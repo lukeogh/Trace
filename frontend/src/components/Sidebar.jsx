@@ -1,7 +1,8 @@
 import { Link, useParams, useLocation } from 'react-router-dom'
-import { LayoutDashboard, ChevronRight } from 'lucide-react'
+import { LayoutDashboard, History, Cpu } from 'lucide-react'
 import { getAreaStatus } from '../utils/status'
 import ThemeToggle from './ThemeToggle'
+import Logo from './Logo'
 
 export default function Sidebar({ areas, dark, onToggleTheme }) {
   const { areaId, threadId } = useParams()
@@ -18,10 +19,10 @@ export default function Sidebar({ areas, dark, onToggleTheme }) {
       <div className="px-4 py-5 border-b border-navy-200 dark:border-navy-800">
         <div className="flex items-center justify-between">
           <div>
-            <div className="font-display font-bold text-sm tracking-widest uppercase text-navy-900 dark:text-white">
-              Dept Log
-            </div>
-            <div className="text-xs text-navy-400 dark:text-navy-500 mt-0.5 font-mono">
+            <Link to="/" className="inline-block">
+              <Logo size={28} />
+            </Link>
+            <div className="text-xs text-navy-400 dark:text-navy-500 mt-1 font-mono">
               Axithra · SW
             </div>
           </div>
@@ -29,8 +30,8 @@ export default function Sidebar({ areas, dark, onToggleTheme }) {
         </div>
       </div>
 
-      {/* Dashboard link */}
-      <div className="px-3 pt-3 pb-1">
+      {/* Top nav links */}
+      <div className="px-3 pt-3 pb-1 space-y-0.5">
         <Link
           to="/"
           className={`
@@ -43,6 +44,32 @@ export default function Sidebar({ areas, dark, onToggleTheme }) {
         >
           <LayoutDashboard size={15} className="flex-shrink-0" />
           <span className="font-display uppercase tracking-wide text-xs">Dashboard</span>
+        </Link>
+        <Link
+          to="/log"
+          className={`
+            flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors
+            ${location.pathname === '/log'
+              ? 'bg-signal-500/10 text-signal-600 dark:text-signal-400'
+              : 'text-navy-500 dark:text-navy-400 hover:bg-navy-100 dark:hover:bg-navy-800 hover:text-navy-800 dark:hover:text-navy-100'
+            }
+          `}
+        >
+          <History size={15} className="flex-shrink-0" />
+          <span className="font-display uppercase tracking-wide text-xs">Audit Log</span>
+        </Link>
+        <Link
+          to="/process"
+          className={`
+            flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors
+            ${location.pathname === '/process'
+              ? 'bg-signal-500/10 text-signal-600 dark:text-signal-400'
+              : 'text-navy-500 dark:text-navy-400 hover:bg-navy-100 dark:hover:bg-navy-800 hover:text-navy-800 dark:hover:text-navy-100'
+            }
+          `}
+        >
+          <Cpu size={15} className="flex-shrink-0" />
+          <span className="font-display uppercase tracking-wide text-xs">Process</span>
         </Link>
       </div>
 

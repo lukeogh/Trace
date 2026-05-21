@@ -1,0 +1,218 @@
+import { useState, useEffect, useRef } from 'react'
+import { format, parseISO } from 'date-fns'
+import { threadsApi, entriesApi } from '../api/client'
+import { useToast } from './Toast'
+import Modal from './Modal'
+import { DUE_DATE_OPTIONS } from '../utils/status'
+
+const ENTRY_TYPES = [
+  { key: 'entry',    label: 'Entry' },
+  { key: 'todo',     label: 'To Do' },
+  { key: 'decision', label: 'Decision' },
+]
+
+export default function QuickCapture() {
+  const [open, setOpen] = useState(false)
+  const [entryType, setEntryType] = useState('entry')
+  const [content, setContent] = useState('')
+  const [threads, setThreads] = useState([])
+  const [selectedThreadId, setSelectedThreadId] = useState('')
+  const [dueDateOption, setDueDateOption] = useState(null)
+  const [dueDate, setDueDate] = useState(null)
+  const [submitting, setSubmitting] = useState(false)
+  const toast = useToast()
+  const textareaRef = useRef(null)
+
+  // Global 'n' shortcut — fires only when no input is focused
+  useEffect(() => {
+    const handler = (e) => {
+      if (open) return
+      const tag = e.target?.tagName?.toLowerCase()
+      if (tag === 'input' || tag === 'textarea' || e.target?.isContentEditable) return
+      if (e.key === 'n' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault()
+        setOpen(true)
+      }
+    }
+    document.addEventListener('keydown', handler)
+    return () => document.removeEventListener('keydown', handler)
+  }, [open])
+
+  // Fetch threads and autofocus textarea when modal opens
+  useEffect(() => {
+    if (!open) return
+    threadsApi.getAll().then(setThreads).catch(() => {})
+    setTimeout(() => textareaRef.current?.focus(), 50)
+  }, [open])
+
+  const close = () => {
+    setOpen(false)
+    setContent('')
+    setEntryType('entry')
+    setSelectedThreadId('')
+    setDueDateOption(null)
+    setDueDate(null)
+  }
+
+  const submit = async () => {
+    if (!content.trim() || !selectedThreadId) return
+    setSubmitting(true)
+    try {
+      await entriesApi.create(Number(selectedThreadId), {
+        content,
+        type: entryType,
+        due_date: entryType === 'todo' ? dueDate : undefined,
+      })
+      toast('Captured')
+      close()
+    } catch (e) {
+      toast(e.message, 'error')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const handleDueDateOption = (opt) => {
+    setDueDateOption(opt.label)
+    setDueDate(opt.resolve())
+  }
+
+  // Group threads by area name for <optgroup>
+  const threadsByArea = threads.reduce((acc, t) => {
+    if (!acc[t.area_name]) acc[t.area_name] = []
+    acc[t.area_name].push(t)
+    return acc
+  }, {})
+
+  return (
+    <Modal isOpen={open} onClose={close} title="Quick Capture" width="max-w-md">
+      <div className="space-y-4">
+        {/* Entry type selector */}
+        <div className="flex items-center gap-1.5">
+          {ENTRY_TYPES.map(({ key, label }) => (
+            <button
+              key={key}
+              onClick={() => { setEntryType(key); setDueDateOption(null); setDueDate(null) }}
+              className={`
+                px-3 py-1 rounded-full text-xs font-display uppercase tracking-wide transition-colors
+                ${entryType === key
+                  ? 'bg-signal-500 text-white'
+                  : 'text-navy-500 dark:text-navy-400 bg-navy-100 dark:bg-navy-800 hover:bg-navy-200 dark:hover:bg-navy-700'
+                }
+              `}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {/* Content textarea */}
+        <textarea
+          ref={textareaRef}
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          placeholder="Capture a thought, task, or decision…"
+          rows={4}
+          onKeyDown={(e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) submit() }}
+          className="
+            w-full bg-navy-50 dark:bg-navy-800 border border-navy-200 dark:border-navy-600
+            rounded-lg px-3 py-2.5 text-sm resize-none
+            text-navy-900 dark:text-white
+            placeholder:text-navy-300 dark:placeholder:text-navy-600
+            focus:outline-none focus:ring-2 focus:ring-signal-500
+          "
+        />
+
+        {/* Thread selector */}
+        <div>
+          <label className="block text-xs font-display uppercase tracking-wide text-navy-500 dark:text-navy-400 mb-1.5">
+            Thread
+          </label>
+          {threads.length === 0 ? (
+            <p className="text-xs text-navy-400 dark:text-navy-600 italic">
+              Create a thread in an area first.
+            </p>
+          ) : (
+            <select
+              value={selectedThreadId}
+              onChange={(e) => setSelectedThreadId(e.target.value)}
+              className="
+                w-full px-3 py-2 text-sm rounded-lg
+                bg-navy-50 dark:bg-navy-800 border border-navy-200 dark:border-navy-600
+                text-navy-900 dark:text-white
+                focus:outline-none focus:ring-2 focus:ring-signal-500
+              "
+            >
+              <option value="">Select a thread…</option>
+              {Object.entries(threadsByArea).map(([areaName, areaThreads]) => (
+                <optgroup key={areaName} label={areaName}>
+                  {areaThreads.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.title}
+                    </option>
+                  ))}
+                </optgroup>
+              ))}
+            </select>
+          )}
+        </div>
+
+        {/* Due date row — To Do only */}
+        {entryType === 'todo' && (
+          <div>
+            <label className="block text-xs font-display uppercase tracking-wide text-navy-500 dark:text-navy-400 mb-1.5">
+              Due Date
+            </label>
+            <div className="flex flex-wrap gap-1.5">
+              {DUE_DATE_OPTIONS.map((opt) => (
+                <button
+                  key={opt.label}
+                  onClick={() => handleDueDateOption(opt)}
+                  className={`
+                    px-2.5 py-1 rounded-full text-xs font-display uppercase tracking-wide transition-colors
+                    ${dueDateOption === opt.label
+                      ? 'bg-signal-500 text-white'
+                      : 'text-navy-500 dark:text-navy-400 bg-navy-100 dark:bg-navy-800 hover:bg-navy-200 dark:hover:bg-navy-700'
+                    }
+                  `}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+            {dueDateOption === 'Pick date' && (
+              <input
+                type="date"
+                value={dueDate || ''}
+                onChange={(e) => setDueDate(e.target.value)}
+                className="mt-2 w-full text-sm px-3 py-2 rounded-lg bg-navy-50 dark:bg-navy-800 border border-navy-200 dark:border-navy-600 text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-signal-500"
+              />
+            )}
+            {dueDate && dueDateOption !== 'Pick date' && (
+              <p className="font-mono text-xs text-navy-400 mt-1">
+                due {format(parseISO(dueDate), 'dd MMM yyyy')}
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Actions */}
+        <div className="flex justify-end gap-2 pt-1">
+          <button
+            onClick={close}
+            className="px-4 py-2 text-sm rounded-md text-navy-600 dark:text-navy-300 hover:bg-navy-100 dark:hover:bg-navy-700 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={submit}
+            disabled={!content.trim() || !selectedThreadId || submitting}
+            className="px-4 py-2 text-sm rounded-md font-medium bg-signal-500 hover:bg-signal-600 text-white disabled:opacity-50 transition-colors"
+          >
+            {submitting ? 'Capturing…' : 'Capture'}
+          </button>
+        </div>
+      </div>
+    </Modal>
+  )
+}

@@ -1,11 +1,12 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import func
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 import models
 import schemas
 from database import get_db
+from audit import log_audit
 
 router = APIRouter(tags=["areas"])
 
@@ -62,9 +63,17 @@ def update_area(area_id: int, payload: schemas.AreaUpdate, db: Session = Depends
         valid = {"stable", "active", "review", "blocked"}
         if payload.status not in valid:
             raise HTTPException(status_code=422, detail=f"status must be one of {valid}")
+        if payload.status != area.status:
+            log_audit(db, entity_type='area', entity_id=area.id, area_id=area.id,
+                      action='updated', field='status', old_value=area.status, new_value=payload.status)
         area.status = payload.status
 
-    if payload.summary is not None:
+    if payload.summary is not None and payload.summary != area.summary:
+        log_audit(db, entity_type='area', entity_id=area.id, area_id=area.id,
+                  action='updated', field='summary',
+                  old_value=(area.summary or '')[:200], new_value=payload.summary[:200])
+        area.summary = payload.summary
+    elif payload.summary is not None:
         area.summary = payload.summary
 
     area.updated_at = datetime.now(timezone.utc)
@@ -131,11 +140,16 @@ def create_thread(area_id: int, payload: schemas.ThreadCreate, db: Session = Dep
         status=payload.status or "open",
     )
     db.add(thread)
+    db.flush()  # ensure thread.id is assigned before logging event
 
     # Bump area updated_at so dashboard reflects new activity
     area.updated_at = datetime.now(timezone.utc)
+    db.add(models.ActivityEvent(event_type="thread_created", thread_id=thread.id, detail=thread.title[:80]))
     db.commit()
     db.refresh(thread)
+
+    log_audit(db, entity_type='thread', entity_id=thread.id, area_id=area_id,
+              thread_id=thread.id, action='created', field='title', new_value=thread.title)
 
     return schemas.ThreadSummary(
         id=thread.id,
@@ -148,3 +162,183 @@ def create_thread(area_id: int, payload: schemas.ThreadCreate, db: Session = Dep
         entry_count=0,
         attachment_count=0,
     )
+
+
+def _build_audit_context(rows):
+    return [
+        schemas.AuditLogWithContext(
+            id=audit.id,
+            entity_type=audit.entity_type,
+            entity_id=audit.entity_id,
+            action=audit.action,
+            field=audit.field,
+            old_value=audit.old_value,
+            new_value=audit.new_value,
+            occurred_at=audit.occurred_at,
+            thread_id=thread.id if thread else None,
+            thread_title=thread.title if thread else None,
+            area_id=area.id,
+            area_name=area.name,
+        )
+        for audit, thread, area in rows
+    ]
+
+
+@router.get("/audit", response_model=list[schemas.AuditLogWithContext])
+def get_global_audit(
+    limit: int = Query(default=200, le=500),
+    db: Session = Depends(get_db),
+):
+    rows = (
+        db.query(models.AuditLog, models.Thread, models.Area)
+        .outerjoin(models.Thread, models.AuditLog.thread_id == models.Thread.id)
+        .join(models.Area, models.AuditLog.area_id == models.Area.id)
+        .order_by(models.AuditLog.occurred_at.desc())
+        .limit(limit)
+        .all()
+    )
+    return _build_audit_context(rows)
+
+
+@router.get("/areas/{area_id}/audit", response_model=list[schemas.AuditLogWithContext])
+def get_area_audit(area_id: int, db: Session = Depends(get_db)):
+    area = db.query(models.Area).filter(models.Area.id == area_id).first()
+    if not area:
+        raise HTTPException(status_code=404, detail="Area not found")
+    rows = (
+        db.query(models.AuditLog, models.Thread, models.Area)
+        .outerjoin(models.Thread, models.AuditLog.thread_id == models.Thread.id)
+        .join(models.Area, models.AuditLog.area_id == models.Area.id)
+        .filter(models.AuditLog.area_id == area_id)
+        .order_by(models.AuditLog.occurred_at.desc())
+        .all()
+    )
+    return _build_audit_context(rows)
+
+
+@router.get("/roundup", response_model=schemas.RoundupData)
+def get_roundup_data(db: Session = Depends(get_db)):
+    cutoff = datetime.utcnow() - timedelta(days=7)
+    generated_at = datetime.utcnow().strftime("%Y-%m-%d")
+
+    areas = db.query(models.Area).order_by(models.Area.id).all()
+    area_data = []
+
+    for area in areas:
+        active_thread_count = (
+            db.query(func.count(models.Thread.id))
+            .filter(
+                models.Thread.area_id == area.id,
+                models.Thread.status.in_(["open", "in-progress"]),
+            )
+            .scalar()
+        ) or 0
+
+        area_thread_ids = [
+            row.id for row in db.query(models.Thread.id).filter(models.Thread.area_id == area.id).all()
+        ]
+
+        todos_created = 0
+        todos_completed = 0
+        decisions = []
+
+        if area_thread_ids:
+            todos_created = (
+                db.query(func.count(models.Entry.id))
+                .filter(
+                    models.Entry.thread_id.in_(area_thread_ids),
+                    models.Entry.type == 'todo',
+                    models.Entry.created_at >= cutoff,
+                )
+                .scalar()
+            ) or 0
+
+            todos_completed = (
+                db.query(func.count(models.Entry.id))
+                .filter(
+                    models.Entry.thread_id.in_(area_thread_ids),
+                    models.Entry.type == 'todo',
+                    models.Entry.completed == True,
+                    models.Entry.completed_at >= cutoff,
+                )
+                .scalar()
+            ) or 0
+
+            decision_rows = (
+                db.query(models.Entry.content)
+                .filter(
+                    models.Entry.thread_id.in_(area_thread_ids),
+                    models.Entry.type == 'decision',
+                    models.Entry.created_at >= cutoff,
+                )
+                .all()
+            )
+            decisions = [row.content[:200] for row in decision_rows]
+
+        recent_event_rows = (
+            db.query(models.ActivityEvent)
+            .join(models.Thread, models.ActivityEvent.thread_id == models.Thread.id)
+            .filter(
+                models.Thread.area_id == area.id,
+                models.ActivityEvent.occurred_at >= cutoff,
+            )
+            .order_by(models.ActivityEvent.occurred_at.desc())
+            .limit(10)
+            .all()
+        )
+
+        recent_events = [
+            f"{e.event_type}: {e.detail}" if e.detail else e.event_type
+            for e in recent_event_rows
+        ]
+
+        area_data.append(schemas.AreaRoundupData(
+            area_id=area.id,
+            area_name=area.name,
+            area_status=area.status,
+            active_thread_count=active_thread_count,
+            todos_created=todos_created,
+            todos_completed=todos_completed,
+            decisions=decisions,
+            recent_events=recent_events,
+            has_activity=len(recent_event_rows) > 0,
+        ))
+
+    return schemas.RoundupData(
+        generated_at=generated_at,
+        period_days=7,
+        areas=area_data,
+    )
+
+
+@router.get("/activity", response_model=list[schemas.ActivityItem])
+def get_activity(
+    limit: int = Query(default=10, le=10),
+    db: Session = Depends(get_db),
+):
+    events = (
+        db.query(models.ActivityEvent)
+        .join(models.Thread, models.ActivityEvent.thread_id == models.Thread.id)
+        .order_by(models.ActivityEvent.occurred_at.desc())
+        .limit(limit)
+        .all()
+    )
+
+    result = []
+    for event in events:
+        thread = event.thread
+        area = db.query(models.Area).filter(models.Area.id == thread.area_id).first()
+        result.append(
+            schemas.ActivityItem(
+                event_type=event.event_type,
+                thread_id=thread.id,
+                thread_title=thread.title,
+                thread_status=thread.status,
+                detail=event.detail,
+                occurred_at=event.occurred_at,
+                area_id=area.id,
+                area_name=area.name,
+                area_status=area.status,
+            )
+        )
+    return result

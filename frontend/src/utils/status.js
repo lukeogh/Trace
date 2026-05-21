@@ -1,3 +1,16 @@
+import { addDays, endOfWeek, addWeeks, endOfMonth, format } from 'date-fns'
+
+// ─── Due date quick options ───────────────────────────────────────────────────
+
+export const DUE_DATE_OPTIONS = [
+  { label: 'Today',      resolve: () => format(new Date(), 'yyyy-MM-dd') },
+  { label: 'Tomorrow',   resolve: () => format(addDays(new Date(), 1), 'yyyy-MM-dd') },
+  { label: 'This week',  resolve: () => format(endOfWeek(new Date(), { weekStartsOn: 1 }), 'yyyy-MM-dd') },
+  { label: 'Next week',  resolve: () => format(endOfWeek(addWeeks(new Date(), 1), { weekStartsOn: 1 }), 'yyyy-MM-dd') },
+  { label: 'This month', resolve: () => format(endOfMonth(new Date()), 'yyyy-MM-dd') },
+  { label: 'Pick date',  resolve: () => null },
+]
+
 // ─── Area statuses ────────────────────────────────────────────────────────────
 
 export const AREA_STATUSES = {
@@ -18,7 +31,7 @@ export const AREA_STATUSES = {
     ringClass: 'ring-signal-500',
   },
   review: {
-    label: 'Review',
+    label: 'On Hold',
     dot: '#F59E0B',         // amber-500
     textClass: 'text-amber-600 dark:text-amber-400',
     bgClass: 'bg-amber-50 dark:bg-amber-900/20',

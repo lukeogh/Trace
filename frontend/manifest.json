@@ -1,0 +1,21 @@
+{
+  "name": "Department Log",
+  "short_name": "Dept Log",
+  "description": "Axithra Software Department",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#07101F",
+  "theme_color": "#07101F",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

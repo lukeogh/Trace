@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 import models
 import schemas
 from database import get_db
+from audit import log_audit
 
 router = APIRouter(tags=["attachments"])
 
@@ -56,6 +57,17 @@ async def upload_file(
     db.add(attachment)
     db.commit()
     db.refresh(attachment)
+
+    try:
+        db.add(models.ActivityEvent(event_type="file_uploaded", thread_id=thread_id, detail=(attachment.original_name or "")[:80]))
+        db.commit()
+    except Exception:
+        pass
+
+    log_audit(db, entity_type='attachment', entity_id=attachment.id, area_id=thread.area_id,
+              thread_id=thread_id, action='created', field='file',
+              new_value=attachment.original_name or attachment.name)
+
     return attachment
 
 
@@ -82,6 +94,16 @@ def add_link(
     db.add(attachment)
     db.commit()
     db.refresh(attachment)
+
+    try:
+        db.add(models.ActivityEvent(event_type="link_added", thread_id=thread_id, detail=attachment.name[:80]))
+        db.commit()
+    except Exception:
+        pass
+
+    log_audit(db, entity_type='attachment', entity_id=attachment.id, area_id=thread.area_id,
+              thread_id=thread_id, action='created', field='link', new_value=attachment.name)
+
     return attachment
 
 
@@ -95,6 +117,12 @@ def delete_attachment(attachment_id: int, db: Session = Depends(get_db)):
     if not attachment:
         raise HTTPException(status_code=404, detail="Attachment not found")
 
+    # Save data for audit log before deletion
+    thread_id = attachment.thread_id
+    att_type = attachment.type
+    att_name = attachment.name
+    area_id = db.query(models.Thread.area_id).filter(models.Thread.id == thread_id).scalar()
+
     # Delete physical file if applicable
     if attachment.type == "file" and attachment.stored_name:
         path = os.path.join(UPLOAD_DIR, attachment.stored_name)
@@ -103,3 +131,6 @@ def delete_attachment(attachment_id: int, db: Session = Depends(get_db)):
 
     db.delete(attachment)
     db.commit()
+
+    log_audit(db, entity_type='attachment', entity_id=attachment_id, area_id=area_id,
+              thread_id=thread_id, action='deleted', field=att_type, old_value=att_name)

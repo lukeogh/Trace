@@ -1,18 +1,33 @@
 import { useEffect, useState, useRef } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import {
-  ArrowLeft, Plus, Edit3, Trash2, Check, X,
+  Plus, Edit3, Trash2, Check, X,
   Paperclip, Link2, Upload, ExternalLink,
-  ChevronDown, RefreshCw, FileText
+  RefreshCw, FileText
 } from 'lucide-react'
-import { format, formatDistanceToNow } from 'date-fns'
+import { format, formatDistanceToNow, parseISO } from 'date-fns'
 import ReactMarkdown from 'react-markdown'
 import { threadsApi, entriesApi, attachmentsApi, areasApi } from '../api/client'
 import StatusBadge from '../components/StatusBadge'
 import Modal from '../components/Modal'
 import ConfirmDialog from '../components/ConfirmDialog'
 import { useToast } from '../components/Toast'
-import { THREAD_STATUSES, getThreadStatus, formatBytes } from '../utils/status'
+import { THREAD_STATUSES, formatBytes, DUE_DATE_OPTIONS } from '../utils/status'
+
+const INACTIVITY_THRESHOLD_DAYS = 7
+
+const ENTRY_TYPES = [
+  { key: 'entry',    label: 'Entry' },
+  { key: 'todo',     label: 'To Do' },
+  { key: 'decision', label: 'Decision' },
+]
+
+function getDueDateClass(dueDateStr) {
+  const today = format(new Date(), 'yyyy-MM-dd')
+  if (dueDateStr === today) return 'text-amber-500 font-semibold'
+  if (dueDateStr < today)  return 'text-red-500 font-semibold'
+  return 'text-navy-400 dark:text-navy-500'
+}
 
 export default function ThreadView() {
   const { threadId } = useParams()
@@ -23,6 +38,7 @@ export default function ThreadView() {
   const [area, setArea] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [lastVisitedBanner, setLastVisitedBanner] = useState(null)
 
   // Thread-level editing
   const [editingTitle, setEditingTitle] = useState(false)
@@ -31,9 +47,14 @@ export default function ThreadView() {
   const [descDraft, setDescDraft] = useState('')
   const [editingStatus, setEditingStatus] = useState(false)
 
-  // Entry state
+  // Entry composer state
   const [newEntryContent, setNewEntryContent] = useState('')
+  const [entryType, setEntryType] = useState('entry')
+  const [dueDateOption, setDueDateOption] = useState(null)
+  const [dueDate, setDueDate] = useState(null)
   const [addingEntry, setAddingEntry] = useState(false)
+
+  // Entry editing
   const [editingEntryId, setEditingEntryId] = useState(null)
   const [entryDraft, setEntryDraft] = useState('')
 
@@ -67,6 +88,19 @@ export default function ThreadView() {
   }
 
   useEffect(() => { load() }, [threadId])
+
+  // Last-visited banner
+  useEffect(() => {
+    const key = `thread_last_visited_${threadId}`
+    const stored = localStorage.getItem(key)
+    if (stored) {
+      const diff = Date.now() - new Date(stored).getTime()
+      if (diff > 24 * 60 * 60 * 1000) {
+        setLastVisitedBanner(formatDistanceToNow(new Date(stored), { addSuffix: true }))
+      }
+    }
+    localStorage.setItem(key, new Date().toISOString())
+  }, [threadId])
 
   // ── Thread-level edits ──────────────────────────────────────────────────────
 
@@ -113,9 +147,16 @@ export default function ThreadView() {
     if (!newEntryContent.trim()) return
     setAddingEntry(true)
     try {
-      const entry = await entriesApi.create(threadId, { content: newEntryContent })
+      const entry = await entriesApi.create(threadId, {
+        content: newEntryContent,
+        type: entryType,
+        due_date: entryType === 'todo' ? dueDate : undefined,
+      })
       setThread((t) => ({ ...t, entries: [...t.entries, entry] }))
       setNewEntryContent('')
+      setEntryType('entry')
+      setDueDateOption(null)
+      setDueDate(null)
       toast('Entry added')
     } catch (e) { toast(e.message, 'error') }
     finally { setAddingEntry(false) }
@@ -139,6 +180,34 @@ export default function ThreadView() {
       setThread((t) => ({ ...t, entries: t.entries.filter((e) => e.id !== entryId) }))
       toast('Entry deleted')
     } catch (e) { toast(e.message, 'error') }
+  }
+
+  const toggleEntryComplete = async (entryId, completed) => {
+    // Optimistic update
+    setThread((t) => ({
+      ...t,
+      entries: t.entries.map((e) =>
+        e.id === entryId
+          ? { ...e, completed, completed_at: completed ? new Date().toISOString() : null }
+          : e
+      ),
+    }))
+    try {
+      const updated = await entriesApi.update(entryId, { completed })
+      setThread((t) => ({
+        ...t,
+        entries: t.entries.map((e) => (e.id === entryId ? updated : e)),
+      }))
+    } catch (err) {
+      // Revert
+      setThread((t) => ({
+        ...t,
+        entries: t.entries.map((e) =>
+          e.id === entryId ? { ...e, completed: !completed } : e
+        ),
+      }))
+      toast(err.message, 'error')
+    }
   }
 
   // ── Attachments ─────────────────────────────────────────────────────────────
@@ -194,12 +263,37 @@ export default function ThreadView() {
   const files = thread.attachments.filter((a) => a.type === 'file')
   const links = thread.attachments.filter((a) => a.type === 'link')
 
+  // Open tasks: incomplete todos sorted by due_date asc, undated last
+  const openTasks = thread.entries
+    .filter((e) => e.type === 'todo' && !e.completed)
+    .sort((a, b) => {
+      if (a.due_date && b.due_date) return a.due_date.localeCompare(b.due_date)
+      if (a.due_date) return -1
+      if (b.due_date) return 1
+      return 0
+    })
+
+  // Render order: incomplete entries/todos/decisions chrono, completed todos last
+  const sortedEntries = [...thread.entries].sort((a, b) => {
+    const aCompleted = a.type === 'todo' && a.completed
+    const bCompleted = b.type === 'todo' && b.completed
+    if (aCompleted && !bCompleted) return 1
+    if (!aCompleted && bCompleted) return -1
+    return new Date(a.created_at) - new Date(b.created_at)
+  })
+
+  const handleDueDateOption = (opt) => {
+    setDueDateOption(opt.label)
+    const resolved = opt.resolve()
+    setDueDate(resolved)
+  }
+
   return (
-    <div className="flex-1 min-h-screen bg-white dark:bg-navy-900">
+    <div className="flex-1 min-h-screen bg-navy-50 dark:bg-navy-900 bg-grid-light dark:bg-grid-dark">
       {/* Header */}
       <header className="
         sticky top-0 z-10 px-8 py-4
-        bg-white/90 dark:bg-navy-900/90 backdrop-blur-md
+        bg-navy-50/90 dark:bg-navy-900/90 backdrop-blur-md
         border-b border-navy-100 dark:border-navy-800
       ">
         <div className="max-w-5xl mx-auto">
@@ -328,19 +422,46 @@ export default function ThreadView() {
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between mb-5">
             <h2 className="text-xs font-display uppercase tracking-widest text-navy-400 dark:text-navy-500">
-              Log <span className="font-mono text-navy-300 dark:text-navy-600">({thread.entries.length})</span>
+              Entries <span className="font-mono text-navy-300 dark:text-navy-600">({thread.entries.length})</span>
             </h2>
           </div>
 
-          {/* Add entry composer */}
+          {/* Last-visited banner */}
+          {lastVisitedBanner && (
+            <p className="font-mono text-xs text-navy-400 dark:text-navy-600 italic mb-3">
+              ↩ Last visited {lastVisitedBanner}
+            </p>
+          )}
+
+          {/* Entry composer */}
           <div className="mb-6 p-4 rounded-xl border-2 border-dashed border-navy-200 dark:border-navy-700 bg-navy-50/50 dark:bg-navy-850/50">
-            <div className="text-xs font-display uppercase tracking-wide text-navy-400 dark:text-navy-500 mb-2">
-              New Entry — supports **markdown**
+            {/* Type selector */}
+            <div className="flex items-center gap-1.5 mb-3">
+              {ENTRY_TYPES.map(({ key, label }) => (
+                <button
+                  key={key}
+                  onClick={() => { setEntryType(key); setDueDateOption(null); setDueDate(null) }}
+                  className={`
+                    px-3 py-1 rounded-full text-xs font-display uppercase tracking-wide transition-colors
+                    ${entryType === key
+                      ? 'bg-signal-500 text-white'
+                      : 'text-navy-500 dark:text-navy-400 bg-navy-100 dark:bg-navy-800 hover:bg-navy-200 dark:hover:bg-navy-700'
+                    }
+                  `}
+                >
+                  {label}
+                </button>
+              ))}
             </div>
+
             <textarea
               value={newEntryContent}
               onChange={(e) => setNewEntryContent(e.target.value)}
-              placeholder="What's happening? Document findings, decisions, blockers…"
+              placeholder={
+                entryType === 'todo'     ? 'Describe the task…' :
+                entryType === 'decision' ? 'State the decision and rationale…' :
+                'What\'s happening? Document findings, decisions, blockers…'
+              }
               rows={4}
               className="
                 w-full bg-white dark:bg-navy-800 border border-navy-200 dark:border-navy-600
@@ -350,6 +471,43 @@ export default function ThreadView() {
                 focus:outline-none focus:ring-2 focus:ring-signal-500
               "
             />
+
+            {/* Due date row for To Do */}
+            {entryType === 'todo' && (
+              <div className="mt-2.5">
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {DUE_DATE_OPTIONS.map((opt) => (
+                    <button
+                      key={opt.label}
+                      onClick={() => handleDueDateOption(opt)}
+                      className={`
+                        px-2.5 py-1 rounded-full text-xs font-display uppercase tracking-wide transition-colors
+                        ${dueDateOption === opt.label
+                          ? 'bg-signal-500 text-white'
+                          : 'text-navy-500 dark:text-navy-400 bg-navy-100 dark:bg-navy-800 hover:bg-navy-200 dark:hover:bg-navy-700'
+                        }
+                      `}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                  {dueDateOption === 'Pick date' && (
+                    <input
+                      type="date"
+                      value={dueDate || ''}
+                      onChange={(e) => setDueDate(e.target.value)}
+                      className="text-xs px-2 py-1 rounded-md bg-white dark:bg-navy-800 border border-navy-200 dark:border-navy-600 text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-signal-500"
+                    />
+                  )}
+                </div>
+                {dueDate && (
+                  <p className="font-mono text-xs text-navy-400 mt-1">
+                    due {format(parseISO(dueDate), 'dd MMM yyyy')}
+                  </p>
+                )}
+              </div>
+            )}
+
             <div className="flex justify-end mt-2">
               <button
                 onClick={addEntry}
@@ -362,10 +520,46 @@ export default function ThreadView() {
             </div>
           </div>
 
+          {/* Open tasks section */}
+          {openTasks.length > 0 && (
+            <div className="mb-6">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="font-display uppercase tracking-widest text-xs text-navy-400 dark:text-navy-500">
+                  Open Tasks
+                </span>
+                <span className="font-mono text-xs text-navy-300 dark:text-navy-600">
+                  {openTasks.length}
+                </span>
+              </div>
+              <div className="space-y-1">
+                {openTasks.map((task) => (
+                  <a
+                    key={task.id}
+                    href={`#entry-${task.id}`}
+                    className="flex items-center gap-3 px-3 py-2 rounded-lg bg-white dark:bg-navy-850 border border-navy-100 dark:border-navy-700 hover:border-navy-200 dark:hover:border-navy-600 transition-colors group"
+                  >
+                    <TaskCheckbox
+                      completed={false}
+                      onToggle={(e) => { e.preventDefault(); toggleEntryComplete(task.id, true) }}
+                    />
+                    <span className="flex-1 text-xs text-navy-700 dark:text-navy-200 truncate group-hover:text-navy-900 dark:group-hover:text-white">
+                      {task.content}
+                    </span>
+                    {task.due_date && (
+                      <span className={`font-mono text-xs flex-shrink-0 ${getDueDateClass(task.due_date)}`}>
+                        {format(parseISO(task.due_date), 'dd MMM')}
+                      </span>
+                    )}
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Entry timeline */}
           {thread.entries.length === 0 ? (
             <div className="text-center py-12 text-sm text-navy-400 dark:text-navy-600 italic">
-              No log entries yet. Add the first entry above.
+              No entries yet. Add the first one above.
             </div>
           ) : (
             <div className="relative">
@@ -373,7 +567,7 @@ export default function ThreadView() {
               <div className="absolute left-4 top-0 bottom-0 w-px bg-navy-100 dark:bg-navy-800" />
 
               <div className="space-y-1">
-                {thread.entries.map((entry) => (
+                {sortedEntries.map((entry) => (
                   <EntryBlock
                     key={entry.id}
                     entry={entry}
@@ -384,6 +578,7 @@ export default function ThreadView() {
                     onSave={() => saveEntry(entry.id)}
                     onCancel={() => setEditingEntryId(null)}
                     onDelete={() => setDeleteEntryId(entry.id)}
+                    onToggleComplete={(completed) => toggleEntryComplete(entry.id, completed)}
                   />
                 ))}
               </div>
@@ -499,7 +694,7 @@ export default function ThreadView() {
         onClose={() => setDeleteEntryId(null)}
         onConfirm={() => deleteEntry(deleteEntryId)}
         title="Delete Entry"
-        message="Delete this log entry permanently?"
+        message="Delete this entry permanently?"
       />
 
       <ConfirmDialog
@@ -513,27 +708,74 @@ export default function ThreadView() {
   )
 }
 
+// ─── Task checkbox ────────────────────────────────────────────────────────────
+
+function TaskCheckbox({ completed, onToggle }) {
+  return (
+    <button
+      onClick={onToggle}
+      className={`
+        w-6 h-6 rounded-md border-2 flex items-center justify-center flex-shrink-0
+        transition-all duration-150
+        ${completed
+          ? 'bg-signal-500 border-signal-500'
+          : 'border-navy-300 dark:border-navy-600 bg-transparent hover:border-signal-400'
+        }
+      `}
+    >
+      <svg viewBox="0 0 24 24" width={13} height={13} fill="none">
+        <path
+          d="M4 12l5 5 11-11"
+          stroke="white"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeDasharray="24"
+          strokeDashoffset={completed ? 0 : 24}
+          style={{ transition: 'stroke-dashoffset 200ms ease 150ms' }}
+        />
+      </svg>
+    </button>
+  )
+}
+
 // ─── Entry block ──────────────────────────────────────────────────────────────
 
-function EntryBlock({ entry, editing, draft, onEditStart, onDraftChange, onSave, onCancel, onDelete }) {
+function EntryBlock({ entry, editing, draft, onEditStart, onDraftChange, onSave, onCancel, onDelete, onToggleComplete }) {
   const date = new Date(entry.created_at)
   const wasEdited = entry.updated_at !== entry.created_at
+  const isDecision = entry.type === 'decision'
+  const isTodo = entry.type === 'todo'
 
   return (
-    <div className="relative pl-10 pb-6 group animate-fade-in">
+    <div id={`entry-${entry.id}`} className="relative pl-10 pb-6 group animate-fade-in">
       {/* Timeline dot */}
-      <div className="absolute left-3 top-1.5 w-2.5 h-2.5 rounded-full bg-signal-500 border-2 border-white dark:border-navy-900 z-10" />
+      <div className={`
+        absolute left-3 top-1.5 w-2.5 h-2.5 rounded-full border-2 border-white dark:border-navy-900 z-10
+        ${isDecision ? 'bg-amber-400' : 'bg-signal-500'}
+      `} />
 
-      <div className="
-        rounded-xl border overflow-hidden
+      <div className={`
+        relative rounded-xl border overflow-hidden
         bg-white dark:bg-navy-850
         border-navy-100 dark:border-navy-700
         group-hover:border-navy-200 dark:group-hover:border-navy-600
         transition-colors
-      ">
+        ${isTodo && entry.completed ? 'opacity-60' : ''}
+      `}>
+        {/* Decision accent bar */}
+        {isDecision && (
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-amber-400 rounded-l-xl" />
+        )}
+
         {/* Entry header */}
-        <div className="flex items-center justify-between px-4 py-2.5 border-b border-navy-50 dark:border-navy-700 bg-navy-50/50 dark:bg-navy-900/30">
+        <div className={`flex items-center justify-between px-4 py-2.5 border-b border-navy-50 dark:border-navy-700 bg-navy-50/50 dark:bg-navy-900/30 ${isDecision ? 'pl-5' : ''}`}>
           <div className="flex items-center gap-2">
+            {isDecision && (
+              <span className="font-display uppercase text-xs bg-amber-500/10 text-amber-600 dark:text-amber-400 px-1.5 py-0.5 rounded">
+                Decision
+              </span>
+            )}
             <span className="text-xs font-mono font-medium text-signal-600 dark:text-signal-400">
               {format(date, 'dd MMM yyyy')}
             </span>
@@ -555,7 +797,7 @@ function EntryBlock({ entry, editing, draft, onEditStart, onDraftChange, onSave,
         </div>
 
         {/* Content */}
-        <div className="px-4 py-3">
+        <div className={`px-4 py-3 ${isDecision ? 'pl-5' : ''}`}>
           {editing ? (
             <div>
               <textarea
@@ -577,6 +819,27 @@ function EntryBlock({ entry, editing, draft, onEditStart, onDraftChange, onSave,
                 <button onClick={onSave} className="flex items-center gap-1 px-3 py-1.5 text-xs rounded bg-signal-500 hover:bg-signal-600 text-white transition-colors">
                   <Check size={12} /> Save
                 </button>
+              </div>
+            </div>
+          ) : isTodo ? (
+            <div className="flex items-start gap-3">
+              <TaskCheckbox
+                completed={entry.completed}
+                onToggle={() => onToggleComplete(!entry.completed)}
+              />
+              <div className="flex-1 min-w-0">
+                <p className={`text-sm leading-snug transition-colors duration-200 ${
+                  entry.completed
+                    ? 'line-through text-navy-400 dark:text-navy-500'
+                    : 'text-navy-700 dark:text-navy-200'
+                }`}>
+                  {entry.content}
+                </p>
+                {entry.due_date && !entry.completed && (
+                  <p className={`font-mono text-xs mt-1 ${getDueDateClass(entry.due_date)}`}>
+                    due {format(parseISO(entry.due_date), 'dd MMM yyyy')}
+                  </p>
+                )}
               </div>
             </div>
           ) : (

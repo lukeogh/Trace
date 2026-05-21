@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from typing import Optional, List
-from datetime import datetime
+from datetime import datetime, date
 
 
 # ── Attachments ──────────────────────────────────────────────────────────────
@@ -28,16 +28,25 @@ class LinkCreate(BaseModel):
 
 class EntryCreate(BaseModel):
     content: str
+    type: str = 'entry'
+    due_date: Optional[date] = None
 
 
 class EntryUpdate(BaseModel):
-    content: str
+    content: Optional[str] = None
+    type: Optional[str] = None
+    completed: Optional[bool] = None
+    due_date: Optional[date] = None
 
 
 class EntryOut(BaseModel):
     id: int
     thread_id: int
     content: str
+    type: str
+    completed: bool
+    completed_at: Optional[datetime] = None
+    due_date: Optional[date] = None
     created_at: datetime
     updated_at: datetime
 
@@ -121,3 +130,131 @@ class AreaDetail(BaseModel):
     updated_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+# ── Activity ──────────────────────────────────────────────────────────────────
+
+class ActivityItem(BaseModel):
+    event_type: str
+    thread_id: int
+    thread_title: str
+    thread_status: str
+    detail: Optional[str] = None
+    occurred_at: datetime
+    area_id: int
+    area_name: str
+    area_status: str
+
+    model_config = {"from_attributes": True}
+
+
+class AuditLogEntry(BaseModel):
+    id: int
+    entity_type: str
+    entity_id: int
+    action: str
+    field: Optional[str] = None
+    old_value: Optional[str] = None
+    new_value: Optional[str] = None
+    occurred_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class AuditLogWithContext(BaseModel):
+    id: int
+    entity_type: str
+    entity_id: int
+    action: str
+    field: Optional[str] = None
+    old_value: Optional[str] = None
+    new_value: Optional[str] = None
+    occurred_at: datetime
+    thread_id: Optional[int] = None
+    thread_title: Optional[str] = None
+    area_id: int
+    area_name: str
+
+    model_config = {"from_attributes": True}
+
+
+class AllThreadSummary(BaseModel):
+    id: int
+    area_id: int
+    area_name: str
+    title: str
+    status: str
+    updated_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class UpcomingTodo(BaseModel):
+    id: int
+    thread_id: int
+    thread_title: str
+    area_id: int
+    area_name: str
+    content: str
+    due_date: Optional[date] = None
+
+    model_config = {"from_attributes": True}
+
+
+# ── Generate / Process ────────────────────────────────────────────────────────
+
+class ProcessRequest(BaseModel):
+    area_name: str
+    input_text: str
+
+
+class ProcessedItem(BaseModel):
+    type: str
+    content: str
+    rationale: str
+    suggested_thread: str
+    due_date: Optional[str] = None
+
+
+class ProcessResponse(BaseModel):
+    items: List[ProcessedItem]
+
+
+class RefineRequest(BaseModel):
+    item: dict
+    rejection_reason: str
+    area_name: str
+
+
+class RefineResponse(BaseModel):
+    item: dict
+
+
+# ── Roundup ───────────────────────────────────────────────────────────────────
+
+class AreaRoundupData(BaseModel):
+    area_id: int
+    area_name: str
+    area_status: str
+    active_thread_count: int
+    todos_created: int
+    todos_completed: int
+    decisions: List[str]
+    recent_events: List[str]
+    has_activity: bool
+
+
+class RoundupData(BaseModel):
+    generated_at: str
+    period_days: int
+    areas: List[AreaRoundupData]
+
+
+class RoundupRequest(BaseModel):
+    areas: List[dict]
+    period_days: int
+    generated_at: str
+
+
+class RoundupResponse(BaseModel):
+    text: str

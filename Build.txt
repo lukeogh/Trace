@@ -1,0 +1,2 @@
+cd /c/Projects/department-log
+docker compose up --build

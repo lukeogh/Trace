@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
-import { Plus, Check, X, Edit3, RefreshCw } from 'lucide-react'
+import { useParams, useNavigate, Link } from 'react-router-dom'
+import { Plus, Check, X, Edit3, RefreshCw, History, ChevronDown, ChevronUp } from 'lucide-react'
+import { format } from 'date-fns'
 import { areasApi } from '../api/client'
 import StatusBadge from '../components/StatusBadge'
 import ThreadCard from '../components/ThreadCard'
@@ -130,11 +131,11 @@ export default function AreaView() {
   if (!area) return null
 
   return (
-    <div className="flex-1 min-h-screen bg-white dark:bg-navy-900">
+    <div className="flex-1 min-h-screen bg-navy-50 dark:bg-navy-900 bg-grid-light dark:bg-grid-dark">
       {/* Area header */}
       <header className="
         sticky top-0 z-10 px-8 py-5
-        bg-white/90 dark:bg-navy-900/90 backdrop-blur-md
+        bg-navy-50/90 dark:bg-navy-900/90 backdrop-blur-md
         border-b border-navy-100 dark:border-navy-800
       ">
         <div className="max-w-4xl mx-auto flex items-center justify-between gap-4">
@@ -286,6 +287,9 @@ export default function AreaView() {
         </div>
       </div>
 
+      {/* Audit panel */}
+      <AreaAuditPanel areaId={areaId} />
+
       {/* New Thread Modal */}
       <Modal
         isOpen={newThreadOpen}
@@ -376,6 +380,137 @@ export default function AreaView() {
           </div>
         </div>
       </Modal>
+    </div>
+  )
+}
+
+// ─── Area audit panel ─────────────────────────────────────────────────────────
+
+const ACTION_BADGE = {
+  created:     'bg-signal-500/10 text-signal-600 dark:text-signal-400',
+  updated:     'bg-amber-500/10 text-amber-600 dark:text-amber-400',
+  deleted:     'bg-red-500/10 text-red-500 dark:text-red-400',
+  completed:   'bg-sky-500/10 text-sky-500 dark:text-sky-400',
+  uncompleted: 'bg-navy-200/50 text-navy-500 dark:bg-navy-700/50 dark:text-navy-400',
+}
+
+function formatAuditDescription({ action, entity_type, field, old_value, new_value }) {
+  if (action === 'completed') return 'Task marked complete'
+  if (action === 'uncompleted') return 'Task reopened'
+  if (action === 'deleted') return `${field} removed: ${old_value}`
+  if (action === 'created' && entity_type === 'thread') return `Thread created: ${new_value || field || ''}`
+  if (action === 'created' && entity_type === 'entry') return `Entry added (${field})`
+  if (action === 'created' && entity_type === 'attachment') return `${field} attached: ${new_value}`
+  if (action === 'updated') {
+    const base = `${field} changed`
+    if (old_value != null && new_value != null) {
+      if (old_value.length < 40 && new_value.length < 40) {
+        return `${base} from "${old_value}" → "${new_value}"`
+      }
+      return `${base} from [previous] → [updated]`
+    }
+    return base
+  }
+  return `${action} ${entity_type}`
+}
+
+function AreaAuditRow({ record }) {
+  return (
+    <Link
+      to={`/thread/${record.thread_id}`}
+      className="
+        px-4 py-2.5 flex items-center gap-3 text-xs
+        border-b border-navy-50 dark:border-navy-800 last:border-0
+        hover:bg-navy-50/60 dark:hover:bg-navy-800/40
+        transition-colors
+      "
+    >
+      <span className="font-mono text-navy-300 dark:text-navy-600 flex-shrink-0 w-28">
+        {format(new Date(record.occurred_at), 'dd MMM HH:mm')}
+      </span>
+      <span className="text-navy-500 dark:text-navy-400 truncate w-36 flex-shrink-0">
+        {record.thread_title || <span className="italic text-navy-300 dark:text-navy-600">area</span>}
+      </span>
+      <span className={`font-display uppercase px-1.5 py-0.5 rounded flex-shrink-0 ${ACTION_BADGE[record.action] ?? ACTION_BADGE.updated}`}>
+        {record.action}
+      </span>
+      <span className="text-navy-500 dark:text-navy-400 flex-1 truncate">
+        {formatAuditDescription(record)}
+      </span>
+    </Link>
+  )
+}
+
+function AreaAuditSkeleton() {
+  return (
+    <div className="divide-y divide-navy-50 dark:divide-navy-800">
+      {[0, 1, 2].map((i) => (
+        <div key={i} className="px-4 py-2.5 flex items-center gap-3">
+          <div className="w-28 h-3 rounded bg-navy-100 dark:bg-navy-800 animate-pulse" />
+          <div className="w-36 h-3 rounded bg-navy-100 dark:bg-navy-800 animate-pulse" />
+          <div className="w-16 h-3 rounded bg-navy-100 dark:bg-navy-800 animate-pulse" />
+          <div className="flex-1 h-3 rounded bg-navy-100 dark:bg-navy-800 animate-pulse" />
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function AreaAuditPanel({ areaId }) {
+  const [open, setOpen] = useState(false)
+  const [records, setRecords] = useState([])
+  const [fetching, setFetching] = useState(false)
+  const [fetched, setFetched] = useState(false)
+
+  const expand = async () => {
+    setOpen(true)
+    if (fetched) return
+    setFetching(true)
+    try {
+      const data = await areasApi.getAudit(areaId)
+      setRecords(data)
+      setFetched(true)
+    } catch {
+      // silent fail
+    } finally {
+      setFetching(false)
+    }
+  }
+
+  return (
+    <div className="max-w-4xl mx-auto px-8 pb-10">
+      <button
+        onClick={open ? () => setOpen(false) : expand}
+        className="
+          w-full flex items-center gap-2 py-3
+          font-display uppercase tracking-widest text-xs
+          text-navy-300 dark:text-navy-700
+          hover:text-navy-500 dark:hover:text-navy-500
+          cursor-pointer transition-colors
+        "
+      >
+        <History size={13} />
+        <span className="flex-1 text-left">Audit Log</span>
+        {open ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+      </button>
+
+      {open && (
+        <div className="bg-white dark:bg-navy-850 border border-navy-200 dark:border-navy-700 rounded-xl overflow-hidden">
+          {fetching ? (
+            <AreaAuditSkeleton />
+          ) : records.length === 0 ? (
+            <div className="py-8 text-center">
+              <p className="text-xs italic text-navy-300 dark:text-navy-600">No audit history yet</p>
+            </div>
+          ) : (
+            <div>
+              {records.map((record) => (
+                <AreaAuditRow key={record.id} record={record} />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }

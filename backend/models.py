@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, ForeignKey, DateTime
+from sqlalchemy import Column, Integer, String, Text, ForeignKey, DateTime, Boolean, Date
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from database import Base
@@ -54,6 +54,11 @@ class Entry(Base):
     id = Column(Integer, primary_key=True, index=True)
     thread_id = Column(Integer, ForeignKey("threads.id"), nullable=False)
     content = Column(Text, nullable=False)
+    # entry | todo | decision
+    type = Column(String(20), default="entry", nullable=False)
+    completed = Column(Boolean, default=False, nullable=False)
+    completed_at = Column(DateTime, nullable=True)
+    due_date = Column(Date, nullable=True)
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
@@ -79,3 +84,30 @@ class Attachment(Base):
     created_at = Column(DateTime, server_default=func.now())
 
     thread = relationship("Thread", back_populates="attachments")
+
+
+class AuditLog(Base):
+    __tablename__ = "audit_logs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    entity_type = Column(String(50), nullable=False)
+    entity_id = Column(Integer, nullable=False)
+    area_id = Column(Integer, ForeignKey("areas.id", ondelete="CASCADE"), nullable=True)
+    thread_id = Column(Integer, ForeignKey("threads.id", ondelete="SET NULL"), nullable=True)
+    action = Column(String(50), nullable=False)
+    field = Column(String(100), nullable=True)
+    old_value = Column(Text, nullable=True)
+    new_value = Column(Text, nullable=True)
+    occurred_at = Column(DateTime, server_default=func.now())
+
+
+class ActivityEvent(Base):
+    __tablename__ = "activity_events"
+
+    id = Column(Integer, primary_key=True, index=True)
+    event_type = Column(String(50), nullable=False)
+    thread_id = Column(Integer, ForeignKey("threads.id", ondelete="CASCADE"), nullable=False)
+    detail = Column(String(200), nullable=True)
+    occurred_at = Column(DateTime, server_default=func.now())
+
+    thread = relationship("Thread")

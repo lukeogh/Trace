@@ -51,6 +51,21 @@ export const areasApi = {
 
   createThread: (areaId, payload) =>
     request(`/areas/${areaId}/threads`, { method: 'POST', body: payload }),
+
+  getActivity: (limit = 10) =>
+    request(`/activity?limit=${limit}`),
+
+  getAudit: (areaId) =>
+    request(`/areas/${areaId}/audit`),
+
+  getGlobalAudit: (limit = 200) =>
+    request(`/audit?limit=${limit}`),
+
+  getRoundupData: () =>
+    request('/roundup'),
+
+  generateRoundup: (data) =>
+    request('/generate/roundup', { method: 'POST', body: data }),
 }
 
 // ─── Threads ──────────────────────────────────────────────────────────────────
@@ -59,11 +74,17 @@ export const threadsApi = {
   get: (id) =>
     request(`/threads/${id}`),
 
+  getAll: () =>
+    request('/threads/all'),
+
   update: (id, payload) =>
     request(`/threads/${id}`, { method: 'PUT', body: payload }),
 
   delete: (id) =>
     request(`/threads/${id}`, { method: 'DELETE' }),
+
+  getAudit: (threadId) =>
+    request(`/threads/${threadId}/audit`),
 }
 
 // ─── Entries ──────────────────────────────────────────────────────────────────
@@ -77,6 +98,24 @@ export const entriesApi = {
 
   delete: (id) =>
     request(`/entries/${id}`, { method: 'DELETE' }),
+
+  getUpcoming: (limit = 10) =>
+    request(`/todos/upcoming?limit=${limit}`),
+}
+
+// ─── Generate / Process ───────────────────────────────────────────────────────
+
+export const generateApi = {
+  process: (areaName, inputText) =>
+    request('/generate/process', {
+      method: 'POST',
+      body: { area_name: areaName, input_text: inputText },
+    }),
+  refine: (item, rejectionReason, areaName) =>
+    request('/generate/refine', {
+      method: 'POST',
+      body: { item, rejection_reason: rejectionReason, area_name: areaName },
+    }),
 }
 
 // ─── Attachments ──────────────────────────────────────────────────────────────

@@ -6,7 +6,7 @@ from fastapi.staticfiles import StaticFiles
 
 import models
 from database import engine, SessionLocal
-from routers import areas, threads, entries, attachments
+from routers import areas, threads, entries, attachments, generate
 
 UPLOAD_DIR = os.environ.get("UPLOAD_DIR", "./data/uploads")
 FRONTEND_DIST = os.environ.get(
@@ -28,8 +28,39 @@ INITIAL_AREAS = [
 
 def _init_db():
     """Create all tables and seed the seven areas if the database is empty."""
+    from sqlalchemy import text
     models.Base.metadata.create_all(bind=engine)
     os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+    # Safe migration: add new columns to existing databases
+    with engine.connect() as conn:
+        for sql in [
+            "ALTER TABLE entries ADD COLUMN type VARCHAR(20) DEFAULT 'entry'",
+            "ALTER TABLE entries ADD COLUMN completed BOOLEAN DEFAULT 0",
+            "ALTER TABLE entries ADD COLUMN completed_at DATETIME",
+            "ALTER TABLE entries ADD COLUMN due_date DATE",
+            "ALTER TABLE activity_events ADD COLUMN detail VARCHAR(200)",
+            "CREATE TABLE IF NOT EXISTS audit_logs (id INTEGER PRIMARY KEY, entity_type VARCHAR(50), entity_id INTEGER, area_id INTEGER REFERENCES areas(id) ON DELETE CASCADE, thread_id INTEGER REFERENCES threads(id) ON DELETE SET NULL, action VARCHAR(50), field VARCHAR(100), old_value TEXT, new_value TEXT, occurred_at DATETIME DEFAULT CURRENT_TIMESTAMP)",
+            "ALTER TABLE audit_logs ADD COLUMN area_id INTEGER REFERENCES areas(id) ON DELETE CASCADE",
+        ]:
+            try:
+                conn.execute(text(sql))
+                conn.commit()
+            except Exception:
+                pass
+
+    # Backfill area_id for any existing audit_log rows that pre-date the column
+    try:
+        from sqlalchemy import text as _text
+        with engine.connect() as conn:
+            conn.execute(_text(
+                "UPDATE audit_logs SET area_id = "
+                "(SELECT area_id FROM threads WHERE threads.id = audit_logs.thread_id) "
+                "WHERE area_id IS NULL AND thread_id IS NOT NULL"
+            ))
+            conn.commit()
+    except Exception:
+        pass
 
     db = SessionLocal()
     try:
@@ -61,6 +92,7 @@ app.include_router(areas.router, prefix="/api")
 app.include_router(threads.router, prefix="/api")
 app.include_router(entries.router, prefix="/api")
 app.include_router(attachments.router, prefix="/api")
+app.include_router(generate.router, prefix="/api")
 
 # Serve uploaded files at /uploads/<stored_name>
 if os.path.exists(UPLOAD_DIR):
