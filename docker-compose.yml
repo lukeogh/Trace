@@ -1,0 +1,24 @@
+version: "3.8"
+
+services:
+  app:
+    build: .
+    container_name: department-log
+    ports:
+      # Access the app at http://localhost:8080 (or your homelab hostname:8080)
+      - "8080:8000"
+    volumes:
+      # All persistent data: SQLite database + uploaded files
+      # Stored in ./data relative to this docker-compose.yml file
+      - ./data:/data
+    environment:
+      - DB_PATH=/data/department.db
+      - UPLOAD_DIR=/data/uploads
+      - FRONTEND_DIST=/app/frontend/dist
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/areas')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s

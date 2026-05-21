@@ -1,0 +1,206 @@
+# Department Log
+
+A self-hosted department activity tracker for the Axithra software team. Tracks the current situation across seven software disciplines — Documentation, Firmware, Software Test, Software Development, Algorithm, Design, and Security — with named threads and chronological log entries per thread.
+
+---
+
+## Quick Start
+
+### Prerequisites
+
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) or Docker Engine + Docker Compose installed
+- Git installed
+- Port `8080` free on your machine
+
+### Run with Docker
+
+```bash
+# Clone your repo (or navigate to the project directory)
+cd department-log
+
+# Build and start the container
+docker compose up --build -d
+
+# The app is now available at:
+# http://localhost:8080
+```
+
+On first run, the database is created automatically and the seven areas are seeded. All data persists in the `./data/` directory.
+
+### Stop the container
+
+```bash
+docker compose down
+```
+
+### Rebuild after code changes
+
+```bash
+docker compose up --build -d
+```
+
+---
+
+## Project Structure
+
+```
+department-log/
+│
+├── backend/                  Python FastAPI application
+│   ├── main.py               App entry point — initialises DB, mounts routers, serves frontend
+│   ├── database.py           SQLAlchemy engine and session factory
+│   ├── models.py             ORM models: Area, Thread, Entry, Attachment
+│   ├── schemas.py            Pydantic schemas for request/response validation
+│   ├── requirements.txt      Python dependencies
+│   └── routers/
+│       ├── areas.py          GET/PUT areas; GET/POST threads per area
+│       ├── threads.py        GET/PUT/DELETE threads
+│       ├── entries.py        POST/PUT/DELETE log entries
+│       └── attachments.py    File upload + link add/delete
+│
+├── frontend/                 React + Vite application
+│   ├── index.html            HTML entry point (loads Google Fonts)
+│   ├── vite.config.js        Vite config with /api proxy for dev mode
+│   ├── tailwind.config.js    Custom navy + signal colour palette; Oxanium/Barlow fonts
+│   ├── postcss.config.js     PostCSS for Tailwind
+│   └── src/
+│       ├── main.jsx          React root mount
+│       ├── App.jsx           Router + theme provider + shell layout
+│       ├── index.css         Tailwind base + custom CSS (grid texture, markdown prose, scrollbars)
+│       ├── api/
+│       │   └── client.js     All API calls — thin fetch wrapper over every endpoint
+│       ├── hooks/
+│       │   └── useTheme.js   Dark/light mode toggle; persists to localStorage
+│       ├── utils/
+│       │   └── status.js     Status config (colours, labels) for areas and threads
+│       ├── components/
+│       │   ├── Sidebar.jsx       Left nav — area list with status dots
+│       │   ├── StatusBadge.jsx   Coloured pill badge for area/thread status
+│       │   ├── ThemeToggle.jsx   Sun/Moon button
+│       │   ├── Modal.jsx         Reusable overlay dialog
+│       │   ├── ConfirmDialog.jsx Destructive action confirmation
+│       │   ├── Toast.jsx         In-app notification system
+│       │   └── ThreadCard.jsx    Area view card linking to a thread
+│       └── pages/
+│           ├── Dashboard.jsx   7-area grid with status, counts, summaries
+│           ├── AreaView.jsx    Single area — editable summary, thread list, new thread modal
+│           └── ThreadView.jsx  Full thread — entry log, file attachments, link attachments
+│
+├── data/                     Runtime data (git-ignored, Docker volume mount)
+│   ├── department.db         SQLite database
+│   └── uploads/              Uploaded files
+│
+├── Dockerfile                Multi-stage: Node builds frontend; Python serves everything
+├── docker-compose.yml        Single-service compose with ./data volume mount
+├── .gitignore
+├── README.md                 This file
+└── REQUIREMENTS.md           Full product specification
+```
+
+---
+
+## Development (without Docker)
+
+For local development you run the backend and frontend separately, with Vite proxying API calls to FastAPI.
+
+### Backend
+
+```bash
+cd backend
+
+# Create a virtual environment
+python -m venv venv
+source venv/bin/activate       # Windows: venv\Scripts\activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Create the data directory
+mkdir -p ../data/uploads
+
+# Run the dev server
+DB_PATH=../data/department.db UPLOAD_DIR=../data/uploads uvicorn main:app --reload --port 8000
+```
+
+API is available at `http://localhost:8000`
+Interactive API docs at `http://localhost:8000/docs`
+
+### Frontend
+
+```bash
+cd frontend
+
+# Install dependencies
+npm install
+
+# Start Vite dev server (proxies /api → localhost:8000)
+npm run dev
+```
+
+Frontend is available at `http://localhost:5173`
+
+---
+
+## API Reference
+
+All endpoints are prefixed with `/api`.
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/areas` | List all 7 areas with thread counts |
+| GET | `/areas/:id` | Get a single area |
+| PUT | `/areas/:id` | Update area status or summary |
+| GET | `/areas/:id/threads` | List threads for an area |
+| POST | `/areas/:id/threads` | Create a new thread |
+| GET | `/threads/:id` | Get thread with all entries and attachments |
+| PUT | `/threads/:id` | Update thread title, status, or description |
+| DELETE | `/threads/:id` | Delete thread (cascades to entries and attachments) |
+| POST | `/threads/:id/entries` | Add a log entry |
+| PUT | `/entries/:id` | Edit an entry |
+| DELETE | `/entries/:id` | Delete an entry |
+| POST | `/threads/:id/attachments/file` | Upload a file (multipart) |
+| POST | `/threads/:id/attachments/link` | Add a URL link |
+| DELETE | `/attachments/:id` | Remove an attachment |
+
+Uploaded files are served at `/uploads/:stored_name`.
+
+---
+
+## Data
+
+All data lives in `./data/` and is never committed to git.
+
+- `./data/department.db` — SQLite database. Back this up to preserve your records.
+- `./data/uploads/` — Uploaded files. Include this in any backup.
+
+**Backup:**
+```bash
+cp -r ./data ./data_backup_$(date +%Y%m%d)
+```
+
+---
+
+## Technology
+
+| Layer | Choice | Why |
+|-------|--------|-----|
+| Frontend | React 18 + Vite | Fast, familiar, tree-shakeable |
+| Styling | Tailwind CSS v3 | Utility-first, dark mode via `class` |
+| Routing | React Router v6 | Standard SPA routing |
+| Icons | Lucide React | Consistent, lightweight |
+| Markdown | react-markdown | Renders entry content |
+| Dates | date-fns | Lightweight date formatting |
+| Backend | Python FastAPI | Fast, typed, auto-generates API docs |
+| ORM | SQLAlchemy 2 | Clean Python models, migrations-ready |
+| Database | SQLite | Zero-config, single file, perfect at this scale |
+| Container | Docker (multi-stage) | Reproducible builds; Node builds frontend, Python serves everything |
+
+---
+
+## Extending
+
+This codebase is designed to be extended in future Claude sessions.
+Start any extension session with:
+> "Read README.md and REQUIREMENTS.md in the department-log project, then [your request]."
+
+The `REQUIREMENTS.md` contains the full product specification.

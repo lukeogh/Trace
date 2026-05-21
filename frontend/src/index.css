@@ -1,0 +1,149 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── Google Font import fallback ──────────────────────────────────────────── */
+@layer base {
+  html {
+    font-family: 'Barlow', ui-sans-serif, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Scrollbar styling */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-navy-300 dark:bg-navy-700 rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-navy-400 dark:bg-navy-600;
+  }
+
+  /* Focus ring */
+  *:focus-visible {
+    @apply outline-none ring-2 ring-signal-500 ring-offset-1 ring-offset-white dark:ring-offset-navy-900;
+  }
+
+  /* Smooth theme transitions */
+  *, *::before, *::after {
+    transition-property: background-color, border-color;
+    transition-duration: 150ms;
+    transition-timing-function: ease;
+  }
+
+  /* Exclude transitions that should be instant */
+  button, a, input, textarea {
+    transition-property: background-color, border-color, color, opacity, box-shadow, transform;
+  }
+}
+
+/* ─── Typography utilities ──────────────────────────────────────────────────── */
+@layer utilities {
+  .font-display {
+    font-family: 'Oxanium', ui-monospace, monospace;
+  }
+
+  .font-mono {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+  }
+
+  /* Subtle grid texture for dark mode dashboard */
+  .bg-grid-dark {
+    background-image:
+      linear-gradient(rgba(14, 165, 233, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(14, 165, 233, 0.03) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+
+  .bg-grid-light {
+    background-image:
+      linear-gradient(rgba(50, 86, 120, 0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(50, 86, 120, 0.04) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+
+  /* Glow effect for accent elements */
+  .glow-signal {
+    box-shadow: 0 0 12px rgba(14, 165, 233, 0.3);
+  }
+}
+
+/* ─── Markdown content rendered inside entries ──────────────────────────────── */
+.prose-entry {
+  @apply text-sm leading-relaxed;
+  color: inherit;
+}
+
+.prose-entry p {
+  @apply mb-2 last:mb-0;
+}
+
+.prose-entry ul {
+  @apply list-disc list-inside mb-2 space-y-1;
+}
+
+.prose-entry ol {
+  @apply list-decimal list-inside mb-2 space-y-1;
+}
+
+.prose-entry li {
+  @apply ml-2;
+}
+
+.prose-entry strong {
+  @apply font-semibold;
+}
+
+.prose-entry em {
+  @apply italic;
+}
+
+.prose-entry code {
+  @apply font-mono text-xs px-1.5 py-0.5 rounded;
+  @apply bg-navy-100 text-navy-800;
+  @apply dark:bg-navy-800 dark:text-signal-300;
+}
+
+.prose-entry pre {
+  @apply font-mono text-xs p-3 rounded-md overflow-x-auto mb-2;
+  @apply bg-navy-100 text-navy-800;
+  @apply dark:bg-navy-900 dark:text-signal-300;
+  border: 1px solid;
+  @apply border-navy-200 dark:border-navy-700;
+}
+
+.prose-entry pre code {
+  @apply bg-transparent p-0;
+}
+
+.prose-entry a {
+  @apply text-signal-600 dark:text-signal-400 underline underline-offset-2 hover:text-signal-500;
+}
+
+.prose-entry h1, .prose-entry h2, .prose-entry h3 {
+  @apply font-display font-semibold mb-1 mt-3 first:mt-0;
+}
+
+.prose-entry h1 { @apply text-base; }
+.prose-entry h2 { @apply text-sm; }
+.prose-entry h3 { @apply text-sm; }
+
+.prose-entry blockquote {
+  @apply border-l-2 pl-3 italic;
+  @apply border-navy-300 text-navy-500;
+  @apply dark:border-navy-600 dark:text-navy-400;
+}
+
+.prose-entry hr {
+  @apply my-3;
+  @apply border-navy-200 dark:border-navy-700;
+}

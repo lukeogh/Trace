@@ -1,0 +1,105 @@
+import os
+import uuid
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
+from sqlalchemy.orm import Session
+
+import models
+import schemas
+from database import get_db
+
+router = APIRouter(tags=["attachments"])
+
+UPLOAD_DIR = os.environ.get("UPLOAD_DIR", "./data/uploads")
+MAX_FILE_SIZE = 50 * 1024 * 1024  # 50 MB
+
+
+def _ensure_upload_dir():
+    os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+
+@router.post(
+    "/threads/{thread_id}/attachments/file",
+    response_model=schemas.AttachmentOut,
+    status_code=201,
+)
+async def upload_file(
+    thread_id: int,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+):
+    thread = db.query(models.Thread).filter(models.Thread.id == thread_id).first()
+    if not thread:
+        raise HTTPException(status_code=404, detail="Thread not found")
+
+    _ensure_upload_dir()
+
+    contents = await file.read()
+    if len(contents) > MAX_FILE_SIZE:
+        raise HTTPException(status_code=413, detail="File exceeds 50 MB limit")
+
+    # Generate a unique stored filename to avoid collisions
+    ext = os.path.splitext(file.filename or "file")[1]
+    stored_name = f"{uuid.uuid4().hex}{ext}"
+    dest = os.path.join(UPLOAD_DIR, stored_name)
+
+    with open(dest, "wb") as f:
+        f.write(contents)
+
+    attachment = models.Attachment(
+        thread_id=thread_id,
+        type="file",
+        name=file.filename or stored_name,
+        stored_name=stored_name,
+        original_name=file.filename,
+        size=len(contents),
+    )
+    db.add(attachment)
+    db.commit()
+    db.refresh(attachment)
+    return attachment
+
+
+@router.post(
+    "/threads/{thread_id}/attachments/link",
+    response_model=schemas.AttachmentOut,
+    status_code=201,
+)
+def add_link(
+    thread_id: int,
+    payload: schemas.LinkCreate,
+    db: Session = Depends(get_db),
+):
+    thread = db.query(models.Thread).filter(models.Thread.id == thread_id).first()
+    if not thread:
+        raise HTTPException(status_code=404, detail="Thread not found")
+
+    attachment = models.Attachment(
+        thread_id=thread_id,
+        type="link",
+        name=payload.name,
+        url=payload.url,
+    )
+    db.add(attachment)
+    db.commit()
+    db.refresh(attachment)
+    return attachment
+
+
+@router.delete("/attachments/{attachment_id}", status_code=204)
+def delete_attachment(attachment_id: int, db: Session = Depends(get_db)):
+    attachment = (
+        db.query(models.Attachment)
+        .filter(models.Attachment.id == attachment_id)
+        .first()
+    )
+    if not attachment:
+        raise HTTPException(status_code=404, detail="Attachment not found")
+
+    # Delete physical file if applicable
+    if attachment.type == "file" and attachment.stored_name:
+        path = os.path.join(UPLOAD_DIR, attachment.stored_name)
+        if os.path.exists(path):
+            os.remove(path)
+
+    db.delete(attachment)
+    db.commit()
