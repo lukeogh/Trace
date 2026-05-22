@@ -16,19 +16,47 @@ import shutil
 import subprocess
 import sys
 
+# Force UTF-8 stdout on Windows so the box-drawing chars below don't blow up
+# under the default cp1252 console code page.
+if sys.platform == "win32":
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
+
+
+def _find_rustc() -> str:
+    """Resolve a usable rustc binary.
+
+    Prefers $PATH, then falls back to the standard rustup install location
+    (~/.cargo/bin/rustc[.exe]) since cargo's bin dir is often missing from
+    the shell that launches this script — particularly Windows `py` launcher
+    sessions, which don't source the user's shell profile.
+    """
+    candidate = shutil.which("rustc")
+    if candidate:
+        return candidate
+    home = os.path.expanduser("~")
+    fallback = os.path.join(
+        home, ".cargo", "bin",
+        "rustc.exe" if sys.platform == "win32" else "rustc",
+    )
+    if os.path.exists(fallback):
+        return fallback
+    raise RuntimeError(
+        "rustc not found on PATH or at ~/.cargo/bin/. "
+        "Install Rust from https://rustup.rs/ and re-open your shell."
+    )
+
 
 def get_rust_triple() -> str:
     """Return the current Rust target triple via `rustc -vV`."""
-    try:
-        result = subprocess.run(
-            ["rustc", "-vV"],
-            capture_output=True, text=True, check=True,
-        )
-    except FileNotFoundError:
-        raise RuntimeError(
-            "rustc not found on PATH. Install Rust from https://rustup.rs/ "
-            "and re-open your shell."
-        )
+    rustc = _find_rustc()
+    result = subprocess.run(
+        [rustc, "-vV"],
+        capture_output=True, text=True, check=True,
+    )
     for line in result.stdout.splitlines():
         if line.startswith("host:"):
             return line.split(":", 1)[1].strip()
@@ -79,7 +107,7 @@ def main() -> None:
 
     print(f"── Done. Backend binary at {dest_dir}")
     print()
-    print("Next: run `cargo tauri build` from the repo root to produce the installer.")
+    print("Next: run `tauri build` from the repo root to produce the installer.")
 
 
 if __name__ == "__main__":

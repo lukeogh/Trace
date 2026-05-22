@@ -42,16 +42,15 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
-    "externalBin": [
-      "binaries/trace-backend"
-    ],
+    "resources": {
+      "binaries/trace-backend-x86_64-pc-windows-msvc": "binaries/trace-backend-x86_64-pc-windows-msvc"
+    },
     "windows": {
-      "wix": {},
+      "webviewInstallMode": {
+        "type": "embedBootstrapper"
+      },
       "nsis": {
-        "installMode": "perMachine",
-        "webviewInstallMode": {
-          "type": "embedBootstrapper"
-        }
+        "installMode": "perMachine"
       }
     }
   }

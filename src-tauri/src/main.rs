@@ -14,6 +14,11 @@ use tauri::{
 };
 use tauri_plugin_shell::{process::CommandChild, ShellExt};
 
+/// PyInstaller onedir folder name for our backend bundle. Must match what
+/// `scripts/build-backend.py` stages under `src-tauri/binaries/` and what
+/// `tauri.conf.json` declares as a bundled resource.
+const BACKEND_DIR_NAME: &str = "trace-backend-x86_64-pc-windows-msvc";
+
 /// Find a free TCP port by binding to port 0 and reading what the OS hands
 /// back. The listener is dropped immediately, freeing the port for the
 /// sidecar. There is a tiny TOCTOU race here — acceptable for a single-user
@@ -99,10 +104,33 @@ fn main() {
                 .to_str()
                 .ok_or_else(|| "data dir path is not valid UTF-8".to_string())?;
 
-            // Spawn the PyInstaller-built backend as a sidecar.
+            // Resolve the bundled PyInstaller onedir from the Tauri resource
+            // directory. We can't use sidecar() here because PyInstaller
+            // produces an .exe + _internal/ folder pair, not a single file —
+            // so we ship the whole folder as a resource and invoke the exe
+            // by absolute path.
+            let resource_dir = app
+                .path()
+                .resource_dir()
+                .map_err(|e| format!("failed to resolve resource_dir: {}", e))?;
+            let backend_exe = resource_dir
+                .join("binaries")
+                .join(BACKEND_DIR_NAME)
+                .join("trace-backend.exe");
+
+            if !backend_exe.exists() {
+                let msg = format!(
+                    "trace-backend.exe not found at {} — did `python scripts/build-backend.py` \
+                     run before `tauri build`?",
+                    backend_exe.display()
+                );
+                eprintln!("{}", msg);
+                return Err(msg.into());
+            }
+
             let child = app
                 .shell()
-                .sidecar("trace-backend")?
+                .command(backend_exe.to_str().ok_or("backend exe path is not UTF-8")?)
                 .args([
                     "--port",
                     &port.to_string(),
@@ -111,7 +139,7 @@ fn main() {
                 ])
                 .spawn()
                 .map_err(|e| {
-                    eprintln!("Failed to spawn trace-backend sidecar: {}", e);
+                    eprintln!("Failed to spawn trace-backend: {}", e);
                     e
                 })?;
 

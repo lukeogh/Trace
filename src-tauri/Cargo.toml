@@ -5,13 +5,8 @@ description = "Trace. — Stay across everything."
 authors = []
 edition = "2021"
 
-# Tauri v2 expects a library target so the same crate can be reused from the
-# generated mobile/desktop entry points. We also keep the binary target so
-# `cargo tauri dev` and `cargo tauri build` produce trace.exe.
-[lib]
-name = "trace_lib"
-crate-type = ["staticlib", "cdylib", "rlib"]
-
+# Desktop-only: a single binary target is all we need. (If we ever add mobile
+# entry points later, Tauri's mobile scaffold will introduce a library target.)
 [[bin]]
 name = "trace"
 path = "src/main.rs"
