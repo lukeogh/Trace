@@ -1,25 +1,63 @@
 "$schema" = "schemas/schema.json"
 
-# Default permission set for Trace.'s custom Tauri commands.
+# App-level permissions for Trace.'s custom Tauri commands.
 #
-# Without this, custom commands defined via #[tauri::command] are blocked
-# by the ACL when invoked from a remote origin — and the bundled FastAPI
-# sidecar serves the UI from http://127.0.0.1:PORT, which is "remote"
-# from Tauri's perspective.
-#
-# Referenced from capabilities/default.json as `trace:default` (where
-# `trace` is the package name from Cargo.toml).
+# Pattern: one [[permission]] per command, gathered into a [[set]] named
+# "default" — this mirrors the plugin permission convention and is what
+# Tauri 2's runtime ACL resolver expects. Putting all commands inside a
+# single [[permission]].commands.allow array works at compile time but
+# was silently ignored at runtime in our testing.
 
 [[permission]]
+identifier = "allow-get-data-dir"
+description = "Read the current data directory."
+commands.allow = ["get_data_dir"]
+
+[[permission]]
+identifier = "allow-pick-data-dir"
+description = "Open a native folder picker to choose a new data directory."
+commands.allow = ["pick_data_dir"]
+
+[[permission]]
+identifier = "allow-migrate-and-set-data-dir"
+description = "Copy data to a new directory and persist the choice."
+commands.allow = ["migrate_and_set_data_dir"]
+
+[[permission]]
+identifier = "allow-relaunch"
+description = "Restart the Trace. app via app.restart()."
+commands.allow = ["relaunch"]
+
+[[permission]]
+identifier = "allow-get-update-channel"
+description = "Read the current update channel (stable/beta)."
+commands.allow = ["get_update_channel"]
+
+[[permission]]
+identifier = "allow-set-update-channel"
+description = "Persist the chosen update channel."
+commands.allow = ["set_update_channel"]
+
+[[permission]]
+identifier = "allow-get-update-endpoint"
+description = "Read the updater URL for the active channel."
+commands.allow = ["get_update_endpoint"]
+
+[[permission]]
+identifier = "allow-get-updater-auth-header"
+description = "Read the baked-in PAT for the private releases endpoint."
+commands.allow = ["get_updater_auth_header"]
+
+[[set]]
 identifier = "default"
-description = "Allow all custom Trace. desktop commands."
-commands.allow = [
-    "get_data_dir",
-    "pick_data_dir",
-    "migrate_and_set_data_dir",
-    "relaunch",
-    "get_update_channel",
-    "set_update_channel",
-    "get_update_endpoint",
-    "get_updater_auth_header",
+description = "All custom Trace. desktop commands."
+permissions = [
+    "allow-get-data-dir",
+    "allow-pick-data-dir",
+    "allow-migrate-and-set-data-dir",
+    "allow-relaunch",
+    "allow-get-update-channel",
+    "allow-set-update-channel",
+    "allow-get-update-endpoint",
+    "allow-get-updater-auth-header",
 ]
