@@ -101,6 +101,17 @@ class AuditLog(Base):
     occurred_at = Column(DateTime, server_default=func.now())
 
 
+class ThreadLink(Base):
+    __tablename__ = "thread_links"
+
+    id = Column(Integer, primary_key=True, index=True)
+    from_thread_id = Column(Integer, ForeignKey("threads.id", ondelete="CASCADE"), nullable=False, index=True)
+    to_thread_id = Column(Integer, ForeignKey("threads.id", ondelete="CASCADE"), nullable=False, index=True)
+    # blocks | relates_to
+    kind = Column(String(30), nullable=False)
+    created_at = Column(DateTime, server_default=func.now())
+
+
 class ActivityEvent(Base):
     __tablename__ = "activity_events"
 

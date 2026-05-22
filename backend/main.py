@@ -6,7 +6,7 @@ from fastapi.staticfiles import StaticFiles
 
 import models
 from database import engine, SessionLocal
-from routers import areas, threads, entries, attachments, generate
+from routers import areas, threads, entries, attachments, generate, ingest
 
 UPLOAD_DIR = os.environ.get("UPLOAD_DIR", "./data/uploads")
 FRONTEND_DIST = os.environ.get(
@@ -62,6 +62,44 @@ def _init_db():
     except Exception:
         pass
 
+    # Rebuild audit_logs if thread_id was created with NOT NULL (older schemas).
+    # Area-only audits (status/summary change) pass thread_id=None and would
+    # otherwise raise IntegrityError, poisoning the surrounding transaction.
+    try:
+        from sqlalchemy import text as _text
+        with engine.connect() as conn:
+            info = conn.execute(_text("PRAGMA table_info(audit_logs)")).fetchall()
+            thread_col = next((c for c in info if c[1] == "thread_id"), None)
+            # PRAGMA table_info columns: (cid, name, type, notnull, dflt_value, pk)
+            if thread_col is not None and thread_col[3] == 1:
+                conn.execute(_text("PRAGMA foreign_keys=OFF"))
+                conn.execute(_text(
+                    "CREATE TABLE audit_logs_new ("
+                    "id INTEGER PRIMARY KEY, "
+                    "entity_type VARCHAR(50) NOT NULL, "
+                    "entity_id INTEGER NOT NULL, "
+                    "area_id INTEGER REFERENCES areas(id) ON DELETE CASCADE, "
+                    "thread_id INTEGER REFERENCES threads(id) ON DELETE SET NULL, "
+                    "action VARCHAR(50) NOT NULL, "
+                    "field VARCHAR(100), "
+                    "old_value TEXT, "
+                    "new_value TEXT, "
+                    "occurred_at DATETIME DEFAULT CURRENT_TIMESTAMP"
+                    ")"
+                ))
+                conn.execute(_text(
+                    "INSERT INTO audit_logs_new "
+                    "(id, entity_type, entity_id, area_id, thread_id, action, field, old_value, new_value, occurred_at) "
+                    "SELECT id, entity_type, entity_id, area_id, thread_id, action, field, old_value, new_value, occurred_at "
+                    "FROM audit_logs"
+                ))
+                conn.execute(_text("DROP TABLE audit_logs"))
+                conn.execute(_text("ALTER TABLE audit_logs_new RENAME TO audit_logs"))
+                conn.execute(_text("PRAGMA foreign_keys=ON"))
+                conn.commit()
+    except Exception:
+        pass
+
     db = SessionLocal()
     try:
         if db.query(models.Area).count() == 0:
@@ -93,6 +131,7 @@ app.include_router(threads.router, prefix="/api")
 app.include_router(entries.router, prefix="/api")
 app.include_router(attachments.router, prefix="/api")
 app.include_router(generate.router, prefix="/api")
+app.include_router(ingest.router, prefix="/api")
 
 # Serve uploaded files at /uploads/<stored_name>
 if os.path.exists(UPLOAD_DIR):

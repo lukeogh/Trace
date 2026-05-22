@@ -27,4 +27,9 @@ def log_audit(
         db.add(record)
         db.commit()
     except Exception:
-        pass
+        # Roll back so a failed audit write doesn't poison the caller's
+        # transaction (was causing PendingRollbackError downstream).
+        try:
+            db.rollback()
+        except Exception:
+            pass

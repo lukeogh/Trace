@@ -1,3 +1,5 @@
+import os
+import re
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import func
@@ -9,6 +11,21 @@ from database import get_db
 from audit import log_audit
 
 router = APIRouter(tags=["areas"])
+
+
+def _slugify(value: str) -> str:
+    value = value.strip().lower()
+    value = re.sub(r"[^a-z0-9]+", "-", value).strip("-")
+    return value or "area"
+
+
+def _unique_slug(db: Session, base: str) -> str:
+    slug = base
+    suffix = 2
+    while db.query(models.Area).filter(models.Area.slug == slug).first():
+        slug = f"{base}-{suffix}"
+        suffix += 1
+    return slug
 
 
 def _area_summary(area: models.Area, db: Session) -> schemas.AreaSummary:
@@ -43,6 +60,34 @@ def _area_summary(area: models.Area, db: Session) -> schemas.AreaSummary:
 def list_areas(db: Session = Depends(get_db)):
     areas = db.query(models.Area).order_by(models.Area.id).all()
     return [_area_summary(a, db) for a in areas]
+
+
+@router.post("/areas", response_model=schemas.AreaSummary, status_code=201)
+def create_area(payload: schemas.AreaCreate, db: Session = Depends(get_db)):
+    name = payload.name.strip()
+    if not name:
+        raise HTTPException(status_code=422, detail="name is required")
+
+    base_slug = _slugify(name)
+    slug = _unique_slug(db, base_slug)
+
+    area = models.Area(
+        name=name,
+        slug=slug,
+        status="stable",
+        summary=(payload.summary or "").strip(),
+    )
+    db.add(area)
+    db.commit()
+    db.refresh(area)
+
+    log_audit(
+        db, entity_type="area", entity_id=area.id, area_id=area.id,
+        action="created", field=None, old_value=None, new_value=name,
+    )
+    db.commit()
+
+    return _area_summary(area, db)
 
 
 @router.get("/areas/{area_id}", response_model=schemas.AreaDetail)
@@ -80,6 +125,80 @@ def update_area(area_id: int, payload: schemas.AreaUpdate, db: Session = Depends
     db.commit()
     db.refresh(area)
     return area
+
+
+@router.post("/areas/{area_id}/summary/suggest", response_model=schemas.SummarySuggestion)
+def suggest_area_summary(area_id: int, db: Session = Depends(get_db)):
+    area = db.query(models.Area).filter(models.Area.id == area_id).first()
+    if not area:
+        raise HTTPException(status_code=404, detail="Area not found")
+
+    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    if not api_key:
+        raise HTTPException(
+            status_code=500,
+            detail="ANTHROPIC_API_KEY not configured — add it to your .env file and rebuild.",
+        )
+
+    threads = (
+        db.query(models.Thread)
+        .filter(models.Thread.area_id == area.id)
+        .order_by(models.Thread.updated_at.desc())
+        .limit(10)
+        .all()
+    )
+
+    thread_blocks = []
+    for t in threads:
+        recent_entries = (
+            db.query(models.Entry)
+            .filter(models.Entry.thread_id == t.id)
+            .order_by(models.Entry.created_at.desc())
+            .limit(3)
+            .all()
+        )
+        entry_lines = "\n".join(
+            f"  - [{e.type}] {e.content[:180]}" for e in recent_entries
+        ) or "  (no entries)"
+        thread_blocks.append(
+            f"Thread: {t.title} [{t.status}]\n{entry_lines}"
+        )
+
+    context = "\n\n".join(thread_blocks) if thread_blocks else "(no threads yet)"
+
+    from anthropic import Anthropic
+    client = Anthropic(api_key=api_key)
+
+    system = (
+        "You write concise status summaries for areas of a software department.\n"
+        "Output exactly 2 sentences. No preamble, no formatting, no bullet points.\n"
+        "Sentence 1: the current state — what's happening right now, what's in motion.\n"
+        "Sentence 2: what's next or blocking — risks, pending decisions, what to watch.\n"
+        "Tone: direct, factual, suitable for a status board. Avoid filler like 'currently' or 'we are'."
+    )
+
+    user_msg = (
+        f"Area: {area.name}\n"
+        f"Current status: {area.status}\n"
+        f"Existing summary: {area.summary or '(none)'}\n\n"
+        f"Recent activity:\n{context}"
+    )
+
+    try:
+        message = client.messages.create(
+            model="claude-sonnet-4-6",
+            max_tokens=300,
+            system=system,
+            messages=[{"role": "user", "content": user_msg}],
+        )
+        text = message.content[0].text.strip()
+        return schemas.SummarySuggestion(summary=text)
+    except HTTPException:
+        raise
+    except Exception as e:
+        # Translate Anthropic-specific errors into clearer messages
+        from routers.generate import _translate_anthropic_error
+        raise _translate_anthropic_error(e)
 
 
 @router.get("/areas/{area_id}/threads", response_model=list[schemas.ThreadSummary])
@@ -304,10 +423,28 @@ def get_roundup_data(db: Session = Depends(get_db)):
             has_activity=len(recent_event_rows) > 0,
         ))
 
+    # Stale areas: non-stable areas with no activity for 14+ days
+    stale_cutoff = datetime.utcnow() - timedelta(days=14)
+    now = datetime.utcnow()
+    stale_areas = []
+    for area in areas:
+        if area.status == "stable":
+            continue
+        if area.updated_at and area.updated_at < stale_cutoff:
+            days = (now - area.updated_at).days
+            stale_areas.append(schemas.StaleArea(
+                id=area.id,
+                name=area.name,
+                status=area.status,
+                days_inactive=days,
+            ))
+    stale_areas.sort(key=lambda a: -a.days_inactive)
+
     return schemas.RoundupData(
         generated_at=generated_at,
         period_days=7,
         areas=area_data,
+        stale_areas=stale_areas,
     )
 
 
