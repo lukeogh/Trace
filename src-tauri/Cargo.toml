@@ -1,6 +1,6 @@
 [package]
 name = "trace"
-version = "1.0.0"
+version = "1.0.1"
 description = "Trace. — Stay across everything."
 authors = []
 edition = "2021"
@@ -20,6 +20,8 @@ tauri-plugin-shell = "2"
 tauri-plugin-single-instance = "2"
 tauri-plugin-store = "2"
 tauri-plugin-dialog = "2"
+tauri-plugin-updater = "2"
+tauri-plugin-process = "2"  # exposes app.restart() to JS so the updater can finalise
 reqwest = { version = "0.12", default-features = false, features = ["blocking", "rustls-tls"] }
 dirs = "5"
 serde = { version = "1", features = ["derive"] }

@@ -5,6 +5,7 @@ import { useFont } from './hooks/useFont'
 import { useDisplayName } from './hooks/useDisplayName'
 import { useTextSize } from './hooks/useTextSize'
 import { useAvatar } from './hooks/useAvatar'
+import { useUpdater } from './hooks/useUpdater'
 import SettingsMenu from './components/SettingsMenu'
 import { ToastProvider } from './components/Toast'
 import QuickCapture from './components/QuickCapture'
@@ -27,6 +28,7 @@ export default function App() {
   const { displayName, setDisplayName } = useDisplayName()
   const { textSize, setTextSize } = useTextSize()
   const { avatar, setAvatar } = useAvatar()
+  const updater = useUpdater()    // no-op outside Tauri
   const [switcherOpen, setSwitcherOpen] = useState(false)
   const [newAreaOpen, setNewAreaOpen] = useState(false)
   const [booting, setBooting] = useState(true)
@@ -83,6 +85,7 @@ export default function App() {
           onChangeFont={setFont}
           textSize={textSize}
           onChangeTextSize={setTextSize}
+          updater={updater}
         />
         <QuickCapture />
         <QuickSwitcher

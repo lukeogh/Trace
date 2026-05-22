@@ -48,3 +48,4 @@ src-tauri/binaries/
 # PyInstaller intermediate / spec backups
 *.spec.backup
 
+.claude/

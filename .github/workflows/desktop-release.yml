@@ -104,6 +104,15 @@ jobs:
 
       - name: Build Tauri desktop app
         env:
+          # Tauri updater signing — generates .sig sidecar files next to
+          # each bundle. Without these, end-user updates fail signature
+          # verification and refuse to install.
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          # GitHub PAT for fetching from the private releases endpoint.
+          # build.rs picks this up and bakes it into the binary as a
+          # compile-time const. End users never touch this directly.
+          TRACE_UPDATER_TOKEN: ${{ secrets.TRACE_UPDATER_TOKEN }}
           # Windows signing — picked up by tauri.conf.json's signCommand if
           # configured. Empty values are tolerated (build proceeds unsigned).
           WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
@@ -126,20 +135,61 @@ jobs:
           # Windows
           if [[ "${{ matrix.platform }}" == windows-* ]]; then
             cp src-tauri/target/release/bundle/nsis/*.exe artifacts/ 2>/dev/null || true
+            cp src-tauri/target/release/bundle/nsis/*.exe.sig artifacts/ 2>/dev/null || true
             cp src-tauri/target/release/bundle/msi/*.msi  artifacts/ 2>/dev/null || true
+            cp src-tauri/target/release/bundle/msi/*.msi.sig artifacts/ 2>/dev/null || true
           fi
           # macOS
           if [[ "${{ matrix.platform }}" == macos-* ]]; then
-            cp -r src-tauri/target/release/bundle/dmg/*.dmg     artifacts/ 2>/dev/null || true
-            cp -r src-tauri/target/release/bundle/macos/*.app   artifacts/ 2>/dev/null || true
+            cp -r src-tauri/target/release/bundle/dmg/*.dmg         artifacts/ 2>/dev/null || true
+            cp -r src-tauri/target/release/bundle/dmg/*.dmg.sig     artifacts/ 2>/dev/null || true
+            cp -r src-tauri/target/release/bundle/macos/*.app       artifacts/ 2>/dev/null || true
+            cp -r src-tauri/target/release/bundle/macos/*.app.tar.gz artifacts/ 2>/dev/null || true
+            cp -r src-tauri/target/release/bundle/macos/*.app.tar.gz.sig artifacts/ 2>/dev/null || true
           fi
           # Linux
           if [[ "${{ matrix.platform }}" == ubuntu-* ]]; then
-            cp src-tauri/target/release/bundle/appimage/*.AppImage artifacts/ 2>/dev/null || true
-            cp src-tauri/target/release/bundle/deb/*.deb           artifacts/ 2>/dev/null || true
-            cp src-tauri/target/release/bundle/rpm/*.rpm           artifacts/ 2>/dev/null || true
+            cp src-tauri/target/release/bundle/appimage/*.AppImage     artifacts/ 2>/dev/null || true
+            cp src-tauri/target/release/bundle/appimage/*.AppImage.sig artifacts/ 2>/dev/null || true
+            cp src-tauri/target/release/bundle/deb/*.deb               artifacts/ 2>/dev/null || true
+            cp src-tauri/target/release/bundle/rpm/*.rpm               artifacts/ 2>/dev/null || true
           fi
           ls -lh artifacts/
+
+      # ── Generate latest.json manifest for the updater ───────────────────
+      - name: Generate latest.json
+        if: matrix.platform == 'windows-latest'   # only one runner emits the manifest
+        shell: bash
+        env:
+          TAG: ${{ steps.tag.outputs.name }}
+          # Drop the leading "v" — Tauri version strings don't include it.
+          VERSION: ${{ steps.tag.outputs.name }}
+        run: |
+          set -euo pipefail
+          VERSION="${VERSION#v}"
+          NSIS_EXE=$(ls artifacts/*setup.exe 2>/dev/null | head -1)
+          NSIS_SIG=$(ls artifacts/*setup.exe.sig 2>/dev/null | head -1)
+          if [[ -z "$NSIS_EXE" || -z "$NSIS_SIG" ]]; then
+            echo "Missing NSIS bundle or its .sig — can't build manifest" >&2
+            exit 1
+          fi
+          SIG=$(cat "$NSIS_SIG")
+          DOWNLOAD_URL="https://github.com/${{ github.repository }}/releases/download/${TAG}/$(basename "$NSIS_EXE")"
+          cat > artifacts/latest.json <<EOF
+          {
+            "version": "${VERSION}",
+            "notes": "See https://github.com/${{ github.repository }}/releases/tag/${TAG} for changelog.",
+            "pub_date": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "platforms": {
+              "windows-x86_64": {
+                "signature": "${SIG}",
+                "url": "${DOWNLOAD_URL}"
+              }
+            }
+          }
+          EOF
+          echo "=== artifacts/latest.json ==="
+          cat artifacts/latest.json
 
       - name: Resolve tag name
         id: tag
