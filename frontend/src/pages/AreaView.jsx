@@ -136,7 +136,7 @@ export default function AreaView() {
       <div className="flex-1 flex items-center justify-center">
         <div className="text-center">
           <p className="text-sm text-red-500 mb-3">{error}</p>
-          <button onClick={load} className="flex items-center gap-2 px-4 py-2 rounded-md bg-navy-100 dark:bg-navy-800 text-sm mx-auto hover:bg-navy-200 dark:hover:bg-navy-700 transition-colors">
+          <button onClick={load} className="flex items-center gap-2 px-4 py-2 rounded-md bg-paper-200 dark:bg-pitch-700 text-sm mx-auto hover:bg-paper-300 dark:hover:bg-pitch-500 transition-colors">
             <RefreshCw size={13} /> Retry
           </button>
         </div>
@@ -146,16 +146,16 @@ export default function AreaView() {
   if (!area) return null
 
   return (
-    <div className="flex-1 min-h-screen bg-navy-50 dark:bg-navy-900 bg-grid-light dark:bg-grid-dark">
+    <div className="flex-1 min-h-screen bg-paper-100 dark:bg-pitch-800 bg-grid-light dark:bg-grid-dark">
       {/* Area header */}
       <header className="
         sticky top-0 z-10 px-8 py-5
-        bg-navy-50/90 dark:bg-navy-900/90 backdrop-blur-md
-        border-b border-navy-100 dark:border-navy-800
+        bg-paper-100/90 dark:bg-pitch-800/90 backdrop-blur-md
+        border-b border-paper-200 dark:border-pitch-700
       ">
         <div className="max-w-4xl mx-auto flex items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <h1 className="font-display font-bold text-xl uppercase tracking-widest text-navy-900 dark:text-white">
+            <h1 className="font-display font-bold text-xl uppercase tracking-widest text-pitch-800 dark:text-white">
               {area.name}
             </h1>
 
@@ -166,14 +166,14 @@ export default function AreaView() {
               </button>
 
               {editingStatus && (
-                <div className="absolute top-full left-0 mt-1 z-20 bg-white dark:bg-navy-850 border border-navy-200 dark:border-navy-700 rounded-lg shadow-xl overflow-hidden">
+                <div className="absolute top-full left-0 mt-1 z-20 bg-white dark:bg-pitch-700 border border-paper-300 dark:border-pitch-500 rounded-lg shadow-xl overflow-hidden">
                   {Object.entries(AREA_STATUSES).map(([key, cfg]) => (
                     <button
                       key={key}
                       onClick={() => changeStatus(key)}
                       className={`
-                        flex items-center gap-2 w-full px-4 py-2.5 text-left text-xs font-display uppercase tracking-wide hover:bg-navy-50 dark:hover:bg-navy-800 transition-colors
-                        ${key === area.status ? 'bg-navy-50 dark:bg-navy-800' : ''}
+                        flex items-center gap-2 w-full px-4 py-2.5 text-left text-xs font-display uppercase tracking-wide hover:bg-paper-100 dark:hover:bg-pitch-700 transition-colors
+                        ${key === area.status ? 'bg-paper-100 dark:bg-pitch-700' : ''}
                         ${cfg.textClass}
                       `}
                     >
@@ -195,8 +195,8 @@ export default function AreaView() {
             onClick={() => setNewThreadOpen(true)}
             className="
               flex items-center gap-2 px-4 py-2 rounded-md text-sm font-display font-medium uppercase tracking-wide
-              bg-signal-500 hover:bg-signal-600 text-white
-              shadow-sm hover:shadow-signal-500/25
+              bg-accent-500 hover:bg-accent-600 text-white
+              shadow-sm hover:shadow-accent-500/25
               transition-all duration-150
             "
           >
@@ -208,9 +208,9 @@ export default function AreaView() {
 
       <div className="max-w-4xl mx-auto px-8 py-6">
         {/* Summary block */}
-        <div className="mb-8 p-5 rounded-xl bg-navy-50 dark:bg-navy-850 border border-navy-200 dark:border-navy-700">
+        <div className="mb-8 p-5 rounded-xl bg-paper-100 dark:bg-pitch-700 border border-paper-300 dark:border-pitch-500">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-display uppercase tracking-widest text-navy-400 dark:text-navy-500">
+            <span className="text-xs font-display uppercase tracking-widest text-paper-500 dark:text-paper-600">
               Current Situation
             </span>
             <div className="flex items-center gap-3">
@@ -218,7 +218,7 @@ export default function AreaView() {
                 onClick={suggestSummary}
                 disabled={suggestingSummary}
                 title="Generate a 2-line summary from recent activity"
-                className="flex items-center gap-1.5 text-xs text-navy-400 dark:text-navy-500 hover:text-signal-500 dark:hover:text-signal-400 disabled:opacity-50 transition-colors"
+                className="flex items-center gap-1.5 text-xs text-paper-500 dark:text-paper-600 hover:text-accent-500 dark:hover:text-accent-400 disabled:opacity-50 transition-colors"
               >
                 <Sparkles size={12} className={suggestingSummary ? 'animate-pulse' : ''} />
                 {suggestingSummary ? 'Thinking…' : 'Suggest'}
@@ -226,7 +226,7 @@ export default function AreaView() {
               {!editingSummary && (
                 <button
                   onClick={() => setEditingSummary(true)}
-                  className="flex items-center gap-1.5 text-xs text-navy-400 dark:text-navy-500 hover:text-signal-500 transition-colors"
+                  className="flex items-center gap-1.5 text-xs text-paper-500 dark:text-paper-600 hover:text-accent-500 transition-colors"
                 >
                   <Edit3 size={12} />
                   Edit
@@ -244,23 +244,23 @@ export default function AreaView() {
                 rows={5}
                 placeholder="Describe the current situation for this area..."
                 className="
-                  w-full text-sm bg-white dark:bg-navy-800
-                  border border-navy-300 dark:border-navy-600
+                  w-full text-sm bg-white dark:bg-pitch-700
+                  border border-paper-400 dark:border-paper-700
                   rounded-lg px-3 py-2.5 resize-none
-                  text-navy-800 dark:text-navy-100
-                  placeholder:text-navy-300 dark:placeholder:text-navy-600
-                  focus:outline-none focus:ring-2 focus:ring-signal-500
+                  text-pitch-700 dark:text-paper-200
+                  placeholder:text-paper-400 dark:placeholder:text-paper-700
+                  focus:outline-none focus:ring-2 focus:ring-accent-500
                   transition-colors
                 "
               />
               <div className="flex justify-end gap-2 mt-2">
-                <button onClick={cancelSummary} className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-md text-navy-500 dark:text-navy-400 hover:bg-navy-100 dark:hover:bg-navy-700 transition-colors">
+                <button onClick={cancelSummary} className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-md text-paper-600 dark:text-paper-500 hover:bg-paper-200 dark:hover:bg-pitch-500 transition-colors">
                   <X size={12} /> Cancel
                 </button>
                 <button
                   onClick={saveSummary}
                   disabled={savingSummary}
-                  className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-md bg-signal-500 hover:bg-signal-600 text-white disabled:opacity-60 transition-colors"
+                  className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-md bg-accent-500 hover:bg-accent-600 text-white disabled:opacity-60 transition-colors"
                 >
                   <Check size={12} />
                   {savingSummary ? 'Saving…' : 'Save'}
@@ -269,11 +269,11 @@ export default function AreaView() {
             </div>
           ) : (
             <p
-              className="text-sm text-navy-700 dark:text-navy-300 leading-relaxed whitespace-pre-wrap cursor-text"
+              className="text-sm text-pitch-500 dark:text-paper-400 leading-relaxed whitespace-pre-wrap cursor-text"
               onClick={() => setEditingSummary(true)}
             >
               {area.summary || (
-                <span className="italic text-navy-300 dark:text-navy-600">
+                <span className="italic text-paper-400 dark:text-paper-700">
                   No summary yet. Click to add one.
                 </span>
               )}
@@ -284,20 +284,20 @@ export default function AreaView() {
         {/* Threads section */}
         <div>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-display font-semibold uppercase tracking-widest text-xs text-navy-400 dark:text-navy-500">
+            <h2 className="font-display font-semibold uppercase tracking-widest text-xs text-paper-500 dark:text-paper-600">
               Threads{' '}
-              <span className="font-mono text-navy-300 dark:text-navy-600">
+              <span className="font-mono text-paper-400 dark:text-paper-700">
                 ({threads.length})
               </span>
             </h2>
           </div>
 
           {threads.length === 0 ? (
-            <div className="text-center py-16 border-2 border-dashed border-navy-200 dark:border-navy-700 rounded-xl">
-              <p className="text-sm text-navy-400 dark:text-navy-600 mb-4">No threads yet for this area.</p>
+            <div className="text-center py-16 border-2 border-dashed border-paper-300 dark:border-pitch-500 rounded-xl">
+              <p className="text-sm text-paper-500 dark:text-paper-700 mb-4">No threads yet for this area.</p>
               <button
                 onClick={() => setNewThreadOpen(true)}
-                className="flex items-center gap-2 px-4 py-2 rounded-md bg-signal-500 hover:bg-signal-600 text-white text-sm mx-auto transition-colors"
+                className="flex items-center gap-2 px-4 py-2 rounded-md bg-accent-500 hover:bg-accent-600 text-white text-sm mx-auto transition-colors"
               >
                 <Plus size={14} />
                 Create first thread
@@ -324,7 +324,7 @@ export default function AreaView() {
       >
         <div className="space-y-4">
           <div>
-            <label className="block text-xs font-display uppercase tracking-wide text-navy-500 dark:text-navy-400 mb-1.5">
+            <label className="block text-xs font-display uppercase tracking-wide text-paper-600 dark:text-paper-500 mb-1.5">
               Title *
             </label>
             <input
@@ -335,18 +335,18 @@ export default function AreaView() {
               autoFocus
               className="
                 w-full px-3 py-2.5 text-sm rounded-lg
-                bg-navy-50 dark:bg-navy-800
-                border border-navy-200 dark:border-navy-600
-                text-navy-900 dark:text-white
-                placeholder:text-navy-300 dark:placeholder:text-navy-600
-                focus:outline-none focus:ring-2 focus:ring-signal-500
+                bg-paper-100 dark:bg-pitch-700
+                border border-paper-300 dark:border-paper-700
+                text-pitch-800 dark:text-white
+                placeholder:text-paper-400 dark:placeholder:text-paper-700
+                focus:outline-none focus:ring-2 focus:ring-accent-500
               "
               onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) createThread() }}
             />
           </div>
 
           <div>
-            <label className="block text-xs font-display uppercase tracking-wide text-navy-500 dark:text-navy-400 mb-1.5">
+            <label className="block text-xs font-display uppercase tracking-wide text-paper-600 dark:text-paper-500 mb-1.5">
               Description
             </label>
             <textarea
@@ -356,17 +356,17 @@ export default function AreaView() {
               rows={3}
               className="
                 w-full px-3 py-2.5 text-sm rounded-lg resize-none
-                bg-navy-50 dark:bg-navy-800
-                border border-navy-200 dark:border-navy-600
-                text-navy-900 dark:text-white
-                placeholder:text-navy-300 dark:placeholder:text-navy-600
-                focus:outline-none focus:ring-2 focus:ring-signal-500
+                bg-paper-100 dark:bg-pitch-700
+                border border-paper-300 dark:border-paper-700
+                text-pitch-800 dark:text-white
+                placeholder:text-paper-400 dark:placeholder:text-paper-700
+                focus:outline-none focus:ring-2 focus:ring-accent-500
               "
             />
           </div>
 
           <div>
-            <label className="block text-xs font-display uppercase tracking-wide text-navy-500 dark:text-navy-400 mb-1.5">
+            <label className="block text-xs font-display uppercase tracking-wide text-paper-600 dark:text-paper-500 mb-1.5">
               Status
             </label>
             <div className="flex flex-wrap gap-2">
@@ -378,7 +378,7 @@ export default function AreaView() {
                     flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-display uppercase tracking-wide border transition-colors
                     ${threadForm.status === key
                       ? `${cfg.textClass} ${cfg.bgClass} ${cfg.borderClass}`
-                      : 'text-navy-500 dark:text-navy-400 border-navy-200 dark:border-navy-700 hover:border-navy-300 dark:hover:border-navy-600'
+                      : 'text-paper-600 dark:text-paper-500 border-paper-300 dark:border-pitch-500 hover:border-paper-400 dark:hover:border-paper-700'
                     }
                   `}
                 >
@@ -392,14 +392,14 @@ export default function AreaView() {
           <div className="flex justify-end gap-2 pt-1">
             <button
               onClick={() => setNewThreadOpen(false)}
-              className="px-4 py-2 text-sm rounded-md text-navy-600 dark:text-navy-300 hover:bg-navy-100 dark:hover:bg-navy-700 transition-colors"
+              className="px-4 py-2 text-sm rounded-md text-paper-700 dark:text-paper-400 hover:bg-paper-200 dark:hover:bg-pitch-500 transition-colors"
             >
               Cancel
             </button>
             <button
               onClick={createThread}
               disabled={!threadForm.title.trim() || creatingThread}
-              className="px-4 py-2 text-sm rounded-md font-medium bg-signal-500 hover:bg-signal-600 text-white disabled:opacity-50 transition-colors"
+              className="px-4 py-2 text-sm rounded-md font-medium bg-accent-500 hover:bg-accent-600 text-white disabled:opacity-50 transition-colors"
             >
               {creatingThread ? 'Creating…' : 'Create Thread'}
             </button>
@@ -413,11 +413,11 @@ export default function AreaView() {
 // ─── Area audit panel ─────────────────────────────────────────────────────────
 
 const ACTION_BADGE = {
-  created:     'bg-signal-500/10 text-signal-600 dark:text-signal-400',
+  created:     'bg-accent-500/10 text-accent-600 dark:text-accent-400',
   updated:     'bg-amber-500/10 text-amber-600 dark:text-amber-400',
   deleted:     'bg-red-500/10 text-red-500 dark:text-red-400',
   completed:   'bg-sky-500/10 text-sky-500 dark:text-sky-400',
-  uncompleted: 'bg-navy-200/50 text-navy-500 dark:bg-navy-700/50 dark:text-navy-400',
+  uncompleted: 'bg-paper-300/50 text-paper-600 dark:bg-pitch-500/50 dark:text-paper-500',
 }
 
 function formatAuditDescription({ action, entity_type, field, old_value, new_value }) {
@@ -446,21 +446,21 @@ function AreaAuditRow({ record }) {
       to={`/thread/${record.thread_id}`}
       className="
         px-4 py-2.5 flex items-center gap-3 text-xs
-        border-b border-navy-50 dark:border-navy-800 last:border-0
-        hover:bg-navy-50/60 dark:hover:bg-navy-800/40
+        border-b border-paper-100 dark:border-pitch-700 last:border-0
+        hover:bg-paper-100/60 dark:hover:bg-pitch-700/40
         transition-colors
       "
     >
-      <span className="font-mono text-navy-300 dark:text-navy-600 flex-shrink-0 w-28">
+      <span className="font-mono text-paper-400 dark:text-paper-700 flex-shrink-0 w-28">
         {format(new Date(record.occurred_at), 'dd MMM HH:mm')}
       </span>
-      <span className="text-navy-500 dark:text-navy-400 truncate w-36 flex-shrink-0">
-        {record.thread_title || <span className="italic text-navy-300 dark:text-navy-600">area</span>}
+      <span className="text-paper-600 dark:text-paper-500 truncate w-36 flex-shrink-0">
+        {record.thread_title || <span className="italic text-paper-400 dark:text-paper-700">area</span>}
       </span>
       <span className={`font-display uppercase px-1.5 py-0.5 rounded flex-shrink-0 ${ACTION_BADGE[record.action] ?? ACTION_BADGE.updated}`}>
         {record.action}
       </span>
-      <span className="text-navy-500 dark:text-navy-400 flex-1 truncate">
+      <span className="text-paper-600 dark:text-paper-500 flex-1 truncate">
         {formatAuditDescription(record)}
       </span>
     </Link>
@@ -469,13 +469,13 @@ function AreaAuditRow({ record }) {
 
 function AreaAuditSkeleton() {
   return (
-    <div className="divide-y divide-navy-50 dark:divide-navy-800">
+    <div className="divide-y divide-paper-100 dark:divide-pitch-700">
       {[0, 1, 2].map((i) => (
         <div key={i} className="px-4 py-2.5 flex items-center gap-3">
-          <div className="w-28 h-3 rounded bg-navy-100 dark:bg-navy-800 animate-pulse" />
-          <div className="w-36 h-3 rounded bg-navy-100 dark:bg-navy-800 animate-pulse" />
-          <div className="w-16 h-3 rounded bg-navy-100 dark:bg-navy-800 animate-pulse" />
-          <div className="flex-1 h-3 rounded bg-navy-100 dark:bg-navy-800 animate-pulse" />
+          <div className="w-28 h-3 rounded bg-paper-200 dark:bg-pitch-700 animate-pulse" />
+          <div className="w-36 h-3 rounded bg-paper-200 dark:bg-pitch-700 animate-pulse" />
+          <div className="w-16 h-3 rounded bg-paper-200 dark:bg-pitch-700 animate-pulse" />
+          <div className="flex-1 h-3 rounded bg-paper-200 dark:bg-pitch-700 animate-pulse" />
         </div>
       ))}
     </div>
@@ -510,8 +510,8 @@ function AreaAuditPanel({ areaId }) {
         className="
           w-full flex items-center gap-2 py-3
           font-display uppercase tracking-widest text-xs
-          text-navy-300 dark:text-navy-700
-          hover:text-navy-500 dark:hover:text-navy-500
+          text-paper-400 dark:text-pitch-500
+          hover:text-paper-600 dark:hover:text-paper-600
           cursor-pointer transition-colors
         "
       >
@@ -521,12 +521,12 @@ function AreaAuditPanel({ areaId }) {
       </button>
 
       {open && (
-        <div className="bg-white dark:bg-navy-850 border border-navy-200 dark:border-navy-700 rounded-xl overflow-hidden">
+        <div className="bg-white dark:bg-pitch-700 border border-paper-300 dark:border-pitch-500 rounded-xl overflow-hidden">
           {fetching ? (
             <AreaAuditSkeleton />
           ) : records.length === 0 ? (
             <div className="py-8 text-center">
-              <p className="text-xs italic text-navy-300 dark:text-navy-600">No audit history yet</p>
+              <p className="text-xs italic text-paper-400 dark:text-paper-700">No audit history yet</p>
             </div>
           ) : (
             <div>
@@ -543,13 +543,13 @@ function AreaAuditPanel({ areaId }) {
 
 function AreaSkeleton() {
   return (
-    <div className="flex-1 min-h-screen bg-white dark:bg-navy-900 p-8">
+    <div className="flex-1 min-h-screen bg-white dark:bg-pitch-800 p-8">
       <div className="max-w-4xl mx-auto space-y-4">
-        <div className="h-8 w-48 rounded bg-navy-100 dark:bg-navy-800 animate-pulse" />
-        <div className="h-24 rounded-xl bg-navy-100 dark:bg-navy-800 animate-pulse" />
+        <div className="h-8 w-48 rounded bg-paper-200 dark:bg-pitch-700 animate-pulse" />
+        <div className="h-24 rounded-xl bg-paper-200 dark:bg-pitch-700 animate-pulse" />
         <div className="space-y-3">
           {[1, 2, 3].map(i => (
-            <div key={i} className="h-24 rounded-lg bg-navy-100 dark:bg-navy-800 animate-pulse" />
+            <div key={i} className="h-24 rounded-lg bg-paper-200 dark:bg-pitch-700 animate-pulse" />
           ))}
         </div>
       </div>

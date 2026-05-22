@@ -29,26 +29,26 @@ export default function Modal({ isOpen, onClose, title, children, width = 'max-w
       onClick={onClose}
     >
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-navy-950/70 dark:bg-navy-950/80 backdrop-blur-sm" />
+      <div className="absolute inset-0 bg-pitch-900/70 dark:bg-pitch-900/80 backdrop-blur-sm" />
 
       {/* Panel */}
       <div
         className={`
           relative w-full ${width} animate-slide-in
-          bg-white dark:bg-navy-850
-          border border-navy-200 dark:border-navy-700
+          bg-white dark:bg-pitch-700
+          border border-paper-300 dark:border-pitch-500
           rounded-xl shadow-2xl
         `}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-navy-100 dark:border-navy-700">
-          <h2 className="font-display font-semibold text-sm uppercase tracking-wider text-navy-800 dark:text-navy-100">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-paper-200 dark:border-pitch-500">
+          <h2 className="font-display font-semibold text-sm uppercase tracking-wider text-pitch-700 dark:text-paper-200">
             {title}
           </h2>
           <button
             onClick={onClose}
-            className="p-1 rounded text-navy-400 hover:text-navy-600 dark:hover:text-navy-200 hover:bg-navy-100 dark:hover:bg-navy-700 transition-colors"
+            className="p-1 rounded text-paper-500 hover:text-paper-700 dark:hover:text-paper-300 hover:bg-paper-200 dark:hover:bg-pitch-500 transition-colors"
           >
             <X size={16} />
           </button>

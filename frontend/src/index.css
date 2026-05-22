@@ -131,13 +131,13 @@
 
 .prose-entry code {
   @apply font-mono text-xs px-1.5 py-0.5 rounded;
-  @apply bg-paper-200 text-ink;
+  @apply bg-paper-200 text-paper-900;
   @apply dark:bg-pitch-700 dark:text-paper-100;
 }
 
 .prose-entry pre {
   @apply font-mono text-xs p-3 rounded-md overflow-x-auto mb-2;
-  @apply bg-paper-200 text-ink;
+  @apply bg-paper-200 text-paper-900;
   @apply dark:bg-pitch-800 dark:text-paper-100;
   border: 1px solid;
   @apply border-paper-300 dark:border-pitch-500;

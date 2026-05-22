@@ -1,4 +1,4 @@
-# Department Log — Requirements Specification
+# Trace — Requirements Specification
 
 **Version:** 1.0.0
 **Owner:** Luke Eogh (Head of Software, Axithra)
@@ -134,24 +134,24 @@ The seven fixed areas are seeded on first run and cannot be deleted or renamed t
 ## 6. Design
 
 ### Aesthetic direction
-Clean, clinical, masculine, professional. Military-instrument-panel meets medical workstation. High information density with intentional whitespace.
+Warm, calm, professional. Paper-and-ink restraint with a single muted-indigo accent. High information density with intentional whitespace. Tailored for sustained-focus use; backgrounds and palette stay legible without shouting.
 
-### Palette (Tailwind config: `navy` + `signal`)
+### Palette (Tailwind config: `paper` + `pitch` + `accent`)
 | Token | Dark value | Light value |
 |-------|-----------|-------------|
-| Background | `#07101F` (navy-900) | `#EFF3F8` (navy-50) |
-| Surface | `#102540` (navy-800) | `#FFFFFF` |
-| Border | `#1D3A58` (navy-700) | `#C8D8E8` (navy-200) |
-| Text primary | `#DDE8F5` | `#0A1628` (navy-950) |
-| Text secondary | `#7499B8` (navy-400) | `#4A7096` (navy-500) |
-| Accent | `#0EA5E9` (signal-500) | `#0284C7` (signal-600) |
+| Background | `#0F0E0C` (pitch) | `#F7F4ED` (paper) |
+| Surface | `#181714` (pitch-700) | `#EFECE3` (paper-200) |
+| Border | `#38352F` (pitch-400) | `#D4CFC2` (paper-400) |
+| Text primary | `#EDEAE3` (pitch-50) | `#14130F` (paper-900) |
+| Text secondary | `#A8A49E` (pitch-100) | `#4A4845` (paper-700) |
+| Accent | `#5B5BD6` (accent-500) | `#4F4FC7` (accent-600) |
 
 ### Typography
 | Role | Font | Source |
 |------|------|--------|
-| Headings, labels, badges | Oxanium | Google Fonts |
-| Body text, UI | Barlow | Google Fonts |
-| Timestamps, IDs, code | JetBrains Mono | Google Fonts |
+| Brand, headings, UI | Geist | Google Fonts |
+| Body alternative (ADHD-friendly) | Lexend | Google Fonts |
+| Timestamps, IDs, code | Geist Mono | Google Fonts |
 
 ### Theme
 - Dark/light toggle with `useTheme` hook

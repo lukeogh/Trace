@@ -67,22 +67,20 @@ export default function Sidebar({
       style={{ width: `${width}px` }}
       className="
         flex-shrink-0 flex flex-col h-screen sticky top-0 relative
-        bg-navy-50 dark:bg-navy-950
-        border-r border-navy-200 dark:border-navy-800
+        bg-paper-100 dark:bg-pitch-900
+        border-r border-paper-300 dark:border-pitch-700
       "
     >
       {/* Brand */}
-      <div className="px-4 py-5 border-b border-navy-200 dark:border-navy-800">
+      <div className="px-4 py-5 border-b border-paper-300 dark:border-pitch-700">
         <div className="flex items-start justify-between gap-2">
           <Link to="/" className="flex items-center gap-2.5 min-w-0">
             <Logo size={40} />
             <div className="min-w-0">
-              <div className="font-display font-bold text-sm uppercase tracking-widest text-navy-900 dark:text-white leading-tight">
-                Department
-                <br />
-                Log
+              <div className="font-display font-medium text-xl tracking-tightest text-pitch-800 dark:text-white leading-tight">
+                Trace
               </div>
-              <div className="text-xs text-navy-400 dark:text-navy-500 mt-1 font-mono truncate">
+              <div className="text-xs text-paper-500 dark:text-paper-600 mt-1 font-mono truncate">
                 Axithra · SW
               </div>
             </div>
@@ -100,16 +98,16 @@ export default function Sidebar({
           onClick={onOpenSwitcher}
           className="
             w-full flex items-center gap-2 px-3 py-2 rounded-md
-            bg-white dark:bg-navy-900 border border-navy-200 dark:border-navy-800
-            text-navy-400 dark:text-navy-500
-            hover:border-navy-300 dark:hover:border-navy-700
-            hover:text-navy-600 dark:hover:text-navy-300
+            bg-white dark:bg-pitch-800 border border-paper-300 dark:border-pitch-700
+            text-paper-500 dark:text-paper-600
+            hover:border-paper-400 dark:hover:border-pitch-500
+            hover:text-paper-700 dark:hover:text-paper-400
             transition-colors
           "
         >
           <Search size={13} />
           <span className="text-xs flex-1 text-left">Jump to…</span>
-          <span className="text-xs font-mono text-navy-300 dark:text-navy-600 whitespace-nowrap">
+          <span className="text-xs font-mono text-paper-400 dark:text-paper-700 whitespace-nowrap">
             {MOD_KEY} K
           </span>
         </button>
@@ -124,7 +122,7 @@ export default function Sidebar({
 
       {/* Areas section header */}
       <div className="px-4 pt-3 pb-1">
-        <span className="text-xs font-display uppercase tracking-widest text-navy-400 dark:text-navy-600">
+        <span className="text-xs font-display uppercase tracking-widest text-paper-500 dark:text-paper-700">
           Areas
         </span>
       </div>
@@ -142,8 +140,8 @@ export default function Sidebar({
               className={`
                 flex items-center gap-2.5 px-3 py-2 rounded-md text-sm transition-colors group
                 ${isActive
-                  ? 'bg-navy-100 dark:bg-navy-800 text-navy-900 dark:text-white'
-                  : 'text-navy-500 dark:text-navy-400 hover:bg-navy-100 dark:hover:bg-navy-800 hover:text-navy-800 dark:hover:text-navy-100'
+                  ? 'bg-paper-200 dark:bg-pitch-700 text-pitch-800 dark:text-white'
+                  : 'text-paper-600 dark:text-paper-500 hover:bg-paper-200 dark:hover:bg-pitch-700 hover:text-pitch-700 dark:hover:text-paper-200'
                 }
               `}
             >
@@ -158,7 +156,7 @@ export default function Sidebar({
                 {area.name}
               </span>
               {area.open_thread_count > 0 && (
-                <span className="text-xs font-mono text-navy-400 dark:text-navy-500">
+                <span className="text-xs font-mono text-paper-500 dark:text-paper-600">
                   {area.open_thread_count}
                 </span>
               )}
@@ -173,9 +171,9 @@ export default function Sidebar({
           onClick={onOpenNewArea}
           className="
             w-full flex items-center gap-2 px-3 py-1.5 rounded-md
-            text-xs text-navy-400 dark:text-navy-600
-            hover:text-navy-600 dark:hover:text-navy-400
-            hover:bg-navy-100/60 dark:hover:bg-navy-800/40
+            text-xs text-paper-500 dark:text-paper-700
+            hover:text-paper-700 dark:hover:text-paper-500
+            hover:bg-paper-200/60 dark:hover:bg-pitch-700/40
             transition-colors
           "
         >
@@ -187,10 +185,10 @@ export default function Sidebar({
       </div>
 
       {/* Footer — keyboard shortcut hints */}
-      <div className="px-4 py-3 border-t border-navy-200 dark:border-navy-800 space-y-1.5">
+      <div className="px-4 py-3 border-t border-paper-300 dark:border-pitch-700 space-y-1.5">
         <ShortcutHint label="Capture" keys={['N']} />
         <ShortcutHint label="Switcher" keys={[MOD_KEY, 'K']} />
-        <div className="pt-1.5 text-xs font-mono text-navy-300 dark:text-navy-700">
+        <div className="pt-1.5 text-xs font-mono text-paper-400 dark:text-pitch-500">
           v1.0.0
         </div>
       </div>
@@ -202,7 +200,7 @@ export default function Sidebar({
         title="Drag to resize · double-click to reset"
         className="
           absolute top-0 right-0 h-full w-1.5 -mr-0.5 cursor-col-resize
-          hover:bg-signal-500/40 dark:hover:bg-signal-500/40
+          hover:bg-accent-500/40 dark:hover:bg-accent-500/40
           transition-colors
         "
       />
@@ -217,8 +215,8 @@ function NavLink({ to, icon: Icon, label, active }) {
       className={`
         flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors
         ${active
-          ? 'bg-signal-500/10 text-signal-600 dark:text-signal-400'
-          : 'text-navy-500 dark:text-navy-400 hover:bg-navy-100 dark:hover:bg-navy-800 hover:text-navy-800 dark:hover:text-navy-100'
+          ? 'bg-accent-500/10 text-accent-600 dark:text-accent-400'
+          : 'text-paper-600 dark:text-paper-500 hover:bg-paper-200 dark:hover:bg-pitch-700 hover:text-pitch-700 dark:hover:text-paper-200'
         }
       `}
     >
@@ -230,13 +228,13 @@ function NavLink({ to, icon: Icon, label, active }) {
 
 function ShortcutHint({ label, keys }) {
   return (
-    <div className="flex items-center justify-between text-xs text-navy-400 dark:text-navy-600">
+    <div className="flex items-center justify-between text-xs text-paper-500 dark:text-paper-700">
       <span className="font-display uppercase tracking-wide">{label}</span>
       <span className="flex items-center gap-0.5">
         {keys.map((k) => (
           <kbd
             key={k}
-            className="px-1.5 py-0.5 rounded bg-navy-100 dark:bg-navy-800 border border-navy-200 dark:border-navy-700 font-mono text-navy-500 dark:text-navy-400 text-[10px]"
+            className="px-1.5 py-0.5 rounded bg-paper-200 dark:bg-pitch-700 border border-paper-300 dark:border-pitch-500 font-mono text-paper-600 dark:text-paper-500 text-[10px]"
           >
             {k}
           </kbd>

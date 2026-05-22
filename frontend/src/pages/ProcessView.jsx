@@ -4,16 +4,16 @@ import { areasApi, generateApi, entriesApi, ingestApi } from '../api/client'
 import { useToast } from '../components/Toast'
 
 const STATUS_MESSAGES = ['Reading…', 'Identifying tasks…', 'Structuring items…', 'Preparing review…']
-const STORAGE_KEY = 'dept-log-process'
+const STORAGE_KEY = 'trace-process'
 
 const TYPE_BORDER_LEFT = {
-  todo:     'border-l-signal-500',
+  todo:     'border-l-accent-500',
   entry:    'border-l-violet-500',
   decision: 'border-l-amber-500',
 }
 
 const TYPE_BADGE = {
-  todo:     'bg-signal-500/10 text-signal-600 dark:text-signal-400',
+  todo:     'bg-accent-500/10 text-accent-600 dark:text-accent-400',
   entry:    'bg-violet-500/10 text-violet-600 dark:text-violet-400',
   decision: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
 }
@@ -61,9 +61,9 @@ function ProgressBar({ done }) {
 
   return (
     <div className={`transition-opacity duration-300 ${fading ? 'opacity-0' : 'opacity-100'}`}>
-      <div className="w-full h-1 rounded-full bg-navy-100 dark:bg-navy-800 overflow-hidden">
+      <div className="w-full h-1 rounded-full bg-paper-200 dark:bg-pitch-700 overflow-hidden">
         <div
-          className="h-full bg-signal-500 rounded-full"
+          className="h-full bg-accent-500 rounded-full"
           style={{
             width: `${width}%`,
             transition: done ? 'width 200ms ease' : 'width 4000ms ease-out',
@@ -80,7 +80,7 @@ const KIND_META = {
   pdf:  { Icon: FileText, label: 'PDF',      tint: 'text-red-500    dark:text-red-400'    },
   eml:  { Icon: Mail,     label: 'Email',    tint: 'text-violet-500 dark:text-violet-400' },
   ics:  { Icon: Calendar, label: 'Calendar', tint: 'text-emerald-500 dark:text-emerald-400' },
-  text: { Icon: FileText, label: 'Text',     tint: 'text-navy-500   dark:text-navy-400'   },
+  text: { Icon: FileText, label: 'Text',     tint: 'text-paper-600   dark:text-paper-500'   },
 }
 
 function formatBytes(n) {
@@ -94,21 +94,21 @@ function SourceChip({ source, onRemove }) {
   const meta = KIND_META[source.kind] || KIND_META.text
   const { Icon } = meta
   return (
-    <div className="flex items-center gap-2 mb-3 px-3 py-2 rounded-lg bg-navy-50 dark:bg-navy-800 border border-navy-200 dark:border-navy-700">
+    <div className="flex items-center gap-2 mb-3 px-3 py-2 rounded-lg bg-paper-100 dark:bg-pitch-700 border border-paper-300 dark:border-pitch-500">
       <Icon size={14} className={`flex-shrink-0 ${meta.tint}`} />
-      <span className="text-xs font-mono text-navy-700 dark:text-navy-200 truncate flex-1 min-w-0">
+      <span className="text-xs font-mono text-pitch-500 dark:text-paper-300 truncate flex-1 min-w-0">
         {source.name}
       </span>
-      <span className="font-display uppercase tracking-wider text-xs text-navy-400 dark:text-navy-500 flex-shrink-0">
+      <span className="font-display uppercase tracking-wider text-xs text-paper-500 dark:text-paper-600 flex-shrink-0">
         {meta.label}
       </span>
-      <span className="font-mono text-xs text-navy-300 dark:text-navy-600 flex-shrink-0">
+      <span className="font-mono text-xs text-paper-400 dark:text-paper-700 flex-shrink-0">
         {formatBytes(source.bytes)}
       </span>
       <button
         onClick={onRemove}
         title="Remove source reference (text stays)"
-        className="p-1 rounded text-navy-300 dark:text-navy-600 hover:text-red-500 transition-colors flex-shrink-0"
+        className="p-1 rounded text-paper-400 dark:text-paper-700 hover:text-red-500 transition-colors flex-shrink-0"
       >
         <X size={12} />
       </button>
@@ -124,7 +124,7 @@ function StatusCycler() {
     return () => clearInterval(t)
   }, [])
   return (
-    <p className="font-display uppercase tracking-widest text-xs text-navy-400 dark:text-navy-500 text-center mt-3">
+    <p className="font-display uppercase tracking-widest text-xs text-paper-500 dark:text-paper-600 text-center mt-3">
       {STATUS_MESSAGES[idx]}
     </p>
   )
@@ -216,19 +216,19 @@ function ItemCard({ item: initialItem, areaId, areaThreads, selectedAreaName, on
     >
       <div
         className={`
-          bg-white dark:bg-navy-850 border border-navy-200 dark:border-navy-700 rounded-xl overflow-hidden
+          bg-white dark:bg-pitch-700 border border-paper-300 dark:border-pitch-500 rounded-xl overflow-hidden
           border-l-[3px] ${borderLeft}
-          ${flash ? 'bg-signal-500/10 dark:bg-signal-500/10' : ''}
+          ${flash ? 'bg-accent-500/10 dark:bg-accent-500/10' : ''}
           transition-colors duration-300
         `}
       >
         {/* Header strip */}
-        <div className="px-4 py-2.5 bg-navy-50/50 dark:bg-navy-900/30 flex items-center justify-between gap-2">
+        <div className="px-4 py-2.5 bg-paper-100/50 dark:bg-pitch-800/30 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0">
             <span className={`font-display uppercase text-xs px-1.5 py-0.5 rounded flex-shrink-0 ${badge}`}>
               {currentItem.type}
             </span>
-            <span className="font-mono text-xs text-navy-400 dark:text-navy-500 truncate">
+            <span className="font-mono text-xs text-paper-500 dark:text-paper-600 truncate">
               {currentItem.suggested_thread}
             </span>
           </div>
@@ -241,19 +241,19 @@ function ItemCard({ item: initialItem, areaId, areaThreads, selectedAreaName, on
 
         {/* Content */}
         <div className={`px-4 py-3 transition-opacity duration-300 ${status === 'approved' ? 'opacity-50' : ''}`}>
-          <p className="text-sm text-navy-800 dark:text-navy-100">{currentItem.content}</p>
-          <p className="text-xs text-navy-400 dark:text-navy-500 italic mt-1">Why: {currentItem.rationale}</p>
+          <p className="text-sm text-pitch-700 dark:text-paper-200">{currentItem.content}</p>
+          <p className="text-xs text-paper-500 dark:text-paper-600 italic mt-1">Why: {currentItem.rationale}</p>
         </div>
 
         {/* Action row */}
         {status === 'approved' ? (
-          <div className="px-4 py-3 border-t border-navy-50 dark:border-navy-800">
-            <span className="text-xs font-display uppercase tracking-wide text-signal-600 dark:text-signal-400">
+          <div className="px-4 py-3 border-t border-paper-100 dark:border-pitch-700">
+            <span className="text-xs font-display uppercase tracking-wide text-accent-600 dark:text-accent-400">
               Added ✓
             </span>
           </div>
         ) : status === 'rejecting' || status === 'refining' ? (
-          <div className="px-4 py-3 border-t border-navy-50 dark:border-navy-800 space-y-2">
+          <div className="px-4 py-3 border-t border-paper-100 dark:border-pitch-700 space-y-2">
             <textarea
               rows={2}
               value={rejectionReason}
@@ -261,11 +261,11 @@ function ItemCard({ item: initialItem, areaId, areaThreads, selectedAreaName, on
               placeholder="Why are you rejecting this?"
               autoFocus
               className="
-                w-full bg-navy-50 dark:bg-navy-800 border border-navy-200 dark:border-navy-600
+                w-full bg-paper-100 dark:bg-pitch-700 border border-paper-300 dark:border-paper-700
                 rounded-lg px-3 py-2 text-sm resize-none
-                text-navy-900 dark:text-white
-                placeholder:text-navy-300 dark:placeholder:text-navy-600
-                focus:outline-none focus:ring-2 focus:ring-signal-500
+                text-pitch-800 dark:text-white
+                placeholder:text-paper-400 dark:placeholder:text-paper-700
+                focus:outline-none focus:ring-2 focus:ring-accent-500
               "
             />
             <div className="flex items-center gap-2 justify-end">
@@ -273,7 +273,7 @@ function ItemCard({ item: initialItem, areaId, areaThreads, selectedAreaName, on
                 onClick={discard}
                 className="
                   px-3 py-1.5 text-xs font-display uppercase tracking-wide rounded-md
-                  text-navy-500 dark:text-navy-400 hover:bg-navy-100 dark:hover:bg-navy-700
+                  text-paper-600 dark:text-paper-500 hover:bg-paper-200 dark:hover:bg-pitch-500
                   transition-colors
                 "
               >
@@ -284,7 +284,7 @@ function ItemCard({ item: initialItem, areaId, areaThreads, selectedAreaName, on
                 disabled={!rejectionReason.trim() || status === 'refining'}
                 className="
                   flex items-center gap-1.5 px-3 py-1.5 text-xs font-display uppercase tracking-wide rounded-md
-                  bg-signal-500/10 text-signal-600 dark:text-signal-400 hover:bg-signal-500/20
+                  bg-accent-500/10 text-accent-600 dark:text-accent-400 hover:bg-accent-500/20
                   disabled:opacity-50 transition-colors
                 "
               >
@@ -294,15 +294,15 @@ function ItemCard({ item: initialItem, areaId, areaThreads, selectedAreaName, on
             </div>
           </div>
         ) : (
-          <div className="px-4 py-3 border-t border-navy-50 dark:border-navy-800 flex items-center justify-between gap-3">
+          <div className="px-4 py-3 border-t border-paper-100 dark:border-pitch-700 flex items-center justify-between gap-3">
             <select
               value={selectedThreadId}
               onChange={(e) => setSelectedThreadId(e.target.value)}
               className="
                 flex-1 min-w-0 px-2.5 py-1.5 text-xs rounded-lg
-                bg-white dark:bg-navy-800 border border-navy-200 dark:border-navy-600
-                text-navy-700 dark:text-navy-200
-                focus:outline-none focus:ring-2 focus:ring-signal-500
+                bg-white dark:bg-pitch-700 border border-paper-300 dark:border-paper-700
+                text-pitch-500 dark:text-paper-300
+                focus:outline-none focus:ring-2 focus:ring-accent-500
                 font-display uppercase tracking-wide
               "
             >
@@ -320,7 +320,7 @@ function ItemCard({ item: initialItem, areaId, areaThreads, selectedAreaName, on
                 title="Approve"
                 className="
                   flex items-center justify-center
-                  bg-signal-500/10 text-signal-600 dark:text-signal-400 hover:bg-signal-500/20
+                  bg-accent-500/10 text-accent-600 dark:text-accent-400 hover:bg-accent-500/20
                   rounded-md p-2 transition-colors disabled:opacity-50
                 "
               >
@@ -512,16 +512,16 @@ export default function ProcessView() {
   const allReviewed = hasExtracted && items.length === 0
 
   return (
-    <div className="flex-1 min-h-screen bg-navy-50 dark:bg-navy-900 bg-grid-light dark:bg-grid-dark">
+    <div className="flex-1 min-h-screen bg-paper-100 dark:bg-pitch-800 bg-grid-light dark:bg-grid-dark">
       {/* Header */}
       <header className="
         sticky top-0 z-10 px-8 py-5
-        bg-navy-50/90 dark:bg-navy-900/90 backdrop-blur-md
-        border-b border-navy-100 dark:border-navy-800
+        bg-paper-100/90 dark:bg-pitch-800/90 backdrop-blur-md
+        border-b border-paper-200 dark:border-pitch-700
       ">
         <div className="max-w-3xl mx-auto flex items-center gap-3">
-          <BrainCircuit size={18} className="text-signal-500 dark:text-signal-400" />
-          <h1 className="font-display font-bold text-xl uppercase tracking-widest text-navy-900 dark:text-white">
+          <BrainCircuit size={18} className="text-accent-500 dark:text-accent-400" />
+          <h1 className="font-display font-bold text-xl uppercase tracking-widest text-pitch-800 dark:text-white">
             Auto Generate
           </h1>
         </div>
@@ -535,15 +535,15 @@ export default function ProcessView() {
           onDragOver={onDragOver}
           onDrop={onDrop}
           className={`
-            relative bg-white dark:bg-navy-850 border rounded-xl p-6 transition-colors
+            relative bg-white dark:bg-pitch-700 border rounded-xl p-6 transition-colors
             ${dragActive
-              ? 'border-signal-500 ring-2 ring-signal-500/40'
-              : 'border-navy-200 dark:border-navy-700'
+              ? 'border-accent-500 ring-2 ring-accent-500/40'
+              : 'border-paper-300 dark:border-pitch-500'
             }
           `}
         >
           <div className="flex items-center justify-between mb-4">
-            <p className="font-display uppercase tracking-widest text-xs text-navy-400 dark:text-navy-500">
+            <p className="font-display uppercase tracking-widest text-xs text-paper-500 dark:text-paper-600">
               Generate from notes
             </p>
             <button
@@ -551,8 +551,8 @@ export default function ProcessView() {
               disabled={parsing}
               className="
                 flex items-center gap-1.5 text-xs font-display uppercase tracking-wide transition-colors
-                text-navy-400 dark:text-navy-500
-                hover:text-signal-500 dark:hover:text-signal-400
+                text-paper-500 dark:text-paper-600
+                hover:text-accent-500 dark:hover:text-accent-400
                 disabled:opacity-50
               "
             >
@@ -570,7 +570,7 @@ export default function ProcessView() {
 
           {/* Area selector */}
           <div className="mb-4">
-            <p className="block text-xs font-display uppercase tracking-wide text-navy-500 dark:text-navy-400 mb-1.5">
+            <p className="block text-xs font-display uppercase tracking-wide text-paper-600 dark:text-paper-500 mb-1.5">
               Area <span className="text-red-500">*</span>
             </p>
             <div className={`
@@ -587,8 +587,8 @@ export default function ProcessView() {
                 className={`
                   px-3 py-1.5 rounded-full text-xs font-display uppercase tracking-wide transition-colors
                   ${selectedAreaId === area.id
-                    ? 'bg-signal-500 text-white'
-                    : 'text-navy-500 dark:text-navy-400 bg-navy-100 dark:bg-navy-800 hover:bg-navy-200 dark:hover:bg-navy-700'
+                    ? 'bg-accent-500 text-white'
+                    : 'text-paper-600 dark:text-paper-500 bg-paper-200 dark:bg-pitch-700 hover:bg-paper-300 dark:hover:bg-pitch-500'
                   }
                 `}
               >
@@ -612,17 +612,17 @@ export default function ProcessView() {
             onChange={(e) => setInputText(e.target.value)}
             placeholder="Paste notes, or drop a PDF, email (.eml), or calendar invite (.ics) anywhere on this panel…"
             className="
-              w-full min-h-[200px] bg-navy-50 dark:bg-navy-800
-              border border-navy-200 dark:border-navy-600
+              w-full min-h-[200px] bg-paper-100 dark:bg-pitch-700
+              border border-paper-300 dark:border-paper-700
               rounded-lg px-3 py-2.5 font-sans text-sm resize-y
-              text-navy-900 dark:text-white
-              placeholder:text-navy-300 dark:placeholder:text-navy-600
-              focus:outline-none focus:ring-2 focus:ring-signal-500
+              text-pitch-800 dark:text-white
+              placeholder:text-paper-400 dark:placeholder:text-paper-700
+              focus:outline-none focus:ring-2 focus:ring-accent-500
               mb-2
             "
           />
 
-          <p className="text-xs font-mono text-navy-300 dark:text-navy-600 mb-4">
+          <p className="text-xs font-mono text-paper-400 dark:text-paper-700 mb-4">
             Drop a file anywhere on this panel to ingest it.
           </p>
 
@@ -630,14 +630,14 @@ export default function ProcessView() {
           {dragActive && (
             <div className="
               absolute inset-0 z-20 rounded-xl flex flex-col items-center justify-center gap-2
-              bg-signal-500/10 dark:bg-signal-500/15 backdrop-blur-sm pointer-events-none
-              border-2 border-dashed border-signal-500
+              bg-accent-500/10 dark:bg-accent-500/15 backdrop-blur-sm pointer-events-none
+              border-2 border-dashed border-accent-500
             ">
-              <Upload size={28} className="text-signal-500" />
-              <p className="font-display uppercase tracking-widest text-sm text-signal-600 dark:text-signal-400">
+              <Upload size={28} className="text-accent-500" />
+              <p className="font-display uppercase tracking-widest text-sm text-accent-600 dark:text-accent-400">
                 Drop to parse
               </p>
-              <p className="font-mono text-xs text-navy-500 dark:text-navy-400">
+              <p className="font-mono text-xs text-paper-600 dark:text-paper-500">
                 PDF · EML · ICS · TXT
               </p>
             </div>
@@ -647,10 +647,10 @@ export default function ProcessView() {
           {parsing && !dragActive && (
             <div className="
               absolute inset-0 z-20 rounded-xl flex flex-col items-center justify-center gap-2
-              bg-white/70 dark:bg-navy-850/80 backdrop-blur-sm pointer-events-none
+              bg-white/70 dark:bg-pitch-700/80 backdrop-blur-sm pointer-events-none
             ">
-              <Loader2 size={24} className="text-signal-500 animate-spin" />
-              <p className="font-display uppercase tracking-widest text-xs text-navy-500 dark:text-navy-400">
+              <Loader2 size={24} className="text-accent-500 animate-spin" />
+              <p className="font-display uppercase tracking-widest text-xs text-paper-600 dark:text-paper-500">
                 Parsing…
               </p>
             </div>
@@ -675,7 +675,7 @@ export default function ProcessView() {
                 }
                 className="
                   w-full flex items-center justify-center gap-2 py-2.5 rounded-lg
-                  bg-signal-500 hover:bg-signal-600 text-white text-sm
+                  bg-accent-500 hover:bg-accent-600 text-white text-sm
                   font-display uppercase tracking-wide
                   disabled:opacity-50 disabled:cursor-not-allowed transition-colors
                 "
@@ -700,7 +700,7 @@ export default function ProcessView() {
               <p className="text-sm text-red-500">{error}</p>
               <button
                 onClick={() => { setError(null); handleProcess() }}
-                className="mt-2 text-xs font-display uppercase tracking-wide text-navy-400 hover:text-navy-700 dark:hover:text-navy-200 transition-colors"
+                className="mt-2 text-xs font-display uppercase tracking-wide text-paper-500 hover:text-pitch-500 dark:hover:text-paper-300 transition-colors"
               >
                 Retry
               </button>
@@ -711,14 +711,14 @@ export default function ProcessView() {
         {/* All reviewed — completion banner */}
         {allReviewed && (
           <div className="
-            bg-white dark:bg-navy-850 border border-navy-200 dark:border-navy-700 rounded-xl
+            bg-white dark:bg-pitch-700 border border-paper-300 dark:border-pitch-500 rounded-xl
             px-6 py-5 flex items-center justify-between gap-4
           ">
             <div>
-              <p className="font-display uppercase tracking-widest text-xs text-signal-600 dark:text-signal-400 mb-0.5">
+              <p className="font-display uppercase tracking-widest text-xs text-accent-600 dark:text-accent-400 mb-0.5">
                 All items reviewed
               </p>
-              <p className="text-xs text-navy-400 dark:text-navy-500">
+              <p className="text-xs text-paper-500 dark:text-paper-600">
                 Clear this session to start a new extraction.
               </p>
             </div>
@@ -726,8 +726,8 @@ export default function ProcessView() {
               onClick={handleClear}
               className="
                 flex items-center gap-2 px-4 py-2 rounded-lg
-                bg-navy-100 dark:bg-navy-800 hover:bg-navy-200 dark:hover:bg-navy-700
-                text-xs font-display uppercase tracking-wide text-navy-600 dark:text-navy-300
+                bg-paper-200 dark:bg-pitch-700 hover:bg-paper-300 dark:hover:bg-pitch-500
+                text-xs font-display uppercase tracking-wide text-paper-700 dark:text-paper-400
                 transition-colors flex-shrink-0
               "
             >
@@ -742,14 +742,14 @@ export default function ProcessView() {
           <div>
             <div className="flex items-start justify-between mb-1">
               <div>
-                <span className="font-display uppercase tracking-widest text-xs text-navy-400 dark:text-navy-500">
+                <span className="font-display uppercase tracking-widest text-xs text-paper-500 dark:text-paper-600">
                   Extracted Items
                 </span>
-                <p className="text-xs text-navy-500 dark:text-navy-400 italic mt-1">
+                <p className="text-xs text-paper-600 dark:text-paper-500 italic mt-1">
                   Review each item. Approved items will be added to the selected area.
                 </p>
               </div>
-              <span className="font-mono text-xs text-navy-400 dark:text-navy-500 flex-shrink-0 ml-4 mt-0.5">
+              <span className="font-mono text-xs text-paper-500 dark:text-paper-600 flex-shrink-0 ml-4 mt-0.5">
                 {items.length} items found
               </span>
             </div>
@@ -774,8 +774,8 @@ export default function ProcessView() {
               disabled={bulkApproving || items.length === 0}
               className="
                 mt-4 w-full py-2.5 text-xs font-display uppercase tracking-wide rounded-lg
-                text-navy-500 dark:text-navy-400 bg-navy-100 dark:bg-navy-800
-                hover:bg-navy-200 dark:hover:bg-navy-700
+                text-paper-600 dark:text-paper-500 bg-paper-200 dark:bg-pitch-700
+                hover:bg-paper-300 dark:hover:bg-pitch-500
                 disabled:opacity-50 transition-colors
               "
             >

@@ -11,7 +11,7 @@ export default function ConfirmDialog({ isOpen, onClose, onConfirm, title, messa
     <Modal isOpen={isOpen} onClose={onClose} title={title || 'Confirm'} width="max-w-sm">
       <div className="flex gap-3 mb-5">
         <AlertTriangle size={18} className="text-amber-500 flex-shrink-0 mt-0.5" />
-        <p className="text-sm text-navy-600 dark:text-navy-300 leading-relaxed">
+        <p className="text-sm text-paper-700 dark:text-paper-400 leading-relaxed">
           {message || 'This action cannot be undone. Continue?'}
         </p>
       </div>
@@ -20,9 +20,9 @@ export default function ConfirmDialog({ isOpen, onClose, onConfirm, title, messa
           onClick={onClose}
           className="
             px-4 py-2 text-sm rounded-md font-medium
-            text-navy-600 dark:text-navy-300
-            bg-navy-100 dark:bg-navy-800
-            hover:bg-navy-200 dark:hover:bg-navy-700
+            text-paper-700 dark:text-paper-400
+            bg-paper-200 dark:bg-pitch-700
+            hover:bg-paper-300 dark:hover:bg-pitch-500
             transition-colors
           "
         >

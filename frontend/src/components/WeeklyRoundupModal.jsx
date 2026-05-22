@@ -71,13 +71,13 @@ export default function WeeklyRoundupModal({ isOpen, onClose }) {
                 key={i}
                 className={`w-2.5 h-2.5 rounded-full transition-colors duration-150 ${
                   i === dotStep
-                    ? 'bg-signal-500'
-                    : 'bg-navy-200 dark:bg-navy-700'
+                    ? 'bg-accent-500'
+                    : 'bg-paper-300 dark:bg-pitch-500'
                 }`}
               />
             ))}
           </div>
-          <p className="font-display uppercase tracking-widest text-xs text-navy-400 dark:text-navy-500">
+          <p className="font-display uppercase tracking-widest text-xs text-paper-500 dark:text-paper-600">
             Generating weekly roundup…
           </p>
         </div>
@@ -85,7 +85,7 @@ export default function WeeklyRoundupModal({ isOpen, onClose }) {
 
       {phase === 'review' && (
         <div>
-          <p className="font-display uppercase tracking-widest text-xs text-navy-400 dark:text-navy-500 mb-3">
+          <p className="font-display uppercase tracking-widest text-xs text-paper-500 dark:text-paper-600 mb-3">
             Weekly Roundup — W/E {formattedDate}
           </p>
 
@@ -103,10 +103,10 @@ export default function WeeklyRoundupModal({ isOpen, onClose }) {
                     key={a.id}
                     to={`/area/${a.id}`}
                     onClick={onClose}
-                    className="text-xs text-navy-700 dark:text-navy-200 hover:text-signal-500 dark:hover:text-signal-400 transition-colors"
+                    className="text-xs text-pitch-500 dark:text-paper-300 hover:text-accent-500 dark:hover:text-accent-400 transition-colors"
                   >
                     <span className="font-display uppercase tracking-wide">{a.name}</span>
-                    <span className="ml-1.5 font-mono text-navy-400 dark:text-navy-500">{a.days_inactive}d</span>
+                    <span className="ml-1.5 font-mono text-paper-500 dark:text-paper-600">{a.days_inactive}d</span>
                   </RouterLink>
                 ))}
               </div>
@@ -118,10 +118,10 @@ export default function WeeklyRoundupModal({ isOpen, onClose }) {
             onChange={(e) => setText(e.target.value)}
             className="
               w-full min-h-[320px] px-3 py-2.5 rounded-lg text-sm font-sans leading-relaxed resize-y
-              bg-navy-50 dark:bg-navy-800
-              border border-navy-200 dark:border-navy-600
-              text-navy-800 dark:text-navy-100
-              focus:outline-none focus:ring-2 focus:ring-signal-500 focus:border-transparent
+              bg-paper-100 dark:bg-pitch-700
+              border border-paper-300 dark:border-paper-700
+              text-pitch-700 dark:text-paper-200
+              focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent
             "
           />
           <div className="flex justify-end gap-2 mt-3">
@@ -129,8 +129,8 @@ export default function WeeklyRoundupModal({ isOpen, onClose }) {
               onClick={handleCopy}
               className="
                 flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-display uppercase tracking-wide transition-colors
-                bg-navy-100 dark:bg-navy-800 text-navy-600 dark:text-navy-300
-                hover:bg-navy-200 dark:hover:bg-navy-700
+                bg-paper-200 dark:bg-pitch-700 text-paper-700 dark:text-paper-400
+                hover:bg-paper-300 dark:hover:bg-pitch-500
               "
             >
               {copied ? <Check size={13} /> : <Copy size={13} />}
@@ -140,8 +140,8 @@ export default function WeeklyRoundupModal({ isOpen, onClose }) {
               onClick={onClose}
               className="
                 flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-display uppercase tracking-wide transition-colors
-                bg-navy-100 dark:bg-navy-800 text-navy-600 dark:text-navy-300
-                hover:bg-navy-200 dark:hover:bg-navy-700
+                bg-paper-200 dark:bg-pitch-700 text-paper-700 dark:text-paper-400
+                hover:bg-paper-300 dark:hover:bg-pitch-500
               "
             >
               Close
@@ -157,8 +157,8 @@ export default function WeeklyRoundupModal({ isOpen, onClose }) {
             onClick={handleGenerate}
             className="
               px-4 py-2 rounded-md text-xs font-display uppercase tracking-wide transition-colors
-              bg-navy-100 dark:bg-navy-800 text-navy-600 dark:text-navy-300
-              hover:bg-navy-200 dark:hover:bg-navy-700
+              bg-paper-200 dark:bg-pitch-700 text-paper-700 dark:text-paper-400
+              hover:bg-paper-300 dark:hover:bg-pitch-500
             "
           >
             Try again

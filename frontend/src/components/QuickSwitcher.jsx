@@ -110,7 +110,7 @@ export default function QuickSwitcher({ isOpen, onClose }) {
         <div className="relative">
           <Search
             size={14}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-navy-400 dark:text-navy-500"
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-paper-500 dark:text-paper-600"
           />
           <input
             ref={inputRef}
@@ -120,10 +120,10 @@ export default function QuickSwitcher({ isOpen, onClose }) {
             placeholder="Search areas, threads, or pages…"
             className="
               w-full pl-9 pr-3 py-2.5 text-sm rounded-lg
-              bg-navy-50 dark:bg-navy-800 border border-navy-200 dark:border-navy-600
-              text-navy-900 dark:text-white
-              placeholder:text-navy-300 dark:placeholder:text-navy-600
-              focus:outline-none focus:ring-2 focus:ring-signal-500
+              bg-paper-100 dark:bg-pitch-700 border border-paper-300 dark:border-paper-700
+              text-pitch-800 dark:text-white
+              placeholder:text-paper-400 dark:placeholder:text-paper-700
+              focus:outline-none focus:ring-2 focus:ring-accent-500
             "
           />
         </div>
@@ -131,13 +131,13 @@ export default function QuickSwitcher({ isOpen, onClose }) {
         {/* Results */}
         <div ref={listRef} className="max-h-80 overflow-y-auto -mx-1 pr-1">
           {items.length === 0 ? (
-            <p className="text-xs italic text-navy-400 dark:text-navy-600 px-3 py-4">
+            <p className="text-xs italic text-paper-500 dark:text-paper-700 px-3 py-4">
               No matches.
             </p>
           ) : (
             grouped.map((group) => (
               <div key={group.kind} className="mb-2 last:mb-0">
-                <div className="px-3 pt-2 pb-1 text-xs font-display uppercase tracking-widest text-navy-400 dark:text-navy-600">
+                <div className="px-3 pt-2 pb-1 text-xs font-display uppercase tracking-widest text-paper-500 dark:text-paper-700">
                   {SECTION_LABELS[group.kind]}
                 </div>
                 {group.items.map((item) => {
@@ -151,24 +151,24 @@ export default function QuickSwitcher({ isOpen, onClose }) {
                       className={`
                         w-full flex items-center gap-3 px-3 py-2 rounded-md text-left transition-colors
                         ${active
-                          ? 'bg-navy-100 dark:bg-navy-800'
-                          : 'hover:bg-navy-100/60 dark:hover:bg-navy-800/60'
+                          ? 'bg-paper-200 dark:bg-pitch-700'
+                          : 'hover:bg-paper-200/60 dark:hover:bg-pitch-700/60'
                         }
                       `}
                     >
                       <ItemIcon item={item} />
-                      <span className="flex-1 min-w-0 text-xs text-navy-800 dark:text-navy-100 truncate">
+                      <span className="flex-1 min-w-0 text-xs text-pitch-700 dark:text-paper-200 truncate">
                         {item.label}
                       </span>
                       {item.sublabel && (
-                        <span className="font-display uppercase tracking-wide text-xs text-navy-400 dark:text-navy-500 truncate max-w-[40%]">
+                        <span className="font-display uppercase tracking-wide text-xs text-paper-500 dark:text-paper-600 truncate max-w-[40%]">
                           {item.sublabel}
                         </span>
                       )}
                       {active && (
                         <CornerDownLeft
                           size={12}
-                          className="text-navy-400 dark:text-navy-500 flex-shrink-0"
+                          className="text-paper-500 dark:text-paper-600 flex-shrink-0"
                         />
                       )}
                     </button>
@@ -180,7 +180,7 @@ export default function QuickSwitcher({ isOpen, onClose }) {
         </div>
 
         {/* Footer hints */}
-        <div className="flex items-center gap-4 pt-3 border-t border-navy-100 dark:border-navy-800 text-xs font-mono text-navy-300 dark:text-navy-600">
+        <div className="flex items-center gap-4 pt-3 border-t border-paper-200 dark:border-pitch-700 text-xs font-mono text-paper-400 dark:text-paper-700">
           <span className="flex items-center gap-1.5">
             <Kbd>↑↓</Kbd> navigate
           </span>
@@ -198,7 +198,7 @@ export default function QuickSwitcher({ isOpen, onClose }) {
 
 function Kbd({ children }) {
   return (
-    <kbd className="px-1.5 py-0.5 rounded bg-navy-100 dark:bg-navy-800 border border-navy-200 dark:border-navy-700 font-mono text-navy-500 dark:text-navy-400">
+    <kbd className="px-1.5 py-0.5 rounded bg-paper-200 dark:bg-pitch-700 border border-paper-300 dark:border-pitch-500 font-mono text-paper-600 dark:text-paper-500">
       {children}
     </kbd>
   )
@@ -208,7 +208,7 @@ function ItemIcon({ item }) {
   if (item.kind === 'action') {
     const Icon = item.icon
     return (
-      <span className="p-1.5 rounded-md bg-signal-500/10 text-signal-500 dark:text-signal-400 flex-shrink-0">
+      <span className="p-1.5 rounded-md bg-accent-500/10 text-accent-500 dark:text-accent-400 flex-shrink-0">
         <Icon size={13} />
       </span>
     )
@@ -223,7 +223,7 @@ function ItemIcon({ item }) {
     )
   }
   return (
-    <span className="p-1.5 rounded-md bg-navy-100 dark:bg-navy-800 text-navy-400 dark:text-navy-500 flex-shrink-0">
+    <span className="p-1.5 rounded-md bg-paper-200 dark:bg-pitch-700 text-paper-500 dark:text-paper-600 flex-shrink-0">
       <MessageSquare size={13} />
     </span>
   )

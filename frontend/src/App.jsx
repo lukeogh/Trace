@@ -71,7 +71,7 @@ function Shell({ dark, onToggleTheme, font, onChangeFont, onOpenSwitcher, onOpen
   useEffect(() => { loadAreas() }, [location.pathname, loadAreas])
 
   return (
-    <div className="flex min-h-screen bg-white dark:bg-navy-900">
+    <div className="flex min-h-screen bg-white dark:bg-pitch-800">
       <Sidebar
         areas={areas}
         dark={dark}

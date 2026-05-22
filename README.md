@@ -1,4 +1,6 @@
-# Department Log
+# Trace
+
+> Stay across everything.
 
 A self-hosted department activity tracker for the Axithra software team. Tracks the current situation across seven software disciplines — Documentation, Firmware, Software Test, Software Development, Algorithm, Design, and Security — with named threads and chronological log entries per thread.
 
@@ -61,7 +63,7 @@ department-log/
 ├── frontend/                 React + Vite application
 │   ├── index.html            HTML entry point (loads Google Fonts)
 │   ├── vite.config.js        Vite config with /api proxy for dev mode
-│   ├── tailwind.config.js    Custom navy + signal colour palette; Oxanium/Barlow fonts
+│   ├── tailwind.config.js    Trace tokens — paper/pitch/accent palettes, Geist + Lexend fonts
 │   ├── postcss.config.js     PostCSS for Tailwind
 │   └── src/
 │       ├── main.jsx          React root mount

@@ -40,7 +40,7 @@ export default function NewAreaModal({ isOpen, onClose, onCreated }) {
     <Modal isOpen={isOpen} onClose={onClose} title="New area" width="max-w-md">
       <div className="space-y-4">
         <div>
-          <label className="block text-xs font-display uppercase tracking-wide text-navy-500 dark:text-navy-400 mb-1.5">
+          <label className="block text-xs font-display uppercase tracking-wide text-paper-600 dark:text-paper-500 mb-1.5">
             Name
           </label>
           <input
@@ -51,17 +51,17 @@ export default function NewAreaModal({ isOpen, onClose, onCreated }) {
             placeholder="e.g. Customer Portal"
             className="
               w-full px-3 py-2 text-sm rounded-lg
-              bg-navy-50 dark:bg-navy-800 border border-navy-200 dark:border-navy-600
-              text-navy-900 dark:text-white
-              placeholder:text-navy-300 dark:placeholder:text-navy-600
-              focus:outline-none focus:ring-2 focus:ring-signal-500
+              bg-paper-100 dark:bg-pitch-700 border border-paper-300 dark:border-paper-700
+              text-pitch-800 dark:text-white
+              placeholder:text-paper-400 dark:placeholder:text-paper-700
+              focus:outline-none focus:ring-2 focus:ring-accent-500
             "
           />
         </div>
 
         <div>
-          <label className="block text-xs font-display uppercase tracking-wide text-navy-500 dark:text-navy-400 mb-1.5">
-            Summary <span className="text-navy-300 dark:text-navy-600 normal-case font-mono">— optional</span>
+          <label className="block text-xs font-display uppercase tracking-wide text-paper-600 dark:text-paper-500 mb-1.5">
+            Summary <span className="text-paper-400 dark:text-paper-700 normal-case font-mono">— optional</span>
           </label>
           <textarea
             value={summary}
@@ -71,10 +71,10 @@ export default function NewAreaModal({ isOpen, onClose, onCreated }) {
             onKeyDown={(e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) submit() }}
             className="
               w-full px-3 py-2.5 text-sm rounded-lg resize-none
-              bg-navy-50 dark:bg-navy-800 border border-navy-200 dark:border-navy-600
-              text-navy-900 dark:text-white
-              placeholder:text-navy-300 dark:placeholder:text-navy-600
-              focus:outline-none focus:ring-2 focus:ring-signal-500
+              bg-paper-100 dark:bg-pitch-700 border border-paper-300 dark:border-paper-700
+              text-pitch-800 dark:text-white
+              placeholder:text-paper-400 dark:placeholder:text-paper-700
+              focus:outline-none focus:ring-2 focus:ring-accent-500
             "
           />
         </div>
@@ -82,14 +82,14 @@ export default function NewAreaModal({ isOpen, onClose, onCreated }) {
         <div className="flex justify-end gap-2 pt-1">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm rounded-md text-navy-600 dark:text-navy-300 hover:bg-navy-100 dark:hover:bg-navy-700 transition-colors"
+            className="px-4 py-2 text-sm rounded-md text-paper-700 dark:text-paper-400 hover:bg-paper-200 dark:hover:bg-pitch-500 transition-colors"
           >
             Cancel
           </button>
           <button
             onClick={submit}
             disabled={!name.trim() || submitting}
-            className="px-4 py-2 text-sm rounded-md font-medium bg-signal-500 hover:bg-signal-600 text-white disabled:opacity-50 transition-colors"
+            className="px-4 py-2 text-sm rounded-md font-medium bg-accent-500 hover:bg-accent-600 text-white disabled:opacity-50 transition-colors"
           >
             {submitting ? 'Creating…' : 'Create area'}
           </button>

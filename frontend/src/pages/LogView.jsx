@@ -5,11 +5,11 @@ import { format } from 'date-fns'
 import { areasApi } from '../api/client'
 
 const ACTION_BADGE = {
-  created:     'bg-signal-500/10 text-signal-600 dark:text-signal-400',
+  created:     'bg-accent-500/10 text-accent-600 dark:text-accent-400',
   updated:     'bg-amber-500/10 text-amber-600 dark:text-amber-400',
   deleted:     'bg-red-500/10 text-red-500 dark:text-red-400',
   completed:   'bg-sky-500/10 text-sky-500 dark:text-sky-400',
-  uncompleted: 'bg-navy-200/50 text-navy-500 dark:bg-navy-700/50 dark:text-navy-400',
+  uncompleted: 'bg-paper-300/50 text-paper-600 dark:bg-pitch-500/50 dark:text-paper-500',
 }
 
 function formatAuditDescription({ action, entity_type, field, old_value, new_value }) {
@@ -38,21 +38,21 @@ function LogRow({ record }) {
       to={`/thread/${record.thread_id}`}
       className="
         px-4 py-3 flex items-center gap-3 text-xs
-        border-b border-navy-50 dark:border-navy-800 last:border-0
-        hover:bg-navy-50/60 dark:hover:bg-navy-800/40
+        border-b border-paper-100 dark:border-pitch-700 last:border-0
+        hover:bg-paper-100/60 dark:hover:bg-pitch-700/40
         transition-colors
       "
     >
-      <span className="font-mono text-navy-300 dark:text-navy-600 flex-shrink-0 w-28">
+      <span className="font-mono text-paper-400 dark:text-paper-700 flex-shrink-0 w-28">
         {format(new Date(record.occurred_at), 'dd MMM HH:mm')}
       </span>
-      <span className="font-display font-semibold uppercase tracking-wide text-navy-800 dark:text-navy-100 flex-shrink-0">
+      <span className="font-display font-semibold uppercase tracking-wide text-pitch-700 dark:text-paper-200 flex-shrink-0">
         {record.area_name}
       </span>
       {record.thread_title && (
         <>
-          <span className="text-navy-300 dark:text-navy-600 flex-shrink-0">/</span>
-          <span className="text-navy-500 dark:text-navy-400 truncate w-40 flex-shrink-0">
+          <span className="text-paper-400 dark:text-paper-700 flex-shrink-0">/</span>
+          <span className="text-paper-600 dark:text-paper-500 truncate w-40 flex-shrink-0">
             {record.thread_title}
           </span>
         </>
@@ -60,7 +60,7 @@ function LogRow({ record }) {
       <span className={`font-display uppercase px-1.5 py-0.5 rounded flex-shrink-0 ${ACTION_BADGE[record.action] ?? ACTION_BADGE.updated}`}>
         {record.action}
       </span>
-      <span className="text-navy-500 dark:text-navy-400 flex-1 truncate">
+      <span className="text-paper-600 dark:text-paper-500 flex-1 truncate">
         {formatAuditDescription(record)}
       </span>
     </Link>
@@ -69,15 +69,15 @@ function LogRow({ record }) {
 
 function LogSkeleton() {
   return (
-    <div className="bg-white dark:bg-navy-850 border border-navy-200 dark:border-navy-700 rounded-xl overflow-hidden divide-y divide-navy-50 dark:divide-navy-800">
+    <div className="bg-white dark:bg-pitch-700 border border-paper-300 dark:border-pitch-500 rounded-xl overflow-hidden divide-y divide-paper-100 dark:divide-pitch-700">
       {Array.from({ length: 8 }).map((_, i) => (
         <div key={i} className="px-4 py-3 flex items-center gap-3">
-          <div className="w-28 h-3 rounded bg-navy-100 dark:bg-navy-800 animate-pulse" />
-          <div className="w-24 h-3 rounded bg-navy-100 dark:bg-navy-800 animate-pulse" />
-          <div className="w-2 h-3 rounded bg-navy-100 dark:bg-navy-800 animate-pulse" />
-          <div className="w-40 h-3 rounded bg-navy-100 dark:bg-navy-800 animate-pulse" />
-          <div className="w-16 h-3 rounded bg-navy-100 dark:bg-navy-800 animate-pulse" />
-          <div className="flex-1 h-3 rounded bg-navy-100 dark:bg-navy-800 animate-pulse" />
+          <div className="w-28 h-3 rounded bg-paper-200 dark:bg-pitch-700 animate-pulse" />
+          <div className="w-24 h-3 rounded bg-paper-200 dark:bg-pitch-700 animate-pulse" />
+          <div className="w-2 h-3 rounded bg-paper-200 dark:bg-pitch-700 animate-pulse" />
+          <div className="w-40 h-3 rounded bg-paper-200 dark:bg-pitch-700 animate-pulse" />
+          <div className="w-16 h-3 rounded bg-paper-200 dark:bg-pitch-700 animate-pulse" />
+          <div className="flex-1 h-3 rounded bg-paper-200 dark:bg-pitch-700 animate-pulse" />
         </div>
       ))}
     </div>
@@ -115,21 +115,21 @@ export default function LogView() {
     : records
 
   return (
-    <div className="flex-1 min-h-screen bg-navy-50 dark:bg-navy-900 bg-grid-light dark:bg-grid-dark">
+    <div className="flex-1 min-h-screen bg-paper-100 dark:bg-pitch-800 bg-grid-light dark:bg-grid-dark">
       {/* Header */}
       <header className="
         sticky top-0 z-10 px-8 py-5
-        bg-navy-50/90 dark:bg-navy-900/90 backdrop-blur-md
-        border-b border-navy-100 dark:border-navy-800
+        bg-paper-100/90 dark:bg-pitch-800/90 backdrop-blur-md
+        border-b border-paper-200 dark:border-pitch-700
       ">
         <div className="max-w-5xl mx-auto flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <History size={16} className="text-navy-400 dark:text-navy-500" />
-            <h1 className="font-display font-bold text-xl uppercase tracking-widest text-navy-900 dark:text-white">
+            <History size={16} className="text-paper-500 dark:text-paper-600" />
+            <h1 className="font-display font-bold text-xl uppercase tracking-widest text-pitch-800 dark:text-white">
               Audit Log
             </h1>
             {!loading && (
-              <span className="font-mono text-xs text-navy-300 dark:text-navy-600">
+              <span className="font-mono text-xs text-paper-400 dark:text-paper-700">
                 {displayed.length}
               </span>
             )}
@@ -141,10 +141,10 @@ export default function LogView() {
               onChange={(e) => setFilterAreaId(e.target.value)}
               className="
                 px-3 py-1.5 text-xs rounded-lg
-                bg-white dark:bg-navy-800
-                border border-navy-200 dark:border-navy-600
-                text-navy-700 dark:text-navy-200
-                focus:outline-none focus:ring-2 focus:ring-signal-500
+                bg-white dark:bg-pitch-700
+                border border-paper-300 dark:border-paper-700
+                text-pitch-500 dark:text-paper-300
+                focus:outline-none focus:ring-2 focus:ring-accent-500
                 font-display uppercase tracking-wide
               "
             >
@@ -166,20 +166,20 @@ export default function LogView() {
             <p className="text-sm text-red-500 mb-3">{error}</p>
             <button
               onClick={load}
-              className="flex items-center gap-2 px-4 py-2 rounded-md bg-navy-100 dark:bg-navy-800 text-sm mx-auto hover:bg-navy-200 dark:hover:bg-navy-700 transition-colors"
+              className="flex items-center gap-2 px-4 py-2 rounded-md bg-paper-200 dark:bg-pitch-700 text-sm mx-auto hover:bg-paper-300 dark:hover:bg-pitch-500 transition-colors"
             >
               <RefreshCw size={13} /> Retry
             </button>
           </div>
         ) : displayed.length === 0 ? (
           <div className="text-center py-16">
-            <History size={24} className="text-navy-200 dark:text-navy-700 mx-auto mb-3" />
-            <p className="text-sm italic text-navy-400 dark:text-navy-600">
+            <History size={24} className="text-paper-300 dark:text-pitch-500 mx-auto mb-3" />
+            <p className="text-sm italic text-paper-500 dark:text-paper-700">
               {filterAreaId ? 'No audit records for this area yet' : 'No audit records yet'}
             </p>
           </div>
         ) : (
-          <div className="bg-white dark:bg-navy-850 border border-navy-200 dark:border-navy-700 rounded-xl overflow-hidden">
+          <div className="bg-white dark:bg-pitch-700 border border-paper-300 dark:border-pitch-500 rounded-xl overflow-hidden">
             {displayed.map((record) => (
               <LogRow key={record.id} record={record} />
             ))}
