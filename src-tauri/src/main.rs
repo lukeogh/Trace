@@ -318,6 +318,29 @@ fn nuke_sidecar(child: Option<CommandChild>) {
     }
 }
 
+/// Belt-and-braces cleanup that runs on every launch BEFORE spawning the
+/// sidecar — kills any leftover `trace-backend.exe` from a previous launch
+/// that crashed, was force-quit via Task Manager, or otherwise escaped the
+/// normal nuke_sidecar() teardown. Safe because we're a single-user
+/// desktop app: there's only ever one `trace-backend.exe` that should be
+/// running, and if there IS one now, it's an orphan we don't want to
+/// leave holding file locks (which prevents installer / updater file
+/// replacement and is task #67's recurring symptom).
+fn kill_orphan_backends() {
+    #[cfg(target_os = "windows")]
+    {
+        let _ = std::process::Command::new("taskkill")
+            .args(["/F", "/IM", "trace-backend.exe"])
+            .output();
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        let _ = std::process::Command::new("pkill")
+            .args(["-9", "-f", "trace-backend"])
+            .output();
+    }
+}
+
 fn main() {
     // Shared handle to the spawned sidecar — used so the RunEvent::Exit
     // hook (and the tray "Quit" menu) can kill the child cleanly on app
@@ -367,6 +390,12 @@ fn main() {
             get_updater_auth_header,
         ])
         .setup(move |app| {
+            // Clean up any orphan backend from a previous launch (crash,
+            // Task Manager force-close, antivirus-killed process, etc.)
+            // BEFORE we try to spawn a new one — saves the user from
+            // having to manually taskkill leftovers.
+            kill_orphan_backends();
+
             let port = find_free_port();
             let data_dir = resolve_data_dir(&app.handle());
 

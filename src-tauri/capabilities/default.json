@@ -3,10 +3,13 @@
   "identifier": "default",
   "description": "Default capabilities for the Trace. desktop shell.",
   "windows": ["main"],
+  "webviews": ["main"],
   "remote": {
     "urls": [
       "http://127.0.0.1:*",
-      "http://localhost:*"
+      "http://localhost:*",
+      "http://127.0.0.1:*/*",
+      "http://localhost:*/*"
     ]
   },
   "permissions": [
