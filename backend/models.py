@@ -63,6 +63,9 @@ class Entry(Base):
     due_date = Column(Date, nullable=True)
     # Scheduled time for meeting-type entries (null for other types)
     meeting_at = Column(DateTime, nullable=True)
+    # Free-form notes — used mostly on investigative todos to capture
+    # findings while the task is still open. Nullable across all types.
+    notes = Column(Text, nullable=True)
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 

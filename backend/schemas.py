@@ -31,6 +31,7 @@ class EntryCreate(BaseModel):
     type: str = 'entry'  # entry | todo | decision | meeting
     due_date: Optional[date] = None
     meeting_at: Optional[datetime] = None
+    notes: Optional[str] = None
 
 
 class EntryUpdate(BaseModel):
@@ -39,6 +40,7 @@ class EntryUpdate(BaseModel):
     completed: Optional[bool] = None
     due_date: Optional[date] = None
     meeting_at: Optional[datetime] = None
+    notes: Optional[str] = None
 
 
 class EntryOut(BaseModel):
@@ -50,6 +52,7 @@ class EntryOut(BaseModel):
     completed_at: Optional[datetime] = None
     due_date: Optional[date] = None
     meeting_at: Optional[datetime] = None
+    notes: Optional[str] = None
     created_at: datetime
     updated_at: datetime
 

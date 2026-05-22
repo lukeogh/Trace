@@ -28,6 +28,7 @@ def create_entry(
         type=payload.type,
         due_date=payload.due_date,
         meeting_at=payload.meeting_at,
+        notes=payload.notes,
     )
     db.add(entry)
 
@@ -109,6 +110,16 @@ def update_entry(
         entry.meeting_at = payload.meeting_at
     elif payload.meeting_at is not None:
         entry.meeting_at = payload.meeting_at
+
+    # notes — distinguish "user cleared notes" (empty string) from "untouched"
+    # (None). Audit-log only when the value actually changed.
+    if payload.notes is not None and (payload.notes or "") != (entry.notes or ""):
+        old_excerpt = (entry.notes or "")[:200]
+        new_excerpt = (payload.notes or "")[:200]
+        log_audit(db, entity_type='entry', entity_id=entry.id, area_id=entry_area_id,
+                  thread_id=entry.thread_id, action='updated', field='notes',
+                  old_value=old_excerpt, new_value=new_excerpt)
+        entry.notes = payload.notes or None
 
     entry.updated_at = datetime.now(timezone.utc)
     db.commit()

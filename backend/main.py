@@ -44,6 +44,7 @@ def _init_db():
             "ALTER TABLE audit_logs ADD COLUMN area_id INTEGER REFERENCES areas(id) ON DELETE CASCADE",
             "ALTER TABLE areas ADD COLUMN icon VARCHAR(64)",
             "ALTER TABLE entries ADD COLUMN meeting_at DATETIME",
+            "ALTER TABLE entries ADD COLUMN notes TEXT",
         ]:
             try:
                 conn.execute(text(sql))

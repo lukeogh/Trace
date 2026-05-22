@@ -208,6 +208,16 @@ export default function ThreadView() {
     } catch (e) { toast(e.message, 'error') }
   }
 
+  const saveEntryNotes = async (entryId, notes) => {
+    try {
+      const updated = await entriesApi.update(entryId, { notes })
+      setThread((t) => ({
+        ...t,
+        entries: t.entries.map((e) => (e.id === entryId ? updated : e)),
+      }))
+    } catch (e) { toast(e.message, 'error') }
+  }
+
   const toggleEntryComplete = async (entryId, completed) => {
     // Optimistic update
     setThread((t) => ({
@@ -663,6 +673,7 @@ export default function ThreadView() {
                     onCancel={() => setEditingEntryId(null)}
                     onDelete={() => setDeleteEntryId(entry.id)}
                     onToggleComplete={(completed) => toggleEntryComplete(entry.id, completed)}
+                    onSaveNotes={(notes) => saveEntryNotes(entry.id, notes)}
                   />
                 ))}
               </div>
@@ -995,7 +1006,7 @@ function TaskCheckbox({ completed, onToggle }) {
 
 // ─── Entry block ──────────────────────────────────────────────────────────────
 
-function EntryBlock({ entry, editing, draft, onEditStart, onDraftChange, onSave, onCancel, onDelete, onToggleComplete }) {
+function EntryBlock({ entry, editing, draft, onEditStart, onDraftChange, onSave, onCancel, onDelete, onToggleComplete, onSaveNotes }) {
   const date = new Date(entry.created_at)
   const wasEdited = entry.updated_at !== entry.created_at
   const isDecision = entry.type === 'decision'
@@ -1094,6 +1105,10 @@ function EntryBlock({ entry, editing, draft, onEditStart, onDraftChange, onSave,
                     due {format(parseISO(entry.due_date), 'dd MMM yyyy')}
                   </p>
                 )}
+                <TodoNotes
+                  initial={entry.notes || ''}
+                  onSave={onSaveNotes}
+                />
               </div>
             </div>
           ) : (
@@ -1168,6 +1183,82 @@ function ThreadSkeleton() {
         <div className="h-5 w-96 rounded bg-paper-200 dark:bg-pitch-700 animate-pulse" />
         <div className="h-32 rounded-xl bg-paper-200 dark:bg-pitch-700 animate-pulse mt-8" />
       </div>
+    </div>
+  )
+}
+
+// ─── Todo notes — collapsible free-text capture for investigative todos ──────
+
+function TodoNotes({ initial, onSave }) {
+  const hasContent = (initial || '').trim().length > 0
+  // Auto-expanded when there's content. Otherwise collapsed by default so
+  // straight-up tasks aren't cluttered. User toggle overrides per todo.
+  const [open, setOpen] = useState(hasContent)
+  const [value, setValue] = useState(initial || '')
+  const [saving, setSaving] = useState(false)
+
+  // Keep local draft in sync if the entry's notes change from elsewhere
+  // (e.g. after a save the parent re-renders with the persisted value).
+  useEffect(() => {
+    setValue(initial || '')
+  }, [initial])
+
+  const flush = async () => {
+    const next = value
+    if ((next || '') === (initial || '')) return  // nothing changed
+    setSaving(true)
+    try {
+      await onSave?.(next)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="mt-2">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="
+          inline-flex items-center gap-1.5 px-1.5 py-0.5 -ml-1.5 rounded
+          text-[10px] font-display uppercase tracking-widest
+          text-paper-500 dark:text-paper-600
+          hover:text-pitch-700 dark:hover:text-paper-200
+          hover:bg-paper-100 dark:hover:bg-pitch-800
+          transition-colors
+        "
+      >
+        {open ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
+        Notes
+        {!open && hasContent && (
+          <span className="ml-1 px-1 rounded bg-accent-500/10 text-accent-600 dark:text-accent-400 font-mono text-[9px]">
+            {value.trim().length}
+          </span>
+        )}
+      </button>
+
+      {open && (
+        <textarea
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          onBlur={flush}
+          placeholder="Capture findings, links, attempts — saved when you click away."
+          rows={3}
+          className="
+            mt-1.5 w-full text-xs leading-relaxed
+            bg-paper-100 dark:bg-pitch-800 border border-paper-200 dark:border-pitch-500
+            rounded-md px-2.5 py-2 resize-y
+            text-pitch-700 dark:text-paper-200
+            placeholder:text-paper-400 dark:placeholder:text-paper-700
+            focus:outline-none focus:ring-2 focus:ring-accent-500
+          "
+        />
+      )}
+      {saving && (
+        <p className="mt-0.5 text-[10px] font-mono text-paper-400 dark:text-paper-700">
+          Saving…
+        </p>
+      )}
     </div>
   )
 }
