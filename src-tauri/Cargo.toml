@@ -1,0 +1,35 @@
+[package]
+name = "trace"
+version = "1.0.0"
+description = "Trace. — Stay across everything."
+authors = []
+edition = "2021"
+
+# Tauri v2 expects a library target so the same crate can be reused from the
+# generated mobile/desktop entry points. We also keep the binary target so
+# `cargo tauri dev` and `cargo tauri build` produce trace.exe.
+[lib]
+name = "trace_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[[bin]]
+name = "trace"
+path = "src/main.rs"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["tray-icon", "image-png"] }
+tauri-plugin-shell = "2"
+tauri-plugin-single-instance = "2"
+reqwest = { version = "0.12", default-features = false, features = ["blocking", "rustls-tls"] }
+dirs = "5"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[features]
+# Used by Tauri's `tauri://` custom-protocol fallback when the WebView
+# requests bundled assets directly (we don't rely on it — the FastAPI
+# sidecar serves the static files — but the flag is harmless).
+custom-protocol = ["tauri/custom-protocol"]

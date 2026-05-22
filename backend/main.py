@@ -1,18 +1,51 @@
 import os
+import sys
+import argparse
+
+# ── CLI args + path resolution (must run before importing database) ──────────
+# database.py reads DB_PATH at module-load time and uses it to construct the
+# SQLAlchemy engine, so any env-var override needs to be in place BEFORE we
+# `from database import …`. Docker continues to work because docker-compose
+# already sets DB_PATH explicitly; the Tauri sidecar passes --data-dir.
+parser = argparse.ArgumentParser(description="Trace. backend")
+parser.add_argument("--port", type=int, default=None, help="Port to listen on")
+parser.add_argument("--data-dir", type=str, default=None, help="Data directory path")
+_args, _unknown = parser.parse_known_args()
+
+# Path resolution — onedir-frozen vs. interpreter / Docker run
+if getattr(sys, "frozen", False):
+    # PyInstaller onedir: sys.executable is the launcher, _MEIPASS is _internal/
+    _BUNDLE_DIR = os.path.dirname(sys.executable)
+    _INTERNAL_DIR = sys._MEIPASS  # type: ignore[attr-defined]
+    _DEFAULT_FRONTEND = os.path.join(_INTERNAL_DIR, "frontend", "dist")
+else:
+    _BUNDLE_DIR = os.path.dirname(os.path.abspath(__file__))
+    _DEFAULT_FRONTEND = os.path.join(_BUNDLE_DIR, "..", "frontend", "dist")
+
+if _args.data_dir:
+    _DATA_DIR = _args.data_dir
+else:
+    _DATA_DIR = os.environ.get("DATA_DIR", os.path.join(_BUNDLE_DIR, "data"))
+
+os.makedirs(_DATA_DIR, exist_ok=True)
+
+# Propagate DB_PATH BEFORE the database module is imported.
+_db_path = os.environ.get("DB_PATH", os.path.join(_DATA_DIR, "trace.db"))
+os.environ["DB_PATH"] = _db_path
+
+UPLOAD_DIR = os.environ.get("UPLOAD_DIR", os.path.join(_DATA_DIR, "uploads"))
+FRONTEND_DIST = os.environ.get("FRONTEND_DIST", _DEFAULT_FRONTEND)
+
+# ── Now safe to import everything that depends on the env ───────────────────
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import JSONResponse
 
 import models
 from database import engine, SessionLocal
 from routers import areas, threads, entries, attachments, generate, ingest
-
-UPLOAD_DIR = os.environ.get("UPLOAD_DIR", "./data/uploads")
-FRONTEND_DIST = os.environ.get(
-    "FRONTEND_DIST",
-    os.path.join(os.path.dirname(__file__), "..", "frontend", "dist"),
-)
 
 # Trace. launches with no seeded areas — the user creates their own from the
 # sidebar's "+ Add your first area" prompt. The previous seven-area software
@@ -23,7 +56,7 @@ INITIAL_AREAS = []
 
 
 def _init_db():
-    """Create all tables and seed the seven areas if the database is empty."""
+    """Create all tables and seed initial areas if the database is empty."""
     from sqlalchemy import text
     models.Base.metadata.create_all(bind=engine)
     os.makedirs(UPLOAD_DIR, exist_ok=True)
@@ -128,6 +161,13 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="Trace.", version="1.0.0", lifespan=lifespan)
+
+
+@app.get("/api/health")
+async def health():
+    """Liveness probe used by the Tauri shell to know when to show the window."""
+    return JSONResponse({"status": "ok"})
+
 
 app.add_middleware(
     CORSMiddleware,
