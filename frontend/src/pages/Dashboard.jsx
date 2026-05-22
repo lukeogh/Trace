@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { MessageSquare, ArrowRight, RefreshCw, Activity, Plus, PenLine, Link2, Paperclip, Clock, CheckSquare, CheckCheck, Sparkles, RotateCcw } from 'lucide-react'
+import { MessageSquare, ArrowRight, RefreshCw, Activity, Plus, PenLine, Link2, Paperclip, Clock, CheckSquare, CheckCheck, Sparkles, RotateCcw, ChevronDown, ChevronUp } from 'lucide-react'
 import { formatDistanceToNow, format, differenceInDays, differenceInCalendarDays, parseISO } from 'date-fns'
 import { areasApi, entriesApi } from '../api/client'
 import StatusBadge from '../components/StatusBadge'
 import WeeklyRoundupModal from '../components/WeeklyRoundupModal'
+import { AreaIcon } from '../components/IconPicker'
 import { getAreaStatus } from '../utils/status'
 
 const INACTIVITY_THRESHOLD_DAYS = 7
@@ -78,10 +79,10 @@ export default function Dashboard() {
         bg-paper-100/90 dark:bg-pitch-800/90 backdrop-blur-md
         border-b border-paper-300 dark:border-pitch-700
       ">
-        <div className="max-w-6xl mx-auto flex items-start justify-between gap-6">
+        <div className="max-w-6xl mx-auto flex items-start justify-between gap-6 pr-14">
           <div className="min-w-0">
             <h1 className="font-display font-medium text-4xl tracking-tightest text-pitch-800 dark:text-white leading-tight">
-              Trace
+              Trace.
             </h1>
             <p className="text-sm font-mono uppercase tracking-[0.25em] text-paper-600 dark:text-paper-500 mt-2">
               Stay across everything.
@@ -136,7 +137,7 @@ export default function Dashboard() {
       {/* ── Below-fold sections ── */}
       <div className="max-w-6xl mx-auto px-8 pb-12">
         <ComingUp />
-        <RecentActivity />
+        <RecentActivity viewMode={viewMode} />
       </div>
 
       <WeeklyRoundupModal isOpen={roundupOpen} onClose={() => setRoundupOpen(false)} />
@@ -200,10 +201,17 @@ function AreaCard({ area }) {
 
       <div className="p-5 flex flex-col flex-1">
         {/* Header */}
-        <div className="flex items-start justify-between mb-3">
-          <h2 className="font-display font-bold text-base uppercase tracking-wider text-pitch-800 dark:text-white">
-            {area.name}
-          </h2>
+        <div className="flex items-start justify-between gap-3 mb-3">
+          <div className="flex items-center gap-2.5 min-w-0">
+            {area.icon && (
+              <span className="text-paper-700 dark:text-paper-200 flex-shrink-0">
+                <AreaIcon name={area.icon} size={18} />
+              </span>
+            )}
+            <h2 className="font-display font-bold text-base uppercase tracking-wider text-pitch-800 dark:text-white truncate">
+              {area.name}
+            </h2>
+          </div>
           <StatusBadge status={area.status} type="area" size="xs" />
         </div>
 
@@ -447,9 +455,32 @@ function ComingUp() {
 
 // ─── Recent activity ──────────────────────────────────────────────────────────
 
-function RecentActivity() {
+function RecentActivity({ viewMode }) {
   const [items, setItems] = useState([])
   const [showAll, setShowAll] = useState(false)
+
+  // Collapsed state — persisted, but Focus mode forces collapsed on first load.
+  const [collapsed, setCollapsed] = useState(() => {
+    const stored = localStorage.getItem('recentActivityCollapsed')
+    if (stored != null) return stored === 'true'
+    return viewMode === 'focus'
+  })
+
+  // When the view mode flips to focus, auto-collapse (and remember).
+  useEffect(() => {
+    if (viewMode === 'focus') {
+      setCollapsed(true)
+      localStorage.setItem('recentActivityCollapsed', 'true')
+    }
+  }, [viewMode])
+
+  const toggle = () => {
+    setCollapsed((c) => {
+      const next = !c
+      localStorage.setItem('recentActivityCollapsed', String(next))
+      return next
+    })
+  }
 
   useEffect(() => {
     areasApi.getActivity(10).then(setItems).catch(() => {})
@@ -469,35 +500,48 @@ function RecentActivity() {
 
   return (
     <div className="mt-10">
-      <div className="flex items-center gap-2 mb-3">
-        <span className="font-display uppercase tracking-widest text-xs text-paper-500 dark:text-paper-600">
+      <button
+        onClick={toggle}
+        className="
+          w-full flex items-center gap-2 mb-3 py-1
+          text-left transition-colors
+          text-paper-500 dark:text-paper-600
+          hover:text-pitch-700 dark:hover:text-paper-200
+        "
+      >
+        {collapsed ? <ChevronDown size={13} /> : <ChevronUp size={13} />}
+        <span className="font-display uppercase tracking-widest text-xs">
           Recent Activity
         </span>
         <span className="font-mono text-xs text-paper-400 dark:text-paper-700">
-          {visible.length}
+          {items.length}
         </span>
-      </div>
+      </button>
 
-      <div className="bg-white dark:bg-pitch-700 border border-paper-300 dark:border-pitch-500 rounded-xl divide-y divide-paper-200 dark:divide-pitch-700 overflow-hidden">
-        {visible.map((item, i) => (
-          <ActivityRow key={`${item.thread_id}-${item.occurred_at}-${i}`} item={item} />
-        ))}
-      </div>
+      {!collapsed && (
+        <>
+          <div className="bg-white dark:bg-pitch-700 border border-paper-300 dark:border-pitch-500 rounded-xl divide-y divide-paper-200 dark:divide-pitch-700 overflow-hidden">
+            {visible.map((item, i) => (
+              <ActivityRow key={`${item.thread_id}-${item.occurred_at}-${i}`} item={item} />
+            ))}
+          </div>
 
-      {hasMore && (
-        <div className="mt-2 flex justify-center">
-          <button
-            onClick={() => setShowAll(v => !v)}
-            className="
-              p-2 rounded-md text-xs font-display uppercase tracking-wide transition-colors duration-150
-              text-paper-500 dark:text-paper-600
-              hover:text-accent-500 dark:hover:text-accent-400
-              hover:bg-paper-200 dark:hover:bg-pitch-700
-            "
-          >
-            {showAll ? 'Show less' : 'Show 5 more'}
-          </button>
-        </div>
+          {hasMore && (
+            <div className="mt-2 flex justify-center">
+              <button
+                onClick={() => setShowAll(v => !v)}
+                className="
+                  p-2 rounded-md text-xs font-display uppercase tracking-wide transition-colors duration-150
+                  text-paper-500 dark:text-paper-600
+                  hover:text-accent-500 dark:hover:text-accent-400
+                  hover:bg-paper-200 dark:hover:bg-pitch-700
+                "
+              >
+                {showAll ? 'Show less' : 'Show 5 more'}
+              </button>
+            </div>
+          )}
+        </>
       )}
     </div>
   )

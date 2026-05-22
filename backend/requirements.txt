@@ -8,3 +8,5 @@ anthropic>=0.25.0
 # File-ingest deps (drag-drop into Auto Generate)
 pypdf==4.2.0
 icalendar==5.0.12
+# Scheduled jobs (lunchtime Overview refresh)
+apscheduler==3.10.4

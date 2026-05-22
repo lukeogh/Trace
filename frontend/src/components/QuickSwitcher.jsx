@@ -10,7 +10,7 @@ import Modal from './Modal'
 const ACTIONS = [
   { id: 'a-dashboard', label: 'Dashboard',     icon: LayoutDashboard, path: '/' },
   { id: 'a-log',       label: 'Audit Log',     icon: History,         path: '/log' },
-  { id: 'a-process',   label: 'Auto Generate', icon: BrainCircuit,    path: '/process' },
+  { id: 'a-process',   label: 'Smart Generate', icon: BrainCircuit,   path: '/process' },
 ]
 
 const SECTION_LABELS = {

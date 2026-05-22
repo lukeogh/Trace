@@ -6,8 +6,10 @@ import { areasApi } from '../api/client'
 import StatusBadge from '../components/StatusBadge'
 import ThreadCard from '../components/ThreadCard'
 import Modal from '../components/Modal'
+import IconPicker, { AreaIcon } from '../components/IconPicker'
 import { useToast } from '../components/Toast'
 import { AREA_STATUSES, THREAD_STATUSES } from '../utils/status'
+import { SECTION_ICONS } from '../utils/entityIcons'
 
 export default function AreaView() {
   const { areaId } = useParams()
@@ -153,9 +155,39 @@ export default function AreaView() {
         bg-paper-100/90 dark:bg-pitch-800/90 backdrop-blur-md
         border-b border-paper-200 dark:border-pitch-700
       ">
-        <div className="max-w-4xl mx-auto flex items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <h1 className="font-display font-bold text-xl uppercase tracking-widest text-pitch-800 dark:text-white">
+        <div className="max-w-4xl mx-auto flex items-center justify-between gap-4 pr-14">
+          <div className="flex items-center gap-3 min-w-0">
+            <IconPicker
+              value={area.icon}
+              onChange={async (nextIcon) => {
+                try {
+                  const updated = await areasApi.update(areaId, { icon: nextIcon })
+                  setArea(updated)
+                } catch (e) {
+                  toast(e.message, 'error')
+                }
+              }}
+            >
+              {({ open: openPicker, value }) => (
+                <button
+                  onClick={openPicker}
+                  title={value ? `Icon: ${value}` : 'Set icon'}
+                  className="
+                    flex items-center justify-center w-10 h-10 rounded-md flex-shrink-0
+                    bg-paper-200/60 dark:bg-pitch-700
+                    border border-paper-300 dark:border-pitch-500
+                    text-pitch-800 dark:text-white
+                    hover:border-paper-400 dark:hover:border-pitch-400
+                    transition-colors
+                  "
+                >
+                  {value
+                    ? <AreaIcon name={value} size={22} />
+                    : <Plus size={16} className="text-paper-500 dark:text-paper-600" />}
+                </button>
+              )}
+            </IconPicker>
+            <h1 className="font-display font-bold text-2xl uppercase tracking-widest text-pitch-800 dark:text-white truncate">
               {area.name}
             </h1>
 
@@ -207,21 +239,27 @@ export default function AreaView() {
       </header>
 
       <div className="max-w-4xl mx-auto px-8 py-6">
-        {/* Summary block */}
-        <div className="mb-8 p-5 rounded-xl bg-paper-100 dark:bg-pitch-700 border border-paper-300 dark:border-pitch-500">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-display uppercase tracking-widest text-paper-500 dark:text-paper-600">
-              Current Situation
-            </span>
+        {/* Overview — de-boxed, section-header pattern */}
+        <section className="mb-8">
+          <div className="flex items-center justify-between mb-3 pb-2 border-b border-paper-200 dark:border-pitch-700">
+            <div className="flex items-center gap-2">
+              {(() => {
+                const OverviewIcon = SECTION_ICONS.overview
+                return <OverviewIcon size={14} className="text-paper-500 dark:text-paper-600" />
+              })()}
+              <span className="text-xs font-display uppercase tracking-widest text-paper-500 dark:text-paper-600">
+                Overview
+              </span>
+            </div>
             <div className="flex items-center gap-3">
               <button
                 onClick={suggestSummary}
                 disabled={suggestingSummary}
-                title="Generate a 2-line summary from recent activity"
+                title="Regenerate the Overview from recent activity"
                 className="flex items-center gap-1.5 text-xs text-paper-500 dark:text-paper-600 hover:text-accent-500 dark:hover:text-accent-400 disabled:opacity-50 transition-colors"
               >
-                <Sparkles size={12} className={suggestingSummary ? 'animate-pulse' : ''} />
-                {suggestingSummary ? 'Thinking…' : 'Suggest'}
+                <Sparkles size={12} />
+                {suggestingSummary ? 'Updating…' : 'Update'}
               </button>
               {!editingSummary && (
                 <button
@@ -235,51 +273,70 @@ export default function AreaView() {
             </div>
           </div>
 
-          {editingSummary ? (
-            <div>
-              <textarea
-                ref={summaryRef}
-                value={summaryDraft}
-                onChange={(e) => setSummaryDraft(e.target.value)}
-                rows={5}
-                placeholder="Describe the current situation for this area..."
-                className="
-                  w-full text-sm bg-white dark:bg-pitch-700
-                  border border-paper-400 dark:border-paper-700
-                  rounded-lg px-3 py-2.5 resize-none
-                  text-pitch-700 dark:text-paper-200
-                  placeholder:text-paper-400 dark:placeholder:text-paper-700
-                  focus:outline-none focus:ring-2 focus:ring-accent-500
-                  transition-colors
-                "
-              />
-              <div className="flex justify-end gap-2 mt-2">
-                <button onClick={cancelSummary} className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-md text-paper-600 dark:text-paper-500 hover:bg-paper-200 dark:hover:bg-pitch-500 transition-colors">
-                  <X size={12} /> Cancel
-                </button>
-                <button
-                  onClick={saveSummary}
-                  disabled={savingSummary}
-                  className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-md bg-accent-500 hover:bg-accent-600 text-white disabled:opacity-60 transition-colors"
-                >
-                  <Check size={12} />
-                  {savingSummary ? 'Saving…' : 'Save'}
-                </button>
+          {/* Body — wrapped in a relative container so the loading overlay
+              can sit over it */}
+          <div className="relative">
+            {editingSummary ? (
+              <div>
+                <textarea
+                  ref={summaryRef}
+                  value={summaryDraft}
+                  onChange={(e) => setSummaryDraft(e.target.value)}
+                  rows={5}
+                  placeholder="Describe what's happening in this area..."
+                  className="
+                    w-full text-sm bg-paper-100 dark:bg-pitch-700
+                    border border-paper-300 dark:border-pitch-500
+                    rounded-lg px-3 py-2.5 resize-none
+                    text-pitch-700 dark:text-paper-200
+                    placeholder:text-paper-400 dark:placeholder:text-paper-700
+                    focus:outline-none focus:ring-2 focus:ring-accent-500
+                    transition-colors
+                  "
+                />
+                <div className="flex justify-end gap-2 mt-2">
+                  <button onClick={cancelSummary} className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-md text-paper-600 dark:text-paper-500 hover:bg-paper-200 dark:hover:bg-pitch-500 transition-colors">
+                    <X size={12} /> Cancel
+                  </button>
+                  <button
+                    onClick={saveSummary}
+                    disabled={savingSummary}
+                    className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-md bg-accent-500 hover:bg-accent-600 text-white disabled:opacity-60 transition-colors"
+                  >
+                    <Check size={12} />
+                    {savingSummary ? 'Saving…' : 'Save'}
+                  </button>
+                </div>
               </div>
-            </div>
-          ) : (
-            <p
-              className="text-sm text-pitch-500 dark:text-paper-400 leading-relaxed whitespace-pre-wrap cursor-text"
-              onClick={() => setEditingSummary(true)}
-            >
-              {area.summary || (
-                <span className="italic text-paper-400 dark:text-paper-700">
-                  No summary yet. Click to add one.
+            ) : (
+              <p
+                className={`
+                  text-base text-pitch-700 dark:text-paper-200 leading-relaxed whitespace-pre-wrap cursor-text
+                  transition-[filter] duration-200
+                  ${suggestingSummary ? 'blur-sm pointer-events-none select-none' : ''}
+                `}
+                onClick={() => setEditingSummary(true)}
+              >
+                {area.summary || (
+                  <span className="italic text-paper-400 dark:text-paper-700">
+                    No overview yet. Click Update to generate one, or write your own.
+                  </span>
+                )}
+              </p>
+            )}
+
+            {/* Loading overlay during Update */}
+            {suggestingSummary && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 pointer-events-none">
+                <TraceMarkSpinner />
+                <ProgressIndeterminate />
+                <span className="font-display uppercase tracking-widest text-xs text-paper-500 dark:text-paper-600">
+                  Updating from recent activity…
                 </span>
-              )}
-            </p>
-          )}
-        </div>
+              </div>
+            )}
+          </div>
+        </section>
 
         {/* Threads section */}
         <div>
@@ -321,6 +378,7 @@ export default function AreaView() {
         isOpen={newThreadOpen}
         onClose={() => { setNewThreadOpen(false); setThreadForm({ title: '', description: '', status: 'open' }) }}
         title="New Thread"
+        isDirty={Boolean(threadForm.title.trim() || threadForm.description.trim())}
       >
         <div className="space-y-4">
           <div>
@@ -553,6 +611,67 @@ function AreaSkeleton() {
           ))}
         </div>
       </div>
+    </div>
+  )
+}
+
+// ─── Loading visuals for the Overview Update flow ─────────────────────────────
+
+function TraceMarkSpinner() {
+  return (
+    <svg
+      width="48"
+      height="48"
+      viewBox="0 0 100 100"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+      className="text-accent-500 dark:text-accent-400"
+    >
+      <path
+        d="M 22 50 L 50 50"
+        stroke="currentColor"
+        strokeWidth="11"
+        fill="none"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        style={{
+          strokeDasharray: 30,
+          animation: 'drawStem 1.6s cubic-bezier(0.65, 0, 0.35, 1) infinite',
+        }}
+      />
+      <path
+        d="M 50 50 L 78 26"
+        stroke="currentColor"
+        strokeWidth="11"
+        fill="none"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        style={{
+          strokeDasharray: 38,
+          animation: 'drawTop 1.6s cubic-bezier(0.65, 0, 0.35, 1) infinite',
+        }}
+      />
+      <path
+        d="M 50 50 L 78 74"
+        stroke="currentColor"
+        strokeWidth="11"
+        fill="none"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        style={{
+          strokeDasharray: 38,
+          animation: 'drawBot 1.6s cubic-bezier(0.65, 0, 0.35, 1) infinite',
+        }}
+      />
+    </svg>
+  )
+}
+
+function ProgressIndeterminate() {
+  return (
+    <div className="w-40 h-1 rounded-full overflow-hidden bg-paper-200 dark:bg-pitch-700 relative">
+      <div className="absolute inset-y-0 left-0 w-1/3 rounded-full bg-accent-500 animate-[slideIn_1.4s_cubic-bezier(0.4,0,0.2,1)_infinite]" />
     </div>
   )
 }

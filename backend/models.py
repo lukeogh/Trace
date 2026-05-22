@@ -13,6 +13,8 @@ class Area(Base):
     # stable | active | review | blocked
     status = Column(String(50), default="stable", nullable=False)
     summary = Column(Text, default="")
+    # lucide-react icon name (e.g. "Code", "Database"). null = no icon set.
+    icon = Column(String(64), nullable=True)
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
@@ -54,11 +56,16 @@ class Entry(Base):
     id = Column(Integer, primary_key=True, index=True)
     thread_id = Column(Integer, ForeignKey("threads.id"), nullable=False)
     content = Column(Text, nullable=False)
-    # entry | todo | decision
+    # entry | todo | decision | meeting
     type = Column(String(20), default="entry", nullable=False)
     completed = Column(Boolean, default=False, nullable=False)
     completed_at = Column(DateTime, nullable=True)
     due_date = Column(Date, nullable=True)
+    # Scheduled time for meeting-type entries (null for other types)
+    meeting_at = Column(DateTime, nullable=True)
+    # Free-form notes — used mostly on investigative todos to capture
+    # findings while the task is still open. Nullable across all types.
+    notes = Column(Text, nullable=True)
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 

@@ -22,9 +22,14 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# System deps
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    && rm -rf /var/lib/apt/lists/*
+# Container timezone — schedules the lunchtime Overview cron at local Brussels time
+ENV TZ=Europe/Brussels
+
+# System deps (tzdata so the TZ above resolves properly)
+RUN apt-get update && apt-get install -y --no-install-recommends tzdata \
+    && rm -rf /var/lib/apt/lists/* \
+    && ln -snf /usr/share/zoneinfo/$TZ /etc/localtime \
+    && echo $TZ > /etc/timezone
 
 # Python deps
 COPY backend/requirements.txt ./

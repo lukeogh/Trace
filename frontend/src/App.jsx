@@ -2,6 +2,10 @@ import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
 import { useEffect, useState, useCallback } from 'react'
 import { useTheme } from './hooks/useTheme'
 import { useFont } from './hooks/useFont'
+import { useDisplayName } from './hooks/useDisplayName'
+import { useTextSize } from './hooks/useTextSize'
+import { useAvatar } from './hooks/useAvatar'
+import SettingsMenu from './components/SettingsMenu'
 import { ToastProvider } from './components/Toast'
 import QuickCapture from './components/QuickCapture'
 import QuickSwitcher from './components/QuickSwitcher'
@@ -20,6 +24,9 @@ import { areasApi } from './api/client'
 export default function App() {
   const { dark, toggle } = useTheme()
   const { font, setFont } = useFont()
+  const { displayName, setDisplayName } = useDisplayName()
+  const { textSize, setTextSize } = useTextSize()
+  const { avatar, setAvatar } = useAvatar()
   const [switcherOpen, setSwitcherOpen] = useState(false)
   const [newAreaOpen, setNewAreaOpen] = useState(false)
   const [booting, setBooting] = useState(true)
@@ -36,19 +43,24 @@ export default function App() {
     return () => document.removeEventListener('keydown', handler)
   }, [])
 
-  // Boot splash: dismiss once the first areas fetch resolves, OR after 1.2s
-  // as a hard fallback so the user is never stuck if the backend is down.
+  // Boot splash: hold for a minimum so the Draw animation has time to play,
+  // then dismiss as soon as the first areas fetch resolves. Hard ceiling of
+  // 4s so the user is never stuck if the backend is down.
   useEffect(() => {
+    const MIN_SPLASH_MS = 1500
+    const MAX_SPLASH_MS = 4000
+    const startedAt = Date.now()
     let cancelled = false
     const finish = () => { if (!cancelled) setBooting(false) }
-    const timeout = setTimeout(finish, 1200)
+    const finishAfterMin = () => {
+      const remaining = Math.max(0, MIN_SPLASH_MS - (Date.now() - startedAt))
+      setTimeout(finish, remaining)
+    }
+    const hardTimeout = setTimeout(finish, MAX_SPLASH_MS)
     areasApi.list()
       .catch(() => {})
-      .finally(() => {
-        // Settle for one frame so the splash has a chance to be seen
-        setTimeout(finish, 200)
-      })
-    return () => { cancelled = true; clearTimeout(timeout) }
+      .finally(finishAfterMin)
+    return () => { cancelled = true; clearTimeout(hardTimeout) }
   }, [])
 
   return (
@@ -56,12 +68,21 @@ export default function App() {
       <SplashScreen visible={booting} />
       <BrowserRouter>
         <Shell
+          onOpenSwitcher={() => setSwitcherOpen(true)}
+          onOpenNewArea={() => setNewAreaOpen(true)}
+        />
+        {/* Global top-right settings — same place on every page */}
+        <SettingsMenu
+          avatar={avatar}
+          onChangeAvatar={setAvatar}
+          displayName={displayName}
+          onChangeDisplayName={setDisplayName}
           dark={dark}
           onToggleTheme={toggle}
           font={font}
           onChangeFont={setFont}
-          onOpenSwitcher={() => setSwitcherOpen(true)}
-          onOpenNewArea={() => setNewAreaOpen(true)}
+          textSize={textSize}
+          onChangeTextSize={setTextSize}
         />
         <QuickCapture />
         <QuickSwitcher
@@ -78,7 +99,7 @@ export default function App() {
 }
 
 // Shell wraps every route so navigation is always visible
-function Shell({ dark, onToggleTheme, font, onChangeFont, onOpenSwitcher, onOpenNewArea }) {
+function Shell({ onOpenSwitcher, onOpenNewArea }) {
   const [areas, setAreas] = useState([])
   const location = useLocation()
 
@@ -92,10 +113,6 @@ function Shell({ dark, onToggleTheme, font, onChangeFont, onOpenSwitcher, onOpen
     <div className="flex min-h-screen bg-white dark:bg-pitch-800">
       <Sidebar
         areas={areas}
-        dark={dark}
-        onToggleTheme={onToggleTheme}
-        font={font}
-        onChangeFont={onChangeFont}
         onOpenSwitcher={onOpenSwitcher}
         onOpenNewArea={onOpenNewArea}
       />

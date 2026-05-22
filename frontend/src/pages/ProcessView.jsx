@@ -3,21 +3,10 @@ import { BrainCircuit, Check, X, RotateCcw, Upload, FileText, Mail, Calendar } f
 import { areasApi, generateApi, entriesApi, ingestApi } from '../api/client'
 import { useToast } from '../components/Toast'
 import Spinner from '../components/Spinner'
+import { ENTITY, entityFor } from '../utils/entityIcons'
 
 const STATUS_MESSAGES = ['Reading…', 'Identifying tasks…', 'Structuring items…', 'Preparing review…']
 const STORAGE_KEY = 'trace-process'
-
-const TYPE_BORDER_LEFT = {
-  todo:     'border-l-accent-500',
-  entry:    'border-l-violet-500',
-  decision: 'border-l-amber-500',
-}
-
-const TYPE_BADGE = {
-  todo:     'bg-accent-500/10 text-accent-600 dark:text-accent-400',
-  entry:    'bg-violet-500/10 text-violet-600 dark:text-violet-400',
-  decision: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
-}
 
 // ─── localStorage helpers ─────────────────────────────────────────────────────
 
@@ -118,6 +107,31 @@ function SourceChip({ source, onRemove }) {
 }
 
 
+// ─── Intro step card ──────────────────────────────────────────────────────────
+
+function Step({ n, label, hint }) {
+  return (
+    <div className="
+      flex items-start gap-2.5 px-3 py-2.5 rounded-lg
+      bg-white/60 dark:bg-pitch-700/60
+      border border-paper-200 dark:border-pitch-500
+    ">
+      <span className="font-mono text-xs text-accent-500 dark:text-accent-400 mt-0.5 tabular-nums">
+        {n}
+      </span>
+      <div className="min-w-0">
+        <div className="font-display uppercase tracking-wide text-xs text-pitch-800 dark:text-white">
+          {label}
+        </div>
+        <div className="text-xs text-paper-600 dark:text-paper-500 mt-0.5 leading-snug">
+          {hint}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+
 function StatusCycler() {
   const [idx, setIdx] = useState(0)
   useEffect(() => {
@@ -144,6 +158,19 @@ function ItemCard({ item: initialItem, areaId, areaThreads, selectedAreaName, on
   const [flash, setFlash] = useState(false)
   const toast = useToast()
 
+  // If the AI's suggested_thread matches an existing thread in this area
+  // (case-insensitive), pre-select it instead of defaulting to + New thread.
+  // Recomputes whenever the suggestion changes (e.g. after a refine).
+  useEffect(() => {
+    if (!currentItem?.suggested_thread || areaThreads.length === 0) return
+    if (selectedThreadId !== NEW_THREAD_VAL) return  // user already picked
+    const target = currentItem.suggested_thread.trim().toLowerCase()
+    const match = areaThreads.find(
+      (t) => (t.title || '').trim().toLowerCase() === target
+    )
+    if (match) setSelectedThreadId(String(match.id))
+  }, [currentItem.suggested_thread, areaThreads])
+
   // Keep a ref to the latest approve logic so bulkTrigger effect never goes stale
   const approveRef = useRef(null)
   approveRef.current = async () => {
@@ -164,6 +191,7 @@ function ItemCard({ item: initialItem, areaId, areaThreads, selectedAreaName, on
         content: currentItem.content,
         type: currentItem.type,
         due_date: currentItem.due_date || undefined,
+        meeting_at: currentItem.meeting_at || undefined,
       })
       setStatus('approved')
       setTimeout(() => {
@@ -206,8 +234,10 @@ function ItemCard({ item: initialItem, areaId, areaThreads, selectedAreaName, on
     }
   }
 
-  const borderLeft = TYPE_BORDER_LEFT[currentItem.type] ?? TYPE_BORDER_LEFT.todo
-  const badge = TYPE_BADGE[currentItem.type] ?? TYPE_BADGE.todo
+  const meta = entityFor(currentItem.type)
+  const borderLeft = meta.borderLeft
+  const badge = meta.badge
+  const TypeIcon = meta.Icon
 
   return (
     <div
@@ -456,7 +486,12 @@ export default function ProcessView() {
     setBulkApproving(false)
 
     try {
-      const response = await generateApi.process(selectedArea.name, inputText)
+      const response = await generateApi.process(
+        selectedArea.name,
+        inputText,
+        parseSource?.kind || null,
+        areaThreads.map((t) => t.title),
+      )
       setProgressDone(true)
       setTimeout(() => {
         setProcessing(false)
@@ -520,15 +555,29 @@ export default function ProcessView() {
         bg-paper-100/90 dark:bg-pitch-800/90 backdrop-blur-md
         border-b border-paper-200 dark:border-pitch-700
       ">
-        <div className="max-w-3xl mx-auto flex items-center gap-3">
-          <BrainCircuit size={18} className="text-accent-500 dark:text-accent-400" />
-          <h1 className="font-display font-bold text-xl uppercase tracking-widest text-pitch-800 dark:text-white">
-            Auto Generate
+        <div className="max-w-3xl mx-auto flex items-center gap-3 pr-14">
+          <BrainCircuit size={28} className="text-accent-500 dark:text-accent-400 flex-shrink-0" />
+          <h1 className="font-display font-bold text-2xl uppercase tracking-widest text-pitch-800 dark:text-white">
+            Smart Generate
           </h1>
         </div>
       </header>
 
       <div className="max-w-3xl mx-auto px-8 py-6 space-y-6">
+        {/* Intro — short tagline + three-step "how it works" */}
+        <div className="space-y-4">
+          <p className="text-base leading-relaxed text-pitch-700 dark:text-paper-200 max-w-2xl">
+            Turn messy input into structured items. Drop notes, emails,
+            calendar invites, or PDFs — Trace extracts the to-dos,
+            decisions, and context for you to approve.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+            <Step n="01" label="Pick an area" hint="Where items will land" />
+            <Step n="02" label="Drop or paste" hint="Email, calendar, PDF, or text" />
+            <Step n="03" label="Review & approve" hint="Edit, refine, or reject each item" />
+          </div>
+        </div>
+
         {/* Input Panel */}
         <div
           onDragEnter={onDragEnter}
@@ -684,14 +733,6 @@ export default function ProcessView() {
                 <BrainCircuit size={14} />
                 Extract Items
               </button>
-              {!canSubmit && (
-                <p className="mt-2 text-xs font-mono text-amber-500 dark:text-amber-400 text-center">
-                  {!selectedAreaId   ? '↑ Select an area to enable' :
-                   !inputText.trim() ? 'Add some text or drop a file' :
-                   parsing           ? 'Parsing file…' :
-                   ''}
-                </p>
-              )}
             </>
           )}
 

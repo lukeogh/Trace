@@ -2,8 +2,9 @@ import { useEffect, useState, useRef } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import {
   Plus, Edit3, Trash2, Check, X,
-  Paperclip, Link2, Upload, ExternalLink,
-  RefreshCw, FileText, GitBranch, ArrowRight, ArrowLeft
+  Paperclip, Link2, Upload, ExternalLink, UploadCloud,
+  RefreshCw, FileText, GitBranch, ArrowRight, ArrowLeft,
+  ChevronDown, ChevronUp, Calendar, Ban
 } from 'lucide-react'
 import { format, formatDistanceToNow, parseISO } from 'date-fns'
 import ReactMarkdown from 'react-markdown'
@@ -11,16 +12,18 @@ import { threadsApi, entriesApi, attachmentsApi, areasApi } from '../api/client'
 import StatusBadge from '../components/StatusBadge'
 import Modal from '../components/Modal'
 import ConfirmDialog from '../components/ConfirmDialog'
+import AddMeetingModal from '../components/AddMeetingModal'
+import StatusChangeModal from '../components/StatusChangeModal'
 import { useToast } from '../components/Toast'
 import { THREAD_STATUSES, formatBytes, DUE_DATE_OPTIONS } from '../utils/status'
 
+import { ENTITY, ENTITY_TYPES, entityFor, SECTION_ICONS } from '../utils/entityIcons'
+
 const INACTIVITY_THRESHOLD_DAYS = 7
 
-const ENTRY_TYPES = [
-  { key: 'entry',    label: 'Entry' },
-  { key: 'todo',     label: 'To Do' },
-  { key: 'decision', label: 'Decision' },
-]
+// Entry composer types — meetings are added through the dedicated Add Meeting
+// button so they don't appear here.
+const ENTRY_TYPES = ENTITY_TYPES.filter((t) => t.key !== 'meeting')
 
 function getDueDateClass(dueDateStr) {
   const today = format(new Date(), 'yyyy-MM-dd')
@@ -65,6 +68,15 @@ export default function ThreadView() {
   const [uploadingFile, setUploadingFile] = useState(false)
   const fileInputRef = useRef(null)
 
+  // Files-card drop state
+  const [filesDragActive, setFilesDragActive] = useState(false)
+  const filesDragCounter = useRef(0)
+
+  // Inline Link composer (paste URL → optional label → enter)
+  const [inlineLinkUrl, setInlineLinkUrl] = useState('')
+  const [inlineLinkName, setInlineLinkName] = useState('')
+  const [addingInlineLink, setAddingInlineLink] = useState(false)
+
   // Delete dialogs
   const [deleteThreadOpen, setDeleteThreadOpen] = useState(false)
   const [deleteEntryId, setDeleteEntryId] = useState(null)
@@ -75,6 +87,15 @@ export default function ThreadView() {
   const [linkThreadForm, setLinkThreadForm] = useState({ to_thread_id: '', kind: 'blocks' })
   const [allThreads, setAllThreads] = useState([])
   const [addingThreadLink, setAddingThreadLink] = useState(false)
+
+  // Add-meeting modal
+  const [meetingOpen, setMeetingOpen] = useState(false)
+  const [addingMeeting, setAddingMeeting] = useState(false)
+
+  // Status-change modal — driven by the picker. Holds the target status
+  // until the user confirms or cancels.
+  const [statusTarget, setStatusTarget] = useState(null)
+  const [changingStatus, setChangingStatus] = useState(false)
 
   const load = async () => {
     setLoading(true)
@@ -129,14 +150,49 @@ export default function ThreadView() {
     } catch (e) { toast(e.message, 'error') }
   }
 
-  const changeStatus = async (newStatus) => {
+  // The picker now just selects a target status; the modal handles confirm.
+  const requestStatusChange = (newStatus) => {
     setEditingStatus(false)
     if (newStatus === thread.status) return
+    setStatusTarget(newStatus)
+  }
+
+  const submitStatusChange = async ({ text }) => {
+    if (!statusTarget) return
+    const newStatus = statusTarget
+    const isBlocking = newStatus === 'blocked'
+    setChangingStatus(true)
     try {
+      // 1. Flip the status on the thread
       const updated = await threadsApi.update(threadId, { status: newStatus })
-      setThread(updated)
-      toast(`Status → ${THREAD_STATUSES[newStatus]?.label}`)
-    } catch (e) { toast(e.message, 'error') }
+      setThread((t) => ({ ...updated, entries: t.entries, attachments: t.attachments,
+                          outgoing_links: t.outgoing_links, incoming_links: t.incoming_links }))
+
+      // 2. Capture the reason / optional note as a timeline entry
+      if (isBlocking) {
+        // Required reason → mandatory blockage entry
+        const entry = await entriesApi.create(threadId, {
+          content: text,
+          type: 'blockage',
+        })
+        setThread((t) => ({ ...t, entries: [...t.entries, entry] }))
+      } else if (text) {
+        // Optional note for non-blocking status changes
+        const label = THREAD_STATUSES[newStatus]?.label || newStatus
+        const entry = await entriesApi.create(threadId, {
+          content: `Status changed to ${label}. ${text}`,
+          type: 'entry',
+        })
+        setThread((t) => ({ ...t, entries: [...t.entries, entry] }))
+      }
+
+      toast(isBlocking ? 'Thread blocked' : `Status → ${THREAD_STATUSES[newStatus]?.label}`)
+      setStatusTarget(null)
+    } catch (e) {
+      toast(e.message, 'error')
+    } finally {
+      setChangingStatus(false)
+    }
   }
 
   const deleteThread = async () => {
@@ -168,6 +224,21 @@ export default function ThreadView() {
     finally { setAddingEntry(false) }
   }
 
+  const addMeeting = async ({ title, meeting_at }) => {
+    setAddingMeeting(true)
+    try {
+      const entry = await entriesApi.create(threadId, {
+        content: title,
+        type: 'meeting',
+        meeting_at,
+      })
+      setThread((t) => ({ ...t, entries: [...t.entries, entry] }))
+      setMeetingOpen(false)
+      toast('Meeting added')
+    } catch (e) { toast(e.message, 'error') }
+    finally { setAddingMeeting(false) }
+  }
+
   const saveEntry = async (entryId) => {
     try {
       const updated = await entriesApi.update(entryId, { content: entryDraft })
@@ -185,6 +256,30 @@ export default function ThreadView() {
       await entriesApi.delete(entryId)
       setThread((t) => ({ ...t, entries: t.entries.filter((e) => e.id !== entryId) }))
       toast('Entry deleted')
+    } catch (e) { toast(e.message, 'error') }
+  }
+
+  const saveEntryNotes = async (entryId, notes) => {
+    try {
+      const updated = await entriesApi.update(entryId, { notes })
+      setThread((t) => ({
+        ...t,
+        entries: t.entries.map((e) => (e.id === entryId ? updated : e)),
+      }))
+    } catch (e) { toast(e.message, 'error') }
+  }
+
+  const saveMeetingFields = async (entryId, { title, meeting_at }) => {
+    try {
+      const updated = await entriesApi.update(entryId, {
+        content: title,
+        meeting_at,
+      })
+      setThread((t) => ({
+        ...t,
+        entries: t.entries.map((e) => (e.id === entryId ? updated : e)),
+      }))
+      toast('Meeting updated')
     } catch (e) { toast(e.message, 'error') }
   }
 
@@ -218,11 +313,14 @@ export default function ThreadView() {
 
   // ── Attachments ─────────────────────────────────────────────────────────────
 
-  const addLink = async () => {
-    if (!linkForm.name.trim() || !linkForm.url.trim()) return
+  // Modal-driven link add (Label + URL form). Kept as an optional fallback —
+  // drag/paste straight onto the Links card is the primary path now.
+  const addLink = async (payload) => {
+    const form = payload ?? linkForm
+    if (!form.name?.trim() || !form.url?.trim()) return
     setAddingLink(true)
     try {
-      const att = await attachmentsApi.addLink(threadId, linkForm)
+      const att = await attachmentsApi.addLink(threadId, form)
       setThread((t) => ({ ...t, attachments: [...t.attachments, att] }))
       setLinkModalOpen(false)
       setLinkForm({ name: '', url: '' })
@@ -231,8 +329,8 @@ export default function ThreadView() {
     finally { setAddingLink(false) }
   }
 
-  const uploadFile = async (e) => {
-    const file = e.target.files?.[0]
+  // Upload a single File object — used by both the file input and drag-drop.
+  const uploadFileObject = async (file) => {
     if (!file) return
     setUploadingFile(true)
     try {
@@ -240,10 +338,63 @@ export default function ThreadView() {
       setThread((t) => ({ ...t, attachments: [...t.attachments, att] }))
       toast(`File "${file.name}" uploaded`)
     } catch (e) { toast(e.message, 'error') }
-    finally {
-      setUploadingFile(false)
-      e.target.value = ''
+    finally { setUploadingFile(false) }
+  }
+
+  const onFileInputChange = async (e) => {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (file) await uploadFileObject(file)
+  }
+
+  // ── Files-card drag-and-drop ──────────────────────────────────────────────
+  const onFilesDragEnter = (e) => {
+    if (!e.dataTransfer?.types?.includes('Files')) return
+    e.preventDefault()
+    filesDragCounter.current++
+    setFilesDragActive(true)
+  }
+  const onFilesDragLeave = (e) => {
+    e.preventDefault()
+    filesDragCounter.current--
+    if (filesDragCounter.current <= 0) {
+      filesDragCounter.current = 0
+      setFilesDragActive(false)
     }
+  }
+  const onFilesDragOver = (e) => {
+    if (e.dataTransfer?.types?.includes('Files')) e.preventDefault()
+  }
+  const onFilesDrop = async (e) => {
+    e.preventDefault()
+    filesDragCounter.current = 0
+    setFilesDragActive(false)
+    const file = e.dataTransfer.files?.[0]
+    if (file) await uploadFileObject(file)
+  }
+
+  // ── Inline link composer ─────────────────────────────────────────────────
+  const submitInlineLink = async () => {
+    const url = inlineLinkUrl.trim()
+    if (!url) return
+    // Sensible fallback for the label if user didn't fill one in.
+    let name = inlineLinkName.trim()
+    if (!name) {
+      try {
+        name = new URL(url).hostname.replace(/^www\./, '')
+      } catch {
+        name = url
+      }
+    }
+    setAddingInlineLink(true)
+    try {
+      const att = await attachmentsApi.addLink(threadId, { name, url })
+      setThread((t) => ({ ...t, attachments: [...t.attachments, att] }))
+      setInlineLinkUrl('')
+      setInlineLinkName('')
+      toast('Link added')
+    } catch (e) { toast(e.message, 'error') }
+    finally { setAddingInlineLink(false) }
   }
 
   const deleteAttachment = async (attId) => {
@@ -342,7 +493,7 @@ export default function ThreadView() {
         bg-paper-100/90 dark:bg-pitch-800/90 backdrop-blur-md
         border-b border-paper-200 dark:border-pitch-700
       ">
-        <div className="max-w-5xl mx-auto">
+        <div className="max-w-5xl mx-auto pr-14">
           {/* Breadcrumb */}
           <nav className="flex items-center gap-2 text-xs font-mono text-paper-500 dark:text-paper-600 mb-3">
             <Link to="/" className="hover:text-accent-500 transition-colors">Dashboard</Link>
@@ -406,7 +557,7 @@ export default function ThreadView() {
                       {Object.entries(THREAD_STATUSES).map(([key, cfg]) => (
                         <button
                           key={key}
-                          onClick={() => changeStatus(key)}
+                          onClick={() => requestStatusChange(key)}
                           className={`flex items-center gap-2 w-full px-4 py-2.5 text-left text-xs font-display uppercase tracking-wide hover:bg-paper-100 dark:hover:bg-pitch-700 transition-colors ${cfg.textClass}`}
                         >
                           <span className="w-2 h-2 rounded-full" style={{ backgroundColor: cfg.dot }} />
@@ -555,7 +706,24 @@ export default function ThreadView() {
               </div>
             )}
 
-            <div className="flex justify-end mt-2">
+            <div className="flex justify-between items-center mt-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setMeetingOpen(true)}
+                className="
+                  flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-md
+                  text-paper-600 dark:text-paper-500
+                  bg-paper-200 dark:bg-pitch-800
+                  hover:bg-paper-300 dark:hover:bg-pitch-500
+                  font-display uppercase tracking-wide transition-colors
+                "
+              >
+                {(() => {
+                  const MeetingIcon = ENTITY.meeting.Icon
+                  return <MeetingIcon size={13} />
+                })()}
+                Add meeting
+              </button>
               <button
                 onClick={addEntry}
                 disabled={!newEntryContent.trim() || addingEntry}
@@ -626,6 +794,8 @@ export default function ThreadView() {
                     onCancel={() => setEditingEntryId(null)}
                     onDelete={() => setDeleteEntryId(entry.id)}
                     onToggleComplete={(completed) => toggleEntryComplete(entry.id, completed)}
+                    onSaveNotes={(notes) => saveEntryNotes(entry.id, notes)}
+                    onSaveMeeting={(fields) => saveMeetingFields(entry.id, fields)}
                   />
                 ))}
               </div>
@@ -636,10 +806,24 @@ export default function ThreadView() {
         {/* ── Right: Attachments ───────────────────────────────────────────── */}
         <aside className="w-72 flex-shrink-0">
           <div className="sticky top-32 space-y-5">
-            {/* Files */}
-            <div className="p-4 rounded-xl bg-paper-100 dark:bg-pitch-700 border border-paper-300 dark:border-pitch-500">
+            {/* Files — drop a file anywhere on this card, or click Upload */}
+            <div
+              onDragEnter={onFilesDragEnter}
+              onDragLeave={onFilesDragLeave}
+              onDragOver={onFilesDragOver}
+              onDrop={onFilesDrop}
+              className={`
+                relative p-4 rounded-xl bg-paper-100 dark:bg-pitch-700
+                border transition-colors
+                ${filesDragActive
+                  ? 'border-accent-500 ring-2 ring-accent-500/40'
+                  : 'border-paper-300 dark:border-pitch-500'
+                }
+              `}
+            >
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-xs font-display uppercase tracking-widest text-paper-500 dark:text-paper-600">
+                <h3 className="text-xs font-display uppercase tracking-widest text-paper-500 dark:text-paper-600 flex items-center gap-1.5">
+                  <Paperclip size={11} />
                   Files <span className="font-mono text-paper-400 dark:text-paper-700">({files.length})</span>
                 </h3>
                 <button
@@ -650,24 +834,56 @@ export default function ThreadView() {
                   <Upload size={12} />
                   {uploadingFile ? 'Uploading…' : 'Upload'}
                 </button>
-                <input ref={fileInputRef} type="file" className="hidden" onChange={uploadFile} />
+                <input ref={fileInputRef} type="file" className="hidden" onChange={onFileInputChange} />
               </div>
 
-              {files.length === 0 ? (
-                <p className="text-xs italic text-paper-400 dark:text-paper-700">No files attached.</p>
-              ) : (
-                <div className="space-y-2">
+              {files.length > 0 && (
+                <div className="space-y-2 mb-3">
                   {files.map((f) => (
                     <FileItem key={f.id} file={f} onDelete={() => setDeleteAttachmentId(f.id)} />
                   ))}
                 </div>
               )}
+
+              {/* Always-visible drop zone — primary affordance, not just an
+                  empty state. Sits beneath the file list. */}
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="
+                  w-full flex flex-col items-center justify-center gap-1.5 py-4 px-3 rounded-lg
+                  border border-dashed border-paper-300 dark:border-pitch-500
+                  text-paper-500 dark:text-paper-600
+                  hover:border-accent-500/60 hover:text-accent-600 dark:hover:text-accent-400
+                  transition-colors
+                "
+              >
+                <UploadCloud size={20} className="opacity-70" />
+                <span className="text-[10px] font-display uppercase tracking-widest">
+                  Drop a file to upload
+                </span>
+              </button>
+
+              {/* Drop overlay */}
+              {filesDragActive && (
+                <div className="
+                  absolute inset-0 z-10 rounded-xl flex flex-col items-center justify-center gap-1.5
+                  bg-accent-500/10 dark:bg-accent-500/15 backdrop-blur-sm pointer-events-none
+                  border-2 border-dashed border-accent-500
+                ">
+                  <Upload size={20} className="text-accent-500" />
+                  <p className="font-display uppercase tracking-widest text-[10px] text-accent-600 dark:text-accent-400">
+                    Drop to upload
+                  </p>
+                </div>
+              )}
             </div>
 
-            {/* Links */}
+            {/* Links — paste a URL inline, label after, or click +Add */}
             <div className="p-4 rounded-xl bg-paper-100 dark:bg-pitch-700 border border-paper-300 dark:border-pitch-500">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-xs font-display uppercase tracking-widest text-paper-500 dark:text-paper-600">
+                <h3 className="text-xs font-display uppercase tracking-widest text-paper-500 dark:text-paper-600 flex items-center gap-1.5">
+                  <Link2 size={11} />
                   Links <span className="font-mono text-paper-400 dark:text-paper-700">({links.length})</span>
                 </h3>
                 <button
@@ -679,8 +895,56 @@ export default function ThreadView() {
                 </button>
               </div>
 
+              {/* Inline composer — type or paste a URL, then label it */}
+              <div className="mb-3 space-y-1.5">
+                <input
+                  type="url"
+                  value={inlineLinkUrl}
+                  onChange={(e) => setInlineLinkUrl(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter' && inlineLinkUrl.trim()) submitInlineLink() }}
+                  placeholder="Paste a URL…"
+                  className="
+                    w-full px-2.5 py-1.5 text-xs rounded-md
+                    bg-white dark:bg-pitch-800 border border-paper-300 dark:border-pitch-500
+                    text-pitch-800 dark:text-white
+                    placeholder:text-paper-400 dark:placeholder:text-paper-700
+                    focus:outline-none focus:ring-2 focus:ring-accent-500
+                  "
+                />
+                {inlineLinkUrl.trim() && (
+                  <div className="flex items-center gap-1.5 animate-fade-in">
+                    <input
+                      type="text"
+                      value={inlineLinkName}
+                      onChange={(e) => setInlineLinkName(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === 'Enter') submitInlineLink() }}
+                      placeholder="Label (optional)"
+                      className="
+                        flex-1 px-2.5 py-1.5 text-xs rounded-md
+                        bg-white dark:bg-pitch-800 border border-paper-300 dark:border-pitch-500
+                        text-pitch-800 dark:text-white
+                        placeholder:text-paper-400 dark:placeholder:text-paper-700
+                        focus:outline-none focus:ring-2 focus:ring-accent-500
+                      "
+                    />
+                    <button
+                      onClick={submitInlineLink}
+                      disabled={addingInlineLink}
+                      title="Save link (Enter)"
+                      className="
+                        flex items-center justify-center w-7 h-7 rounded-md
+                        bg-accent-500 hover:bg-accent-600 text-white
+                        disabled:opacity-50 transition-colors
+                      "
+                    >
+                      <Check size={12} />
+                    </button>
+                  </div>
+                )}
+              </div>
+
               {links.length === 0 ? (
-                <p className="text-xs italic text-paper-400 dark:text-paper-700">No links added.</p>
+                <p className="text-xs italic text-paper-400 dark:text-paper-700">No links yet.</p>
               ) : (
                 <div className="space-y-2">
                   {links.map((l) => (
@@ -718,7 +982,13 @@ export default function ThreadView() {
 
       {/* ── Modals & dialogs ──────────────────────────────────────────────────── */}
 
-      <Modal isOpen={linkModalOpen} onClose={() => setLinkModalOpen(false)} title="Add Link" width="max-w-sm">
+      <Modal
+        isOpen={linkModalOpen}
+        onClose={() => setLinkModalOpen(false)}
+        title="Add Link"
+        width="max-w-sm"
+        isDirty={Boolean(linkForm.name.trim() || linkForm.url.trim())}
+      >
         <div className="space-y-3">
           <div>
             <label className="block text-xs font-display uppercase tracking-wide text-paper-600 dark:text-paper-500 mb-1.5">Label</label>
@@ -775,7 +1045,29 @@ export default function ThreadView() {
         message="Remove this attachment? Uploaded files will be deleted from the server."
       />
 
-      <Modal isOpen={linkThreadOpen} onClose={() => setLinkThreadOpen(false)} title="Link to another thread" width="max-w-md">
+      <AddMeetingModal
+        isOpen={meetingOpen}
+        onClose={() => setMeetingOpen(false)}
+        onSubmit={addMeeting}
+        submitting={addingMeeting}
+      />
+
+      <StatusChangeModal
+        isOpen={statusTarget !== null}
+        currentStatus={thread?.status}
+        targetStatus={statusTarget}
+        onClose={() => { if (!changingStatus) setStatusTarget(null) }}
+        onConfirm={submitStatusChange}
+        submitting={changingStatus}
+      />
+
+      <Modal
+        isOpen={linkThreadOpen}
+        onClose={() => setLinkThreadOpen(false)}
+        title="Link to another thread"
+        width="max-w-md"
+        isDirty={Boolean(linkThreadForm.to_thread_id)}
+      >
         <div className="space-y-3">
           <div>
             <label className="block text-xs font-display uppercase tracking-wide text-paper-600 dark:text-paper-500 mb-1.5">
@@ -949,11 +1241,16 @@ function TaskCheckbox({ completed, onToggle }) {
 
 // ─── Entry block ──────────────────────────────────────────────────────────────
 
-function EntryBlock({ entry, editing, draft, onEditStart, onDraftChange, onSave, onCancel, onDelete, onToggleComplete }) {
+function EntryBlock({ entry, editing, draft, onEditStart, onDraftChange, onSave, onCancel, onDelete, onToggleComplete, onSaveNotes, onSaveMeeting }) {
   const date = new Date(entry.created_at)
   const wasEdited = entry.updated_at !== entry.created_at
   const isDecision = entry.type === 'decision'
   const isTodo = entry.type === 'todo'
+  const isMeeting = entry.type === 'meeting'
+  const isBlockage = entry.type === 'blockage'
+
+  // Inline meeting-edit state (independent of the regular content edit path)
+  const [editingMeeting, setEditingMeeting] = useState(false)
 
   return (
     <div id={`entry-${entry.id}`} className="relative pl-10 pb-6 group animate-fade-in">
@@ -966,22 +1263,41 @@ function EntryBlock({ entry, editing, draft, onEditStart, onDraftChange, onSave,
       <div className={`
         relative rounded-xl border overflow-hidden
         bg-white dark:bg-pitch-700
-        border-paper-200 dark:border-pitch-500
+        ${isBlockage
+          ? 'border-terracotta/40 dark:border-terracotta/40'
+          : 'border-paper-200 dark:border-pitch-500'
+        }
         group-hover:border-paper-300 dark:group-hover:border-paper-700
         transition-colors
         ${isTodo && entry.completed ? 'opacity-60' : ''}
       `}>
-        {/* Decision accent bar */}
+        {/* Type accent bar */}
         {isDecision && (
           <div className="absolute left-0 top-0 bottom-0 w-1 bg-amber-400 rounded-l-xl" />
         )}
+        {isMeeting && (
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-lavender rounded-l-xl" />
+        )}
+        {isBlockage && (
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-terracotta rounded-l-xl" />
+        )}
 
         {/* Entry header */}
-        <div className={`flex items-center justify-between px-4 py-2.5 border-b border-paper-100 dark:border-pitch-500 bg-paper-100/50 dark:bg-pitch-800/30 ${isDecision ? 'pl-5' : ''}`}>
+        <div className={`flex items-center justify-between px-4 py-2.5 border-b border-paper-100 dark:border-pitch-500 ${isBlockage ? 'bg-terracotta/5 dark:bg-terracotta/10' : 'bg-paper-100/50 dark:bg-pitch-800/30'} ${(isDecision || isMeeting || isBlockage) ? 'pl-5' : ''}`}>
           <div className="flex items-center gap-2">
             {isDecision && (
               <span className="font-display uppercase text-xs bg-amber-500/10 text-amber-600 dark:text-amber-400 px-1.5 py-0.5 rounded">
                 Decision
+              </span>
+            )}
+            {isMeeting && (
+              <span className="font-display uppercase text-xs bg-lavender/10 text-lavender px-1.5 py-0.5 rounded inline-flex items-center gap-1">
+                <Calendar size={10} /> Meeting
+              </span>
+            )}
+            {isBlockage && (
+              <span className="font-display uppercase text-xs bg-terracotta/10 text-terracotta px-1.5 py-0.5 rounded inline-flex items-center gap-1">
+                <Ban size={10} /> Blocked
               </span>
             )}
             <span className="text-xs font-mono font-medium text-accent-600 dark:text-accent-400">
@@ -995,7 +1311,10 @@ function EntryBlock({ entry, editing, draft, onEditStart, onDraftChange, onSave,
             )}
           </div>
           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-            <button onClick={onEditStart} className="p-1 rounded text-paper-400 dark:text-paper-700 hover:text-accent-500 hover:bg-accent-50 dark:hover:bg-accent-900/20 transition-colors">
+            <button
+              onClick={isMeeting ? () => setEditingMeeting(true) : onEditStart}
+              className="p-1 rounded text-paper-400 dark:text-paper-700 hover:text-accent-500 hover:bg-accent-50 dark:hover:bg-accent-900/20 transition-colors"
+            >
               <Edit3 size={12} />
             </button>
             <button onClick={onDelete} className="p-1 rounded text-paper-400 dark:text-paper-700 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
@@ -1005,7 +1324,7 @@ function EntryBlock({ entry, editing, draft, onEditStart, onDraftChange, onSave,
         </div>
 
         {/* Content */}
-        <div className={`px-4 py-3 ${isDecision ? 'pl-5' : ''}`}>
+        <div className={`px-4 py-3 ${(isDecision || isMeeting) ? 'pl-5' : ''}`}>
           {editing ? (
             <div>
               <textarea
@@ -1048,8 +1367,23 @@ function EntryBlock({ entry, editing, draft, onEditStart, onDraftChange, onSave,
                     due {format(parseISO(entry.due_date), 'dd MMM yyyy')}
                   </p>
                 )}
+                <TodoNotes
+                  initial={entry.notes || ''}
+                  onSave={onSaveNotes}
+                />
               </div>
             </div>
+          ) : isMeeting ? (
+            <MeetingBody
+              entry={entry}
+              editing={editingMeeting}
+              onEditStart={() => setEditingMeeting(true)}
+              onCancel={() => setEditingMeeting(false)}
+              onSave={async (fields) => {
+                await onSaveMeeting?.(fields)
+                setEditingMeeting(false)
+              }}
+            />
           ) : (
             <div className="prose-entry text-pitch-500 dark:text-paper-300">
               <ReactMarkdown>{entry.content}</ReactMarkdown>
@@ -1063,12 +1397,42 @@ function EntryBlock({ entry, editing, draft, onEditStart, onDraftChange, onSave,
 
 // ─── File item ────────────────────────────────────────────────────────────────
 
+// Extensions the browser can render natively — open in a new tab.
+// Everything else: the browser will use Content-Disposition (download
+// then OS app) which is the best a web app can do for "open in the
+// program of the extension".
+const PREVIEWABLE_EXTS = new Set([
+  'pdf', 'png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'bmp',
+  'mp3', 'wav', 'ogg',
+  'mp4', 'webm', 'mov',
+  'txt', 'md', 'log', 'json', 'csv', 'xml', 'yaml', 'yml',
+  'html', 'htm',
+])
+
+function isPreviewable(file) {
+  const name = (file.original_name || file.name || '').toLowerCase()
+  const dot = name.lastIndexOf('.')
+  if (dot < 0) return false
+  return PREVIEWABLE_EXTS.has(name.slice(dot + 1))
+}
+
 function FileItem({ file, onDelete }) {
+  const previewable = isPreviewable(file)
   return (
     <div className="flex items-center justify-between gap-2 group py-1">
+      {/*
+        PDFs, images, audio, video and plain-text formats open inline in a
+        new tab. Everything else carries `download` so the browser hands the
+        file off to the OS, which opens it in the default app for the
+        extension — the closest a web app can get to "open in the program
+        of the extension".
+      */}
       <a
         href={`/uploads/${file.stored_name}`}
-        download={file.original_name}
+        {...(previewable
+          ? { target: '_blank', rel: 'noopener noreferrer' }
+          : { download: file.original_name })}
+        title={previewable ? 'Open in new tab' : 'Download and open in default app'}
         className="flex items-center gap-2 min-w-0 text-xs text-pitch-500 dark:text-paper-400 hover:text-accent-500 transition-colors"
       >
         <FileText size={12} className="flex-shrink-0 text-paper-500 dark:text-paper-600" />
@@ -1122,6 +1486,190 @@ function ThreadSkeleton() {
         <div className="h-5 w-96 rounded bg-paper-200 dark:bg-pitch-700 animate-pulse" />
         <div className="h-32 rounded-xl bg-paper-200 dark:bg-pitch-700 animate-pulse mt-8" />
       </div>
+    </div>
+  )
+}
+
+// ─── Meeting body — title + datetime with inline edit ────────────────────────
+
+function MeetingBody({ entry, editing, onEditStart, onCancel, onSave }) {
+  const initialDt = entry.meeting_at ? toLocalInput(new Date(entry.meeting_at)) : ''
+  const [title, setTitle] = useState(entry.content || '')
+  const [dt, setDt] = useState(initialDt)
+  const [saving, setSaving] = useState(false)
+
+  // Re-seed local state whenever the entry changes underneath (e.g. after a save)
+  useEffect(() => {
+    setTitle(entry.content || '')
+    setDt(entry.meeting_at ? toLocalInput(new Date(entry.meeting_at)) : '')
+  }, [entry.content, entry.meeting_at])
+
+  if (!editing) {
+    return (
+      <div
+        onClick={onEditStart}
+        className="cursor-text"
+        title="Click to edit"
+      >
+        <div className="text-base font-medium text-pitch-800 dark:text-white leading-snug">
+          {entry.content || <span className="italic text-paper-400 dark:text-paper-700">Untitled meeting</span>}
+        </div>
+        {entry.meeting_at ? (
+          <div className="mt-1.5 flex items-center gap-1.5 text-xs font-mono text-lavender">
+            <Calendar size={11} />
+            {format(new Date(entry.meeting_at), 'EEE dd MMM yyyy · HH:mm')}
+          </div>
+        ) : (
+          <div className="mt-1.5 text-xs italic text-paper-400 dark:text-paper-700">
+            No time set
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  const canSave = title.trim().length > 0 && dt && !saving
+
+  const commit = async () => {
+    if (!canSave) return
+    setSaving(true)
+    try {
+      await onSave?.({ title: title.trim(), meeting_at: dt })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="space-y-2">
+      <div>
+        <label className="block text-[10px] font-display uppercase tracking-widest text-paper-500 dark:text-paper-600 mb-1">
+          Title
+        </label>
+        <input
+          autoFocus
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          className="
+            w-full px-3 py-2 text-sm rounded-md
+            bg-paper-100 dark:bg-pitch-800 border border-paper-300 dark:border-pitch-500
+            text-pitch-800 dark:text-white
+            focus:outline-none focus:ring-2 focus:ring-accent-500
+          "
+        />
+      </div>
+      <div>
+        <label className="block text-[10px] font-display uppercase tracking-widest text-paper-500 dark:text-paper-600 mb-1">
+          When
+        </label>
+        <input
+          type="datetime-local"
+          value={dt}
+          onChange={(e) => setDt(e.target.value)}
+          className="
+            w-full px-3 py-2 text-sm rounded-md
+            bg-paper-100 dark:bg-pitch-800 border border-paper-300 dark:border-pitch-500
+            text-pitch-800 dark:text-white
+            focus:outline-none focus:ring-2 focus:ring-accent-500
+          "
+        />
+      </div>
+      <div className="flex justify-end gap-2 pt-1">
+        <button
+          onClick={onCancel}
+          className="flex items-center gap-1 px-3 py-1.5 text-xs rounded text-paper-600 hover:bg-paper-200 dark:hover:bg-pitch-500 transition-colors"
+        >
+          <X size={12} /> Cancel
+        </button>
+        <button
+          onClick={commit}
+          disabled={!canSave}
+          className="flex items-center gap-1 px-3 py-1.5 text-xs rounded bg-accent-500 hover:bg-accent-600 text-white disabled:opacity-50 transition-colors"
+        >
+          <Check size={12} /> {saving ? 'Saving…' : 'Save'}
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function toLocalInput(d) {
+  const pad = (n) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
+// ─── Todo notes — collapsible free-text capture for investigative todos ──────
+
+function TodoNotes({ initial, onSave }) {
+  const hasContent = (initial || '').trim().length > 0
+  // Auto-expanded when there's content. Otherwise collapsed by default so
+  // straight-up tasks aren't cluttered. User toggle overrides per todo.
+  const [open, setOpen] = useState(hasContent)
+  const [value, setValue] = useState(initial || '')
+  const [saving, setSaving] = useState(false)
+
+  // Keep local draft in sync if the entry's notes change from elsewhere
+  // (e.g. after a save the parent re-renders with the persisted value).
+  useEffect(() => {
+    setValue(initial || '')
+  }, [initial])
+
+  const flush = async () => {
+    const next = value
+    if ((next || '') === (initial || '')) return  // nothing changed
+    setSaving(true)
+    try {
+      await onSave?.(next)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="mt-2">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="
+          inline-flex items-center gap-1.5 px-1.5 py-0.5 -ml-1.5 rounded
+          text-[10px] font-display uppercase tracking-widest
+          text-paper-500 dark:text-paper-600
+          hover:text-pitch-700 dark:hover:text-paper-200
+          hover:bg-paper-100 dark:hover:bg-pitch-800
+          transition-colors
+        "
+      >
+        {open ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
+        Notes
+        {!open && hasContent && (
+          <span className="ml-1 px-1 rounded bg-accent-500/10 text-accent-600 dark:text-accent-400 font-mono text-[9px]">
+            {value.trim().length}
+          </span>
+        )}
+      </button>
+
+      {open && (
+        <textarea
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          onBlur={flush}
+          placeholder="Capture findings, links, attempts — saved when you click away."
+          rows={3}
+          className="
+            mt-1.5 w-full text-xs leading-relaxed
+            bg-paper-100 dark:bg-pitch-800 border border-paper-200 dark:border-pitch-500
+            rounded-md px-2.5 py-2 resize-y
+            text-pitch-700 dark:text-paper-200
+            placeholder:text-paper-400 dark:placeholder:text-paper-700
+            focus:outline-none focus:ring-2 focus:ring-accent-500
+          "
+        />
+      )}
+      {saving && (
+        <p className="mt-0.5 text-[10px] font-mono text-paper-400 dark:text-paper-700">
+          Saving…
+        </p>
+      )}
     </div>
   )
 }

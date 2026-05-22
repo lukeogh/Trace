@@ -76,7 +76,7 @@ export default function SplashScreen({ visible = true, tagline = 'Stay across ev
       </svg>
 
       {/* Wordmark */}
-      <div className="text-3xl font-medium tracking-tightest">Trace</div>
+      <div className="text-3xl font-medium tracking-tightest">Trace.</div>
 
       {/* Tagline */}
       <div className="font-mono text-[10px] tracking-[0.25em] uppercase text-paper-200/50">

@@ -77,15 +77,52 @@ def _translate_anthropic_error(exc: Exception) -> HTTPException:
 def generate_process(payload: schemas.ProcessRequest):
     client = get_anthropic_client()
 
-    system = """You extract structured work items from unstructured text for a software department management tool.
+    base_system = """You extract structured work items from unstructured text for Trace., a personal log for tracking work across multiple parallel areas of responsibility.
 Respond with a JSON array only. No preamble, no explanation, no markdown code fences.
 Each item must have exactly these fields:
-  type:             "todo" | "entry" | "decision"
-  content:          string (clear and actionable)
+  type:             "todo" | "entry" | "decision" | "meeting"
+  content:          string (clear and actionable; for meetings, the meeting subject/title)
   rationale:        string (one sentence explaining why you extracted this)
   suggested_thread: string (a short thread title this item belongs in)
   due_date:         string | null (ISO date YYYY-MM-DD if applicable, else null)
+  meeting_at:       string | null (ISO datetime YYYY-MM-DDTHH:MM if known, meetings only, else null)
 Maximum 8 items. Prioritise actionable items over contextual ones."""
+
+    ics_addendum = """
+
+This input is a parsed calendar invite (.ics). The FIRST item you return MUST be of type "meeting":
+  - content: the meeting subject
+  - meeting_at: the ISO start datetime (YYYY-MM-DDTHH:MM) parsed from the invite
+  - suggested_thread: a sensible thread name for this meeting topic
+  - rationale: brief note that this came from a calendar invite
+
+Then continue extracting any other actionable items (todos / decisions / context entries) from the agenda or description as normal."""
+
+    threads_addendum = ""
+    if payload.existing_threads:
+        # De-dupe + cap so we don't bloat the prompt on areas with hundreds of threads
+        seen = set()
+        titles = []
+        for t in payload.existing_threads:
+            t = (t or "").strip()
+            if not t or t.lower() in seen:
+                continue
+            seen.add(t.lower())
+            titles.append(t)
+            if len(titles) >= 40:
+                break
+        if titles:
+            joined = "\n".join(f"  - {t}" for t in titles)
+            threads_addendum = (
+                "\n\nThreads that already exist in this area:\n"
+                f"{joined}\n\n"
+                "For each item, set suggested_thread to one of these EXACT titles "
+                "if the item clearly belongs to that thread. Match case and "
+                "punctuation exactly. Only invent a new title when none of the "
+                "existing threads is a good fit."
+            )
+
+    system = base_system + (ics_addendum if (payload.source_kind == "ics") else "") + threads_addendum
 
     try:
         message = client.messages.create(
@@ -143,12 +180,12 @@ No preamble, no markdown."""
 def generate_roundup(payload: schemas.RoundupRequest):
     client = get_anthropic_client()
 
-    prompt = f"""You are writing a weekly department status update for the Head of Software at Axithra, a Belgian medtech company.
-The update covers seven software discipline areas. Write in a professional, direct tone suitable for sharing with a manager.
+    prompt = f"""You are writing a weekly status update summarising activity across the user's areas of work.
+Write in a professional, direct tone suitable for sharing or keeping as a personal record.
 Be concise. Use plain prose with no markdown formatting. Use dashes for list items if needed.
 
 Structure:
-1. One short executive paragraph (3-4 sentences) summarising the week across the whole department.
+1. One short executive paragraph (3-4 sentences) summarising the week across all areas.
 2. One line per area. Format: "Area Name - [summary]".
    Non-movers: "Area Name - No activity this week."
    Active areas: include status, tasks opened vs completed, any decisions made, key activity.

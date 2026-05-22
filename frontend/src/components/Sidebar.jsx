@@ -3,8 +3,7 @@ import { Link, useParams, useLocation } from 'react-router-dom'
 import { LayoutDashboard, History, BrainCircuit, Search, Plus } from 'lucide-react'
 import { getAreaStatus } from '../utils/status'
 import { MOD_KEY } from '../utils/platform'
-import ThemeToggle from './ThemeToggle'
-import FontPicker from './FontPicker'
+import { AreaIcon } from './IconPicker'
 import Logo from './Logo'
 
 const MIN_WIDTH = 200
@@ -13,10 +12,6 @@ const DEFAULT_WIDTH = 240
 
 export default function Sidebar({
   areas,
-  dark,
-  onToggleTheme,
-  font,
-  onChangeFont,
   onOpenSwitcher,
   onOpenNewArea,
 }) {
@@ -71,25 +66,19 @@ export default function Sidebar({
         border-r border-paper-300 dark:border-pitch-700
       "
     >
-      {/* Brand */}
+      {/* Brand — logo + wordmark + slogan */}
       <div className="px-4 py-5 border-b border-paper-300 dark:border-pitch-700">
-        <div className="flex items-start justify-between gap-2">
-          <Link to="/" className="flex items-center gap-2.5 min-w-0">
-            <Logo size={40} />
-            <div className="min-w-0">
-              <div className="font-display font-medium text-xl tracking-tightest text-pitch-800 dark:text-white leading-tight">
-                Trace
-              </div>
-              <div className="text-xs text-paper-500 dark:text-paper-600 mt-1 font-mono truncate">
-                Axithra · SW
-              </div>
+        <Link to="/" className="flex items-center gap-3 min-w-0">
+          <Logo size={36} />
+          <div className="min-w-0">
+            <div className="font-display font-medium text-xl tracking-tightest text-pitch-800 dark:text-white leading-none">
+              Trace.
             </div>
-          </Link>
-          <div className="flex items-center gap-0.5 flex-shrink-0">
-            <FontPicker font={font} onChange={onChangeFont} />
-            <ThemeToggle dark={dark} onToggle={onToggleTheme} />
+            <div className="mt-1 font-mono uppercase tracking-[0.2em] text-[10px] text-paper-500 dark:text-paper-600 truncate">
+              Stay across everything.
+            </div>
           </div>
-        </div>
+        </Link>
       </div>
 
       {/* Quick switcher trigger */}
@@ -117,7 +106,7 @@ export default function Sidebar({
       <div className="px-3 pt-3 pb-1 space-y-0.5">
         <NavLink to="/" icon={LayoutDashboard} label="Dashboard" active={location.pathname === '/'} />
         <NavLink to="/log" icon={History} label="Audit Log" active={location.pathname === '/log'} />
-        <NavLink to="/process" icon={BrainCircuit} label="Auto Generate" active={location.pathname === '/process'} />
+        <NavLink to="/process" icon={BrainCircuit} label="Smart Generate" active={location.pathname === '/process'} />
       </div>
 
       {/* Areas section header */}
@@ -127,8 +116,8 @@ export default function Sidebar({
         </span>
       </div>
 
-      {/* Area list */}
-      <nav className="flex-1 overflow-y-auto px-3 pb-1 space-y-0.5">
+      {/* Area list + inline Add area */}
+      <nav className="flex-1 overflow-y-auto px-3 pb-3 space-y-0.5">
         {areas.map((area) => {
           const config = getAreaStatus(area.status)
           const isActive = areaId && parseInt(areaId) === area.id
@@ -138,7 +127,7 @@ export default function Sidebar({
               key={area.id}
               to={`/area/${area.id}`}
               className={`
-                flex items-center gap-2.5 px-3 py-2 rounded-md text-sm transition-colors group
+                flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors group
                 ${isActive
                   ? 'bg-paper-200 dark:bg-pitch-700 text-pitch-800 dark:text-white'
                   : 'text-paper-600 dark:text-paper-500 hover:bg-paper-200 dark:hover:bg-pitch-700 hover:text-pitch-700 dark:hover:text-paper-200'
@@ -146,12 +135,15 @@ export default function Sidebar({
               `}
             >
               <span
-                className="w-2 h-2 rounded-full flex-shrink-0"
+                className="w-1.5 h-1.5 rounded-full flex-shrink-0"
                 style={{
                   backgroundColor: config.dot,
                   boxShadow: isActive ? `0 0 5px ${config.dot}` : 'none',
                 }}
               />
+              {area.icon ? (
+                <AreaIcon name={area.icon} size={13} className="flex-shrink-0" />
+              ) : null}
               <span className="flex-1 truncate font-medium text-xs font-display uppercase tracking-wide">
                 {area.name}
               </span>
@@ -163,14 +155,12 @@ export default function Sidebar({
             </Link>
           )
         })}
-      </nav>
 
-      {/* Subtle Add area link — sits under the area list */}
-      <div className="px-3 pb-3">
+        {/* Subtle add-area row — sits directly under the last area entry */}
         <button
           onClick={onOpenNewArea}
           className="
-            w-full flex items-center gap-2 px-3 py-1.5 rounded-md
+            w-full flex items-center gap-2 px-3 py-1.5 rounded-md mt-0.5
             text-xs text-paper-500 dark:text-paper-700
             hover:text-paper-700 dark:hover:text-paper-500
             hover:bg-paper-200/60 dark:hover:bg-pitch-700/40
@@ -182,7 +172,7 @@ export default function Sidebar({
             {areas.length === 0 ? 'Add your first area' : 'Add area'}
           </span>
         </button>
-      </div>
+      </nav>
 
       {/* Footer — keyboard shortcut hints */}
       <div className="px-4 py-3 border-t border-paper-300 dark:border-pitch-700 space-y-1.5">
