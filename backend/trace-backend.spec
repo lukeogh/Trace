@@ -12,20 +12,25 @@ from PyInstaller.utils.hooks import collect_data_files
 
 block_cipher = None
 
-# The built React app needs to be bundled inside the binary so the FastAPI
-# StaticFiles mount can find it at FRONTEND_DIST.
-frontend_dist = os.path.join('frontend', 'dist')
+# SPECPATH is the directory containing this .spec file (PyInstaller injects
+# it into the spec's globals). Everything is anchored relative to that so
+# the spec is callable from any CWD.
+BACKEND_DIR = SPECPATH
+REPO_ROOT = os.path.dirname(BACKEND_DIR)
+RUN_SCRIPT = os.path.join(BACKEND_DIR, 'run.py')
+frontend_dist = os.path.join(REPO_ROOT, 'frontend', 'dist')
+
 if not os.path.exists(frontend_dist):
     raise RuntimeError(
-        "frontend/dist not found. Run `npm run build` in the frontend/ "
-        "directory before invoking PyInstaller, or just run "
+        f"frontend/dist not found at {frontend_dist}. Run `npm run build` "
+        "in the frontend/ directory before invoking PyInstaller, or just run "
         "`python scripts/build-backend.py` which does both in order."
     )
 
 
 a = Analysis(
-    ['backend/run.py'],
-    pathex=['backend'],
+    [RUN_SCRIPT],
+    pathex=[BACKEND_DIR],
     binaries=[],
     datas=[
         # Bundle the built React app inside the binary
