@@ -63,9 +63,35 @@ def get_rust_triple() -> str:
     raise RuntimeError("Could not determine Rust target triple from `rustc -vV`")
 
 
+def _check_backend_deps_installed() -> None:
+    """Fail loud and early if the backend's runtime deps aren't importable.
+
+    Without this, PyInstaller silently produces a bundle that omits the
+    missing modules, then the installed app crashes at startup with
+    `ModuleNotFoundError: No module named 'uvicorn'`. We've shipped that
+    footgun once already — never again.
+    """
+    required = ["uvicorn", "fastapi", "sqlalchemy", "anthropic", "apscheduler"]
+    missing = []
+    for mod in required:
+        try:
+            __import__(mod)
+        except ImportError:
+            missing.append(mod)
+    if missing:
+        raise RuntimeError(
+            f"Backend dependencies missing from this Python ({sys.executable}): "
+            f"{', '.join(missing)}.\n"
+            f"Install them first:  py -m pip install -r backend/requirements.txt"
+        )
+
+
 def main() -> None:
     repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     os.chdir(repo_root)
+
+    # 0. Sanity-check the Python environment before doing anything expensive.
+    _check_backend_deps_installed()
 
     # 1. Build the React frontend
     print("── Building React frontend...")
