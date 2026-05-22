@@ -1,0 +1,14 @@
+{
+  "name": "trace",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Trace. — Stay across everything. Desktop shell + backend orchestration.",
+  "scripts": {
+    "dev": "tauri dev",
+    "build": "python scripts/build-backend.py && tauri build",
+    "build:backend": "python scripts/build-backend.py",
+    "build:tauri": "tauri build",
+    "frontend:dev": "npm run dev --prefix frontend",
+    "frontend:build": "npm run build --prefix frontend"
+  }
+}

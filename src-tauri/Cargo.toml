@@ -1,0 +1,30 @@
+[package]
+name = "trace"
+version = "1.0.0"
+description = "Trace. — Stay across everything."
+authors = []
+edition = "2021"
+
+# Desktop-only: a single binary target is all we need. (If we ever add mobile
+# entry points later, Tauri's mobile scaffold will introduce a library target.)
+[[bin]]
+name = "trace"
+path = "src/main.rs"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["tray-icon", "image-png"] }
+tauri-plugin-shell = "2"
+tauri-plugin-single-instance = "2"
+reqwest = { version = "0.12", default-features = false, features = ["blocking", "rustls-tls"] }
+dirs = "5"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[features]
+# Used by Tauri's `tauri://` custom-protocol fallback when the WebView
+# requests bundled assets directly (we don't rely on it — the FastAPI
+# sidecar serves the static files — but the flag is harmless).
+custom-protocol = ["tauri/custom-protocol"]
