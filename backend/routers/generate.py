@@ -98,7 +98,31 @@ This input is a parsed calendar invite (.ics). The FIRST item you return MUST be
 
 Then continue extracting any other actionable items (todos / decisions / context entries) from the agenda or description as normal."""
 
-    system = base_system + (ics_addendum if (payload.source_kind == "ics") else "")
+    threads_addendum = ""
+    if payload.existing_threads:
+        # De-dupe + cap so we don't bloat the prompt on areas with hundreds of threads
+        seen = set()
+        titles = []
+        for t in payload.existing_threads:
+            t = (t or "").strip()
+            if not t or t.lower() in seen:
+                continue
+            seen.add(t.lower())
+            titles.append(t)
+            if len(titles) >= 40:
+                break
+        if titles:
+            joined = "\n".join(f"  - {t}" for t in titles)
+            threads_addendum = (
+                "\n\nThreads that already exist in this area:\n"
+                f"{joined}\n\n"
+                "For each item, set suggested_thread to one of these EXACT titles "
+                "if the item clearly belongs to that thread. Match case and "
+                "punctuation exactly. Only invent a new title when none of the "
+                "existing threads is a good fit."
+            )
+
+    system = base_system + (ics_addendum if (payload.source_kind == "ics") else "") + threads_addendum
 
     try:
         message = client.messages.create(

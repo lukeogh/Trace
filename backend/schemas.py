@@ -242,6 +242,9 @@ class ProcessRequest(BaseModel):
     # eml | ics | pdf | text — when supplied, the prompt is biased for that
     # source (e.g. ics → produce a meeting item first).
     source_kind: Optional[str] = None
+    # Existing thread titles in the area, surfaced so the AI can reuse one
+    # rather than invent a duplicate.
+    existing_threads: Optional[List[str]] = None
 
 
 class ProcessedItem(BaseModel):

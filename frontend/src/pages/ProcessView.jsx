@@ -158,6 +158,19 @@ function ItemCard({ item: initialItem, areaId, areaThreads, selectedAreaName, on
   const [flash, setFlash] = useState(false)
   const toast = useToast()
 
+  // If the AI's suggested_thread matches an existing thread in this area
+  // (case-insensitive), pre-select it instead of defaulting to + New thread.
+  // Recomputes whenever the suggestion changes (e.g. after a refine).
+  useEffect(() => {
+    if (!currentItem?.suggested_thread || areaThreads.length === 0) return
+    if (selectedThreadId !== NEW_THREAD_VAL) return  // user already picked
+    const target = currentItem.suggested_thread.trim().toLowerCase()
+    const match = areaThreads.find(
+      (t) => (t.title || '').trim().toLowerCase() === target
+    )
+    if (match) setSelectedThreadId(String(match.id))
+  }, [currentItem.suggested_thread, areaThreads])
+
   // Keep a ref to the latest approve logic so bulkTrigger effect never goes stale
   const approveRef = useRef(null)
   approveRef.current = async () => {
@@ -473,7 +486,12 @@ export default function ProcessView() {
     setBulkApproving(false)
 
     try {
-      const response = await generateApi.process(selectedArea.name, inputText, parseSource?.kind || null)
+      const response = await generateApi.process(
+        selectedArea.name,
+        inputText,
+        parseSource?.kind || null,
+        areaThreads.map((t) => t.title),
+      )
       setProgressDone(true)
       setTimeout(() => {
         setProcessing(false)
