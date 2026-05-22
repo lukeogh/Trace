@@ -1,9 +1,17 @@
 import { useState, useEffect, useRef } from 'react'
-import { Sun, Moon, Check, Upload, X, FolderOpen, RefreshCw, AlertCircle } from 'lucide-react'
+import { Sun, Moon, Check, Upload, X, FolderOpen, RefreshCw, AlertCircle, Download, Zap } from 'lucide-react'
 import { getInitials } from '../hooks/useDisplayName'
 import { FONT_OPTIONS } from '../hooks/useFont'
 import { TEXT_SIZES } from '../hooks/useTextSize'
-import { isTauri, getDataDir, pickDataDir, migrateAndSetDataDir, relaunch } from '../api/tauri'
+import {
+  isTauri,
+  getDataDir,
+  pickDataDir,
+  migrateAndSetDataDir,
+  relaunch,
+  getUpdateChannel,
+  setUpdateChannel,
+} from '../api/tauri'
 
 const MAX_AVATAR_BYTES = 2 * 1024 * 1024  // 2 MB
 
@@ -23,6 +31,7 @@ export default function SettingsMenu({
   onChangeFont,
   textSize,
   onChangeTextSize,
+  updater,            // { status, available, progress, error, install } from useUpdater()
 }) {
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
@@ -34,6 +43,10 @@ export default function SettingsMenu({
   const [dataDirMigrating, setDataDirMigrating] = useState(false)
   const [dataDirError, setDataDirError] = useState('')
   const [restartPending, setRestartPending] = useState(false)
+
+  // Update channel (Tauri only).
+  const [channel, setChannel] = useState('stable')
+  const [channelChangePending, setChannelChangePending] = useState(false)
 
   useEffect(() => {
     if (!open) return
@@ -49,11 +62,12 @@ export default function SettingsMenu({
     }
   }, [open])
 
-  // Lazy-load the current data dir when the popover opens. Costs nothing
-  // outside Tauri (isTauri() short-circuits).
+  // Lazy-load the current data dir + channel when the popover opens.
+  // Costs nothing outside Tauri (isTauri() short-circuits).
   useEffect(() => {
     if (!open || !isTauri()) return
     getDataDir().then(setDataDir)
+    getUpdateChannel().then(setChannel)
   }, [open])
 
   const initials = getInitials(displayName)
@@ -79,6 +93,17 @@ export default function SettingsMenu({
     }
     reader.onerror = () => setUploadError('Could not read that file.')
     reader.readAsDataURL(file)
+  }
+
+  const handleChangeChannel = async (next) => {
+    if (next === channel) return
+    setChannelChangePending(true)
+    try {
+      await setUpdateChannel(next)
+      setChannel(next)
+    } finally {
+      setChannelChangePending(false)
+    }
   }
 
   const handleChangeDataDir = async () => {
@@ -144,6 +169,69 @@ export default function SettingsMenu({
           p-3 space-y-3
           animate-fade-in
         ">
+          {/* Update available — only shows when useUpdater() has found one.
+              Renders at the top of the popover so it can't be missed. */}
+          {isTauri() && updater?.status === 'available' && updater.available && (
+            <div className="
+              rounded-md p-2.5
+              bg-gradient-to-br from-accent-500/10 to-accent-500/5
+              border border-accent-500/40
+            ">
+              <div className="flex items-start gap-2 mb-2">
+                <Zap size={14} className="flex-shrink-0 mt-0.5 text-accent-500" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-display uppercase tracking-wide text-accent-600 dark:text-accent-400">
+                    Update available
+                  </p>
+                  <p className="text-[11px] text-pitch-700 dark:text-paper-300 mt-0.5">
+                    {updater.available.currentVersion} → <strong>{updater.available.version}</strong>
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={updater.install}
+                className="
+                  w-full flex items-center justify-center gap-1.5
+                  px-2.5 py-1.5 rounded-md text-xs
+                  bg-accent-500 hover:bg-accent-600 text-white
+                  font-display uppercase tracking-wide transition-colors
+                "
+              >
+                <Download size={11} />
+                Install &amp; restart
+              </button>
+            </div>
+          )}
+
+          {isTauri() && updater?.status === 'downloading' && (
+            <div className="
+              rounded-md p-2.5
+              bg-accent-500/5
+              border border-accent-500/40
+            ">
+              <div className="flex items-center gap-2">
+                <Download size={12} className="text-accent-500 animate-pulse" />
+                <p className="text-[11px] text-pitch-700 dark:text-paper-300">
+                  Downloading update
+                  {updater.progress?.contentLength
+                    ? ` (${Math.round(100 * updater.progress.downloaded / updater.progress.contentLength)}%)`
+                    : '…'}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {isTauri() && updater?.status === 'error' && (
+            <div className="rounded-md p-2 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800">
+              <div className="flex items-start gap-1">
+                <AlertCircle size={11} className="flex-shrink-0 mt-0.5 text-red-500" />
+                <p className="text-[10px] text-red-500 leading-snug">
+                  Update failed: {updater.error}
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Profile photo */}
           <Section label="Profile">
             <div className="flex items-center gap-3">
@@ -250,6 +338,29 @@ export default function SettingsMenu({
               onChange={onChangeTextSize}
             />
           </Section>
+
+          {/* Update channel — Tauri only. */}
+          {isTauri() && (
+            <Section label="Update channel">
+              <Segmented
+                value={channel}
+                options={[
+                  { key: 'stable', label: 'Stable' },
+                  { key: 'beta',   label: 'Beta' },
+                ]}
+                onChange={handleChangeChannel}
+              />
+              {channelChangePending && (
+                <p className="mt-1 text-[10px] text-paper-500 dark:text-paper-600">
+                  Saving…
+                </p>
+              )}
+              <p className="mt-1 text-[10px] text-paper-500 dark:text-paper-600 leading-snug">
+                Beta gets new builds with every merge to main. Restart Trace.
+                after switching for the change to take effect.
+              </p>
+            </Section>
+          )}
 
           {/* Data storage — Tauri only. Hidden in browser/Docker so non-desktop
               users don't see a setting that doesn't apply to them. */}

@@ -16,6 +16,28 @@ use tauri_plugin_dialog::DialogExt;
 use tauri_plugin_shell::{process::CommandChild, ShellExt};
 use tauri_plugin_store::StoreExt;
 
+/// Stable channel — `latest` redirects to the most recent non-prerelease.
+const STABLE_UPDATE_ENDPOINT: &str =
+    "https://github.com/lukeogh/Trace/releases/latest/download/latest.json";
+
+/// Beta channel — CI updates a sliding `beta` release tag on every push to
+/// `main`, so this URL always points at the most recent beta build.
+const BETA_UPDATE_ENDPOINT: &str =
+    "https://github.com/lukeogh/Trace/releases/download/beta/latest-beta.json";
+
+/// Config-store key for the user's chosen update channel ("stable" | "beta").
+/// Defaults to "stable" if unset.
+const UPDATE_CHANNEL_KEY: &str = "update_channel";
+
+/// GitHub Personal Access Token baked in at build time (via build.rs). Read-
+/// only, scoped to the single private `lukeogh/Trace` repo. Used by the
+/// frontend as a Bearer header on updater requests so we can fetch the
+/// manifest + bundle from the private releases endpoint.
+///
+/// `None` in local dev builds without the env var set — the updater simply
+/// won't function, which is acceptable in dev (you ship updates from CI).
+const UPDATER_TOKEN: Option<&str> = option_env!("TRACE_UPDATER_TOKEN");
+
 /// PyInstaller onedir folder name for our backend bundle. Must match what
 /// `scripts/build-backend.py` stages under `src-tauri/binaries/` and what
 /// `tauri.conf.json` declares as a bundled resource.
@@ -184,6 +206,71 @@ fn relaunch(app: AppHandle) {
     app.restart();
 }
 
+/// Returns the chosen update channel — "stable" by default.
+#[tauri::command]
+fn get_update_channel(app: AppHandle) -> String {
+    resolve_update_channel(&app)
+}
+
+/// Persists the chosen update channel. Takes effect on next launch (the
+/// updater plugin's endpoint is wired at plugin-init time; we don't try to
+/// hot-swap because the user has to relaunch for the channel change to be
+/// meaningful anyway).
+#[tauri::command]
+fn set_update_channel(app: AppHandle, channel: String) -> Result<(), String> {
+    if channel != "stable" && channel != "beta" {
+        return Err(format!("Unknown update channel: {}", channel));
+    }
+    let store = app
+        .store(CONFIG_STORE)
+        .map_err(|e| format!("Failed to open config store: {}", e))?;
+    store.set(UPDATE_CHANNEL_KEY, serde_json::Value::String(channel));
+    store
+        .save()
+        .map_err(|e| format!("Failed to save config: {}", e))?;
+    Ok(())
+}
+
+/// Reads the update channel from the config store; defaults to "stable".
+fn resolve_update_channel(app: &AppHandle) -> String {
+    if let Ok(store) = app.store(CONFIG_STORE) {
+        if let Some(val) = store.get(UPDATE_CHANNEL_KEY) {
+            if let Some(s) = val.as_str() {
+                if s == "stable" || s == "beta" {
+                    return s.to_string();
+                }
+            }
+        }
+    }
+    "stable".to_string()
+}
+
+/// Returns the update endpoint URL for the given channel.
+fn endpoint_for_channel(channel: &str) -> &'static str {
+    match channel {
+        "beta" => BETA_UPDATE_ENDPOINT,
+        _ => STABLE_UPDATE_ENDPOINT,
+    }
+}
+
+/// Returns the endpoint that the updater is currently configured to hit.
+/// Used by the frontend to display the channel and (optionally) link to the
+/// release page.
+#[tauri::command]
+fn get_update_endpoint(app: AppHandle) -> String {
+    endpoint_for_channel(&resolve_update_channel(&app)).to_string()
+}
+
+/// Returns the Authorization header value the updater should send on
+/// requests to GitHub Releases. `None` means the binary wasn't built with
+/// a token baked in (local dev) — in that case the frontend skips the
+/// header and the updater fails gracefully when hitting the private repo.
+#[tauri::command]
+fn get_updater_auth_header() -> Option<String> {
+    UPDATER_TOKEN.map(|t| format!("Bearer {}", t))
+}
+
+
 /// Recursively copy `src` into `dst`. Existing files at the destination are
 /// left alone (this is what makes the migration idempotent — re-running the
 /// "Change…" flow with the same destination is a no-op).
@@ -204,18 +291,62 @@ fn copy_dir_recursive(src: &std::path::Path, dst: &std::path::Path) -> std::io::
 
 // ── App setup ────────────────────────────────────────────────────────────────
 
+/// Kills the sidecar — both via Tauri's CommandChild and a follow-up
+/// `taskkill /T /F /PID …` to handle the entire process tree on Windows.
+/// `child.kill()` alone has proven unreliable: we've seen `trace-backend.exe`
+/// survive after `app.exit(0)`, which is the orphan-quit bug from task #67.
+///
+/// Safe to call multiple times — both `kill()` and `taskkill` return
+/// non-zero / errors on a process that's already gone, which we ignore.
+fn nuke_sidecar(child: Option<CommandChild>) {
+    let Some(child) = child else { return };
+    let pid = child.pid();
+    let _ = child.kill();
+
+    #[cfg(target_os = "windows")]
+    {
+        let _ = std::process::Command::new("taskkill")
+            .args(["/T", "/F", "/PID", &pid.to_string()])
+            .output();
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        // POSIX: SIGKILL the process group so children die too.
+        let _ = std::process::Command::new("kill")
+            .args(["-9", &format!("-{}", pid)])
+            .output();
+    }
+}
+
 fn main() {
     // Shared handle to the spawned sidecar — used so the RunEvent::Exit
-    // hook can kill the child cleanly on app quit.
+    // hook (and the tray "Quit" menu) can kill the child cleanly on app
+    // quit. Two paths to cleanup because in practice neither alone is
+    // reliable — see nuke_sidecar() docs.
     let sidecar_child: Arc<Mutex<Option<CommandChild>>> = Arc::new(Mutex::new(None));
     let sidecar_child_for_exit = sidecar_child.clone();
+    let sidecar_child_for_tray = sidecar_child.clone();
+
+    // The updater plugin's default endpoint (in tauri.conf.json) is the
+    // stable URL. The frontend reads the chosen channel via
+    // `get_update_endpoint` and passes the resolved URL to
+    // `check({ endpoints: [url] })` on each check, so the plugin only ever
+    // sees the right URL for the current channel.
+    //
+    // (The tauri-plugin-updater 2.x Rust Builder doesn't expose an
+    // `.endpoints()` override; runtime channel switching has to happen on
+    // the JS side.)
+    let updater = tauri_plugin_updater::Builder::new().build();
 
     tauri::Builder::default()
         // Plugins must be registered before .setup() runs so resolve_data_dir
-        // can read from the store during sidecar spawn.
+        // and resolve_update_channel can read from the store during sidecar
+        // spawn.
         .plugin(tauri_plugin_store::Builder::default().build())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_shell::init())
+        .plugin(tauri_plugin_process::init())
+        .plugin(updater)
         .plugin(tauri_plugin_single_instance::init(|app, _argv, _cwd| {
             // A second launch happened — focus the existing window instead of
             // starting another backend.
@@ -230,6 +361,10 @@ fn main() {
             pick_data_dir,
             migrate_and_set_data_dir,
             relaunch,
+            get_update_channel,
+            set_update_channel,
+            get_update_endpoint,
+            get_updater_auth_header,
         ])
         .setup(move |app| {
             let port = find_free_port();
@@ -305,7 +440,7 @@ fn main() {
             window.navigate(backend_url.parse().expect("bad backend URL"))?;
             window.show()?;
 
-            setup_tray(app.handle().clone())?;
+            setup_tray(app.handle().clone(), sidecar_child_for_tray.clone())?;
 
             Ok(())
         })
@@ -322,15 +457,17 @@ fn main() {
         .expect("error while building the Trace. desktop shell")
         .run(move |_app, event| {
             if let tauri::RunEvent::Exit = event {
-                if let Some(child) = sidecar_child_for_exit.lock().unwrap().take() {
-                    // Ignore errors — process may already be gone.
-                    let _ = child.kill();
-                }
+                // Belt-and-braces cleanup — see nuke_sidecar() docs.
+                let child = sidecar_child_for_exit.lock().unwrap().take();
+                nuke_sidecar(child);
             }
         });
 }
 
-fn setup_tray(app: AppHandle) -> tauri::Result<()> {
+fn setup_tray(
+    app: AppHandle,
+    sidecar_child: Arc<Mutex<Option<CommandChild>>>,
+) -> tauri::Result<()> {
     let show = MenuItem::with_id(&app, "show", "Show Trace.", true, None::<&str>)?;
     let quit = MenuItem::with_id(&app, "quit", "Quit", true, None::<&str>)?;
     let menu = Menu::with_items(&app, &[&show, &quit])?;
@@ -357,7 +494,7 @@ fn setup_tray(app: AppHandle) -> tauri::Result<()> {
                 }
             }
         })
-        .on_menu_event(|app, event| match event.id.as_ref() {
+        .on_menu_event(move |app, event| match event.id.as_ref() {
             "show" => {
                 if let Some(window) = app.get_webview_window("main") {
                     let _ = window.show();
@@ -365,6 +502,12 @@ fn setup_tray(app: AppHandle) -> tauri::Result<()> {
                 }
             }
             "quit" => {
+                // Kill the sidecar synchronously here, BEFORE app.exit(0).
+                // The RunEvent::Exit hook also runs nuke_sidecar() as a
+                // fallback, but doing it here means we don't depend on
+                // Tauri's exit ordering — see task #67.
+                let child = sidecar_child.lock().unwrap().take();
+                nuke_sidecar(child);
                 app.exit(0);
             }
             _ => {}

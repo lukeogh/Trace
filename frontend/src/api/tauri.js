@@ -50,3 +50,96 @@ export async function migrateAndSetDataDir(newPath) {
 export async function relaunch() {
   return invoke('relaunch')
 }
+
+// ── Updater ──────────────────────────────────────────────────────────────
+
+/** "stable" | "beta" — defaults to "stable" outside Tauri. */
+export async function getUpdateChannel() {
+  if (!isTauri()) return 'stable'
+  const { invoke: tauriInvoke } = await import('@tauri-apps/api/core')
+  return tauriInvoke('get_update_channel')
+}
+
+/**
+ * Persist the channel. Takes effect on the *next* app launch (updater
+ * endpoint is wired at plugin-init time).
+ */
+export async function setUpdateChannel(channel) {
+  if (!isTauri()) return
+  const { invoke: tauriInvoke } = await import('@tauri-apps/api/core')
+  return tauriInvoke('set_update_channel', { channel })
+}
+
+/**
+ * Returns the update endpoint URL the user's current channel would hit.
+ * The Rust side reads the channel from the store and resolves to the
+ * right GitHub Releases URL.
+ */
+async function getUpdateEndpoint() {
+  if (!isTauri()) return null
+  const { invoke: tauriInvoke } = await import('@tauri-apps/api/core')
+  return tauriInvoke('get_update_endpoint')
+}
+
+/**
+ * Returns the "Bearer <pat>" header value baked into the binary at build
+ * time, or null when the binary was built without a token (local dev).
+ * We use this to authenticate against the private GitHub Releases endpoint.
+ */
+async function getUpdaterAuthHeader() {
+  if (!isTauri()) return null
+  const { invoke: tauriInvoke } = await import('@tauri-apps/api/core')
+  return tauriInvoke('get_updater_auth_header')
+}
+
+/**
+ * Check for an update. Returns:
+ *   - { available: true, version, currentVersion, body, downloadAndInstall }
+ *     when a newer version is found. Call `downloadAndInstall()` to apply.
+ *   - { available: false } when up to date.
+ *   - null outside Tauri.
+ *
+ * We pass the endpoint override on every check because the tauri-plugin-
+ * updater Rust Builder doesn't allow runtime endpoint changes — but the JS
+ * `check({ endpoints, headers })` does. The Authorization header is what
+ * lets us reach the private repo's releases.
+ */
+export async function checkForUpdate() {
+  if (!isTauri()) return null
+  const endpoint = await getUpdateEndpoint()
+  const authHeader = await getUpdaterAuthHeader()
+  const options = {}
+  if (endpoint) options.endpoints = [endpoint]
+  if (authHeader) {
+    options.headers = {
+      Authorization: authHeader,
+      // GitHub's API form for release-asset downloads requires this Accept
+      // header; the redirector form ignores it. Setting it on every
+      // request is harmless and forward-compatible.
+      Accept: 'application/octet-stream',
+    }
+  }
+  const { check } = await import('@tauri-apps/plugin-updater')
+  const update = await check(Object.keys(options).length ? options : undefined)
+  if (!update) return { available: false }
+  return {
+    available: true,
+    version: update.version,
+    currentVersion: update.currentVersion,
+    body: update.body,
+    // Download + install in one shot. Caller should also call
+    // relaunchForUpdate() afterwards.
+    downloadAndInstall: (onEvent) => update.downloadAndInstall(onEvent),
+  }
+}
+
+/**
+ * Relaunch the app after the updater has finished applying the new bundle.
+ * Uses tauri-plugin-process (not the same as our `relaunch` command, which
+ * goes through app.restart()).
+ */
+export async function relaunchForUpdate() {
+  if (!isTauri()) return
+  const { relaunch: processRelaunch } = await import('@tauri-apps/plugin-process')
+  return processRelaunch()
+}
