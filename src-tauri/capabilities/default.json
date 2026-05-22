@@ -8,6 +8,10 @@
     "shell:default",
     "shell:allow-execute",
     "shell:allow-spawn",
-    "shell:allow-kill"
+    "shell:allow-kill",
+    "dialog:allow-open",
+    "store:allow-get",
+    "store:allow-set",
+    "store:allow-save"
   ]
 }
