@@ -1,4 +1,4 @@
-# Trace
+# Trace.
 
 > Stay across everything.
 

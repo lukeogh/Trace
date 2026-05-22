@@ -28,8 +28,9 @@ class LinkCreate(BaseModel):
 
 class EntryCreate(BaseModel):
     content: str
-    type: str = 'entry'
+    type: str = 'entry'  # entry | todo | decision | meeting
     due_date: Optional[date] = None
+    meeting_at: Optional[datetime] = None
 
 
 class EntryUpdate(BaseModel):
@@ -37,6 +38,7 @@ class EntryUpdate(BaseModel):
     type: Optional[str] = None
     completed: Optional[bool] = None
     due_date: Optional[date] = None
+    meeting_at: Optional[datetime] = None
 
 
 class EntryOut(BaseModel):
@@ -47,6 +49,7 @@ class EntryOut(BaseModel):
     completed: bool
     completed_at: Optional[datetime] = None
     due_date: Optional[date] = None
+    meeting_at: Optional[datetime] = None
     created_at: datetime
     updated_at: datetime
 
@@ -236,6 +239,9 @@ class UpcomingTodo(BaseModel):
 class ProcessRequest(BaseModel):
     area_name: str
     input_text: str
+    # eml | ics | pdf | text — when supplied, the prompt is biased for that
+    # source (e.g. ics → produce a meeting item first).
+    source_kind: Optional[str] = None
 
 
 class ProcessedItem(BaseModel):
@@ -244,6 +250,7 @@ class ProcessedItem(BaseModel):
     rationale: str
     suggested_thread: str
     due_date: Optional[str] = None
+    meeting_at: Optional[str] = None
 
 
 class ProcessResponse(BaseModel):

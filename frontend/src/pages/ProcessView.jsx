@@ -3,21 +3,10 @@ import { BrainCircuit, Check, X, RotateCcw, Upload, FileText, Mail, Calendar } f
 import { areasApi, generateApi, entriesApi, ingestApi } from '../api/client'
 import { useToast } from '../components/Toast'
 import Spinner from '../components/Spinner'
+import { ENTITY, entityFor } from '../utils/entityIcons'
 
 const STATUS_MESSAGES = ['Reading…', 'Identifying tasks…', 'Structuring items…', 'Preparing review…']
 const STORAGE_KEY = 'trace-process'
-
-const TYPE_BORDER_LEFT = {
-  todo:     'border-l-accent-500',
-  entry:    'border-l-violet-500',
-  decision: 'border-l-amber-500',
-}
-
-const TYPE_BADGE = {
-  todo:     'bg-accent-500/10 text-accent-600 dark:text-accent-400',
-  entry:    'bg-violet-500/10 text-violet-600 dark:text-violet-400',
-  decision: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
-}
 
 // ─── localStorage helpers ─────────────────────────────────────────────────────
 
@@ -189,6 +178,7 @@ function ItemCard({ item: initialItem, areaId, areaThreads, selectedAreaName, on
         content: currentItem.content,
         type: currentItem.type,
         due_date: currentItem.due_date || undefined,
+        meeting_at: currentItem.meeting_at || undefined,
       })
       setStatus('approved')
       setTimeout(() => {
@@ -231,8 +221,10 @@ function ItemCard({ item: initialItem, areaId, areaThreads, selectedAreaName, on
     }
   }
 
-  const borderLeft = TYPE_BORDER_LEFT[currentItem.type] ?? TYPE_BORDER_LEFT.todo
-  const badge = TYPE_BADGE[currentItem.type] ?? TYPE_BADGE.todo
+  const meta = entityFor(currentItem.type)
+  const borderLeft = meta.borderLeft
+  const badge = meta.badge
+  const TypeIcon = meta.Icon
 
   return (
     <div
@@ -481,7 +473,7 @@ export default function ProcessView() {
     setBulkApproving(false)
 
     try {
-      const response = await generateApi.process(selectedArea.name, inputText)
+      const response = await generateApi.process(selectedArea.name, inputText, parseSource?.kind || null)
       setProgressDone(true)
       setTimeout(() => {
         setProcessing(false)

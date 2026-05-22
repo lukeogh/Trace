@@ -1,4 +1,4 @@
-# Trace — Requirements Specification
+# Trace. — Requirements Specification
 
 **Version:** 1.0.0
 **Owner:** Luke Eogh (Head of Software, Axithra)

@@ -43,6 +43,7 @@ def _init_db():
             "CREATE TABLE IF NOT EXISTS audit_logs (id INTEGER PRIMARY KEY, entity_type VARCHAR(50), entity_id INTEGER, area_id INTEGER REFERENCES areas(id) ON DELETE CASCADE, thread_id INTEGER REFERENCES threads(id) ON DELETE SET NULL, action VARCHAR(50), field VARCHAR(100), old_value TEXT, new_value TEXT, occurred_at DATETIME DEFAULT CURRENT_TIMESTAMP)",
             "ALTER TABLE audit_logs ADD COLUMN area_id INTEGER REFERENCES areas(id) ON DELETE CASCADE",
             "ALTER TABLE areas ADD COLUMN icon VARCHAR(64)",
+            "ALTER TABLE entries ADD COLUMN meeting_at DATETIME",
         ]:
             try:
                 conn.execute(text(sql))
@@ -114,10 +115,22 @@ def _init_db():
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     _init_db()
+    try:
+        import scheduler
+        scheduler.start()
+    except Exception as e:
+        # Don't let a scheduler bug take the whole API down
+        import logging
+        logging.getLogger("trace").warning("Scheduler failed to start: %s", e)
     yield
+    try:
+        import scheduler
+        scheduler.shutdown()
+    except Exception:
+        pass
 
 
-app = FastAPI(title="Trace", version="1.0.0", lifespan=lifespan)
+app = FastAPI(title="Trace.", version="1.0.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,

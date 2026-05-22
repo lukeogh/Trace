@@ -137,10 +137,10 @@ export const ingestApi = {
 // ─── Generate / Process ───────────────────────────────────────────────────────
 
 export const generateApi = {
-  process: (areaName, inputText) =>
+  process: (areaName, inputText, sourceKind = null) =>
     request('/generate/process', {
       method: 'POST',
-      body: { area_name: areaName, input_text: inputText },
+      body: { area_name: areaName, input_text: inputText, source_kind: sourceKind },
     }),
   refine: (item, rejectionReason, areaName) =>
     request('/generate/refine', {

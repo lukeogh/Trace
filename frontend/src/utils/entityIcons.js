@@ -1,0 +1,61 @@
+import { PenLine, CheckSquare, Scale, Calendar, MessageSquare, Eye, Activity, Paperclip, Link2 } from 'lucide-react'
+
+/**
+ * Single source of truth for the icon + label + colour token used for each
+ * domain concept. Used across composers, badges, list rows, page headers
+ * and the Universal Suggest pipeline so the same idea always reads the
+ * same way.
+ *
+ * Tint classes assume Trace's accent palette + the muted status colours
+ * declared in tailwind.config.js.
+ */
+export const ENTITY = {
+  entry: {
+    label: 'Entry',
+    Icon: PenLine,
+    tint: 'text-accent-500 dark:text-accent-400',
+    badge: 'bg-accent-500/10 text-accent-600 dark:text-accent-400',
+    borderLeft: 'border-l-accent-500',
+  },
+  todo: {
+    label: 'To Do',
+    Icon: CheckSquare,
+    tint: 'text-sky-muted dark:text-sky-muted',
+    badge: 'bg-sky-muted/10 text-sky-muted dark:text-sky-muted',
+    borderLeft: 'border-l-sky-muted',
+  },
+  decision: {
+    label: 'Decision',
+    Icon: Scale,
+    tint: 'text-amber-muted dark:text-amber-muted',
+    badge: 'bg-amber-muted/10 text-amber-muted dark:text-amber-muted',
+    borderLeft: 'border-l-amber-muted',
+  },
+  meeting: {
+    label: 'Meeting',
+    Icon: Calendar,
+    tint: 'text-lavender dark:text-lavender',
+    badge: 'bg-lavender/10 text-lavender dark:text-lavender',
+    borderLeft: 'border-l-lavender',
+  },
+}
+
+export const ENTITY_TYPES = Object.entries(ENTITY).map(([key, v]) => ({
+  key,
+  label: v.label,
+  Icon: v.Icon,
+}))
+
+export function entityFor(type) {
+  return ENTITY[type] ?? ENTITY.entry
+}
+
+// Structural concepts (sections, lists, page headers) — not entry types.
+export const SECTION_ICONS = {
+  thread:     MessageSquare,
+  overview:   Eye,
+  openTasks:  CheckSquare,
+  timeline:   Activity,
+  files:      Paperclip,
+  links:      Link2,
+}

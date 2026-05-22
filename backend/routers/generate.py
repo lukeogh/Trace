@@ -77,15 +77,28 @@ def _translate_anthropic_error(exc: Exception) -> HTTPException:
 def generate_process(payload: schemas.ProcessRequest):
     client = get_anthropic_client()
 
-    system = """You extract structured work items from unstructured text for a software department management tool.
+    base_system = """You extract structured work items from unstructured text for a software department management tool.
 Respond with a JSON array only. No preamble, no explanation, no markdown code fences.
 Each item must have exactly these fields:
-  type:             "todo" | "entry" | "decision"
-  content:          string (clear and actionable)
+  type:             "todo" | "entry" | "decision" | "meeting"
+  content:          string (clear and actionable; for meetings, the meeting subject/title)
   rationale:        string (one sentence explaining why you extracted this)
   suggested_thread: string (a short thread title this item belongs in)
   due_date:         string | null (ISO date YYYY-MM-DD if applicable, else null)
+  meeting_at:       string | null (ISO datetime YYYY-MM-DDTHH:MM if known, meetings only, else null)
 Maximum 8 items. Prioritise actionable items over contextual ones."""
+
+    ics_addendum = """
+
+This input is a parsed calendar invite (.ics). The FIRST item you return MUST be of type "meeting":
+  - content: the meeting subject
+  - meeting_at: the ISO start datetime (YYYY-MM-DDTHH:MM) parsed from the invite
+  - suggested_thread: a sensible thread name for this meeting topic
+  - rationale: brief note that this came from a calendar invite
+
+Then continue extracting any other actionable items (todos / decisions / context entries) from the agenda or description as normal."""
+
+    system = base_system + (ics_addendum if (payload.source_kind == "ics") else "")
 
     try:
         message = client.messages.create(

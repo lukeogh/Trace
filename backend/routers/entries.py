@@ -18,11 +18,16 @@ def create_entry(
     if not thread:
         raise HTTPException(status_code=404, detail="Thread not found")
 
+    valid_types = {"entry", "todo", "decision", "meeting"}
+    if payload.type not in valid_types:
+        raise HTTPException(status_code=422, detail=f"type must be one of {valid_types}")
+
     entry = models.Entry(
         thread_id=thread_id,
         content=payload.content,
         type=payload.type,
         due_date=payload.due_date,
+        meeting_at=payload.meeting_at,
     )
     db.add(entry)
 
@@ -95,6 +100,15 @@ def update_entry(
         entry.due_date = payload.due_date
     elif payload.due_date is not None:
         entry.due_date = payload.due_date
+
+    if payload.meeting_at is not None and payload.meeting_at != entry.meeting_at:
+        log_audit(db, entity_type='entry', entity_id=entry.id, area_id=entry_area_id,
+                  thread_id=entry.thread_id, action='updated', field='meeting_at',
+                  old_value=entry.meeting_at.isoformat() if entry.meeting_at else None,
+                  new_value=payload.meeting_at.isoformat())
+        entry.meeting_at = payload.meeting_at
+    elif payload.meeting_at is not None:
+        entry.meeting_at = payload.meeting_at
 
     entry.updated_at = datetime.now(timezone.utc)
     db.commit()

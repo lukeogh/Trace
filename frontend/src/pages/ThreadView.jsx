@@ -11,16 +11,17 @@ import { threadsApi, entriesApi, attachmentsApi, areasApi } from '../api/client'
 import StatusBadge from '../components/StatusBadge'
 import Modal from '../components/Modal'
 import ConfirmDialog from '../components/ConfirmDialog'
+import AddMeetingModal from '../components/AddMeetingModal'
 import { useToast } from '../components/Toast'
 import { THREAD_STATUSES, formatBytes, DUE_DATE_OPTIONS } from '../utils/status'
 
+import { ENTITY, ENTITY_TYPES, entityFor, SECTION_ICONS } from '../utils/entityIcons'
+
 const INACTIVITY_THRESHOLD_DAYS = 7
 
-const ENTRY_TYPES = [
-  { key: 'entry',    label: 'Entry' },
-  { key: 'todo',     label: 'To Do' },
-  { key: 'decision', label: 'Decision' },
-]
+// Entry composer types — meetings are added through the dedicated Add Meeting
+// button so they don't appear here.
+const ENTRY_TYPES = ENTITY_TYPES.filter((t) => t.key !== 'meeting')
 
 function getDueDateClass(dueDateStr) {
   const today = format(new Date(), 'yyyy-MM-dd')
@@ -75,6 +76,10 @@ export default function ThreadView() {
   const [linkThreadForm, setLinkThreadForm] = useState({ to_thread_id: '', kind: 'blocks' })
   const [allThreads, setAllThreads] = useState([])
   const [addingThreadLink, setAddingThreadLink] = useState(false)
+
+  // Add-meeting modal
+  const [meetingOpen, setMeetingOpen] = useState(false)
+  const [addingMeeting, setAddingMeeting] = useState(false)
 
   const load = async () => {
     setLoading(true)
@@ -166,6 +171,21 @@ export default function ThreadView() {
       toast('Entry added')
     } catch (e) { toast(e.message, 'error') }
     finally { setAddingEntry(false) }
+  }
+
+  const addMeeting = async ({ title, meeting_at }) => {
+    setAddingMeeting(true)
+    try {
+      const entry = await entriesApi.create(threadId, {
+        content: title,
+        type: 'meeting',
+        meeting_at,
+      })
+      setThread((t) => ({ ...t, entries: [...t.entries, entry] }))
+      setMeetingOpen(false)
+      toast('Meeting added')
+    } catch (e) { toast(e.message, 'error') }
+    finally { setAddingMeeting(false) }
   }
 
   const saveEntry = async (entryId) => {
@@ -555,7 +575,24 @@ export default function ThreadView() {
               </div>
             )}
 
-            <div className="flex justify-end mt-2">
+            <div className="flex justify-between items-center mt-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setMeetingOpen(true)}
+                className="
+                  flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-md
+                  text-paper-600 dark:text-paper-500
+                  bg-paper-200 dark:bg-pitch-800
+                  hover:bg-paper-300 dark:hover:bg-pitch-500
+                  font-display uppercase tracking-wide transition-colors
+                "
+              >
+                {(() => {
+                  const MeetingIcon = ENTITY.meeting.Icon
+                  return <MeetingIcon size={13} />
+                })()}
+                Add meeting
+              </button>
               <button
                 onClick={addEntry}
                 disabled={!newEntryContent.trim() || addingEntry}
@@ -639,7 +676,8 @@ export default function ThreadView() {
             {/* Files */}
             <div className="p-4 rounded-xl bg-paper-100 dark:bg-pitch-700 border border-paper-300 dark:border-pitch-500">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-xs font-display uppercase tracking-widest text-paper-500 dark:text-paper-600">
+                <h3 className="text-xs font-display uppercase tracking-widest text-paper-500 dark:text-paper-600 flex items-center gap-1.5">
+                  <Paperclip size={11} />
                   Files <span className="font-mono text-paper-400 dark:text-paper-700">({files.length})</span>
                 </h3>
                 <button
@@ -667,7 +705,8 @@ export default function ThreadView() {
             {/* Links */}
             <div className="p-4 rounded-xl bg-paper-100 dark:bg-pitch-700 border border-paper-300 dark:border-pitch-500">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-xs font-display uppercase tracking-widest text-paper-500 dark:text-paper-600">
+                <h3 className="text-xs font-display uppercase tracking-widest text-paper-500 dark:text-paper-600 flex items-center gap-1.5">
+                  <Link2 size={11} />
                   Links <span className="font-mono text-paper-400 dark:text-paper-700">({links.length})</span>
                 </h3>
                 <button
@@ -773,6 +812,13 @@ export default function ThreadView() {
         onConfirm={() => deleteAttachment(deleteAttachmentId)}
         title="Remove Attachment"
         message="Remove this attachment? Uploaded files will be deleted from the server."
+      />
+
+      <AddMeetingModal
+        isOpen={meetingOpen}
+        onClose={() => setMeetingOpen(false)}
+        onSubmit={addMeeting}
+        submitting={addingMeeting}
       />
 
       <Modal isOpen={linkThreadOpen} onClose={() => setLinkThreadOpen(false)} title="Link to another thread" width="max-w-md">

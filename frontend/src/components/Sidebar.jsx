@@ -66,12 +66,17 @@ export default function Sidebar({
         border-r border-paper-300 dark:border-pitch-700
       "
     >
-      {/* Brand — kept clean: logo + wordmark only */}
+      {/* Brand — logo + wordmark + slogan */}
       <div className="px-4 py-5 border-b border-paper-300 dark:border-pitch-700">
         <Link to="/" className="flex items-center gap-3 min-w-0">
           <Logo size={36} />
-          <div className="font-display font-medium text-xl tracking-tightest text-pitch-800 dark:text-white leading-none">
-            Trace
+          <div className="min-w-0">
+            <div className="font-display font-medium text-xl tracking-tightest text-pitch-800 dark:text-white leading-none">
+              Trace.
+            </div>
+            <div className="mt-1 font-mono uppercase tracking-[0.2em] text-[10px] text-paper-500 dark:text-paper-600 truncate">
+              Stay across everything.
+            </div>
           </div>
         </Link>
       </div>

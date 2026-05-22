@@ -56,11 +56,13 @@ class Entry(Base):
     id = Column(Integer, primary_key=True, index=True)
     thread_id = Column(Integer, ForeignKey("threads.id"), nullable=False)
     content = Column(Text, nullable=False)
-    # entry | todo | decision
+    # entry | todo | decision | meeting
     type = Column(String(20), default="entry", nullable=False)
     completed = Column(Boolean, default=False, nullable=False)
     completed_at = Column(DateTime, nullable=True)
     due_date = Column(Date, nullable=True)
+    # Scheduled time for meeting-type entries (null for other types)
+    meeting_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
