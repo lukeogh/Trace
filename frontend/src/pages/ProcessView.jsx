@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { BrainCircuit, Check, X, Loader2, RotateCcw, Upload, FileText, Mail, Calendar } from 'lucide-react'
+import { BrainCircuit, Check, X, RotateCcw, Upload, FileText, Mail, Calendar } from 'lucide-react'
 import { areasApi, generateApi, entriesApi, ingestApi } from '../api/client'
 import { useToast } from '../components/Toast'
+import Spinner from '../components/Spinner'
 
 const STATUS_MESSAGES = ['Reading…', 'Identifying tasks…', 'Structuring items…', 'Preparing review…']
 const STORAGE_KEY = 'trace-process'
@@ -288,7 +289,7 @@ function ItemCard({ item: initialItem, areaId, areaThreads, selectedAreaName, on
                   disabled:opacity-50 transition-colors
                 "
               >
-                {status === 'refining' && <Loader2 size={11} className="animate-spin" />}
+                {status === 'refining' && <Spinner size={11} />}
                 Refine
               </button>
             </div>
@@ -325,7 +326,7 @@ function ItemCard({ item: initialItem, areaId, areaThreads, selectedAreaName, on
                 "
               >
                 {status === 'approving' ? (
-                  <Loader2 size={14} className="animate-spin" />
+                  <Spinner size={14} />
                 ) : (
                   <Check size={14} />
                 )}
@@ -649,7 +650,7 @@ export default function ProcessView() {
               absolute inset-0 z-20 rounded-xl flex flex-col items-center justify-center gap-2
               bg-white/70 dark:bg-pitch-700/80 backdrop-blur-sm pointer-events-none
             ">
-              <Loader2 size={24} className="text-accent-500 animate-spin" />
+              <Spinner size={24} className="text-accent-500" />
               <p className="font-display uppercase tracking-widest text-xs text-paper-600 dark:text-paper-500">
                 Parsing…
               </p>

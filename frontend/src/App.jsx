@@ -6,6 +6,7 @@ import { ToastProvider } from './components/Toast'
 import QuickCapture from './components/QuickCapture'
 import QuickSwitcher from './components/QuickSwitcher'
 import NewAreaModal from './components/NewAreaModal'
+import SplashScreen from './components/SplashScreen'
 import Sidebar from './components/Sidebar'
 import Dashboard from './pages/Dashboard'
 import AreaView from './pages/AreaView'
@@ -21,6 +22,7 @@ export default function App() {
   const { font, setFont } = useFont()
   const [switcherOpen, setSwitcherOpen] = useState(false)
   const [newAreaOpen, setNewAreaOpen] = useState(false)
+  const [booting, setBooting] = useState(true)
 
   // Global ⌘K / Ctrl+K toggles the QuickSwitcher from anywhere
   useEffect(() => {
@@ -34,8 +36,24 @@ export default function App() {
     return () => document.removeEventListener('keydown', handler)
   }, [])
 
+  // Boot splash: dismiss once the first areas fetch resolves, OR after 1.2s
+  // as a hard fallback so the user is never stuck if the backend is down.
+  useEffect(() => {
+    let cancelled = false
+    const finish = () => { if (!cancelled) setBooting(false) }
+    const timeout = setTimeout(finish, 1200)
+    areasApi.list()
+      .catch(() => {})
+      .finally(() => {
+        // Settle for one frame so the splash has a chance to be seen
+        setTimeout(finish, 200)
+      })
+    return () => { cancelled = true; clearTimeout(timeout) }
+  }, [])
+
   return (
     <ToastProvider>
+      <SplashScreen visible={booting} />
       <BrowserRouter>
         <Shell
           dark={dark}
