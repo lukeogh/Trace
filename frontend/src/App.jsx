@@ -2,6 +2,8 @@ import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
 import { useEffect, useState, useCallback } from 'react'
 import { useTheme } from './hooks/useTheme'
 import { useFont } from './hooks/useFont'
+import { useDisplayName } from './hooks/useDisplayName'
+import { useTextSize } from './hooks/useTextSize'
 import { ToastProvider } from './components/Toast'
 import QuickCapture from './components/QuickCapture'
 import QuickSwitcher from './components/QuickSwitcher'
@@ -20,6 +22,8 @@ import { areasApi } from './api/client'
 export default function App() {
   const { dark, toggle } = useTheme()
   const { font, setFont } = useFont()
+  const { displayName, setDisplayName } = useDisplayName()
+  const { textSize, setTextSize } = useTextSize()
   const [switcherOpen, setSwitcherOpen] = useState(false)
   const [newAreaOpen, setNewAreaOpen] = useState(false)
   const [booting, setBooting] = useState(true)
@@ -65,6 +69,10 @@ export default function App() {
           onToggleTheme={toggle}
           font={font}
           onChangeFont={setFont}
+          displayName={displayName}
+          onChangeDisplayName={setDisplayName}
+          textSize={textSize}
+          onChangeTextSize={setTextSize}
           onOpenSwitcher={() => setSwitcherOpen(true)}
           onOpenNewArea={() => setNewAreaOpen(true)}
         />
@@ -83,7 +91,13 @@ export default function App() {
 }
 
 // Shell wraps every route so navigation is always visible
-function Shell({ dark, onToggleTheme, font, onChangeFont, onOpenSwitcher, onOpenNewArea }) {
+function Shell({
+  dark, onToggleTheme,
+  font, onChangeFont,
+  displayName, onChangeDisplayName,
+  textSize, onChangeTextSize,
+  onOpenSwitcher, onOpenNewArea,
+}) {
   const [areas, setAreas] = useState([])
   const location = useLocation()
 
@@ -101,6 +115,10 @@ function Shell({ dark, onToggleTheme, font, onChangeFont, onOpenSwitcher, onOpen
         onToggleTheme={onToggleTheme}
         font={font}
         onChangeFont={onChangeFont}
+        displayName={displayName}
+        onChangeDisplayName={onChangeDisplayName}
+        textSize={textSize}
+        onChangeTextSize={onChangeTextSize}
         onOpenSwitcher={onOpenSwitcher}
         onOpenNewArea={onOpenNewArea}
       />

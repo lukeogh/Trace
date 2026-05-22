@@ -3,8 +3,7 @@ import { Link, useParams, useLocation } from 'react-router-dom'
 import { LayoutDashboard, History, BrainCircuit, Search, Plus } from 'lucide-react'
 import { getAreaStatus } from '../utils/status'
 import { MOD_KEY } from '../utils/platform'
-import ThemeToggle from './ThemeToggle'
-import FontPicker from './FontPicker'
+import SettingsMenu from './SettingsMenu'
 import Logo from './Logo'
 
 const MIN_WIDTH = 200
@@ -17,6 +16,10 @@ export default function Sidebar({
   onToggleTheme,
   font,
   onChangeFont,
+  displayName,
+  onChangeDisplayName,
+  textSize,
+  onChangeTextSize,
   onOpenSwitcher,
   onOpenNewArea,
 }) {
@@ -71,20 +74,14 @@ export default function Sidebar({
         border-r border-paper-300 dark:border-pitch-700
       "
     >
-      {/* Brand */}
+      {/* Brand — kept clean: logo + wordmark only */}
       <div className="px-4 py-5 border-b border-paper-300 dark:border-pitch-700">
-        <div className="flex items-center justify-between gap-2">
-          <Link to="/" className="flex items-center gap-3 min-w-0">
-            <Logo size={36} />
-            <div className="font-display font-medium text-xl tracking-tightest text-pitch-800 dark:text-white leading-none">
-              Trace
-            </div>
-          </Link>
-          <div className="flex items-center gap-0.5 flex-shrink-0">
-            <FontPicker font={font} onChange={onChangeFont} />
-            <ThemeToggle dark={dark} onToggle={onToggleTheme} />
+        <Link to="/" className="flex items-center gap-3 min-w-0">
+          <Logo size={36} />
+          <div className="font-display font-medium text-xl tracking-tightest text-pitch-800 dark:text-white leading-none">
+            Trace
           </div>
-        </div>
+        </Link>
       </div>
 
       {/* Quick switcher trigger */}
@@ -177,12 +174,26 @@ export default function Sidebar({
         </button>
       </nav>
 
-      {/* Footer — keyboard shortcut hints */}
-      <div className="px-4 py-3 border-t border-paper-300 dark:border-pitch-700 space-y-1.5">
-        <ShortcutHint label="Capture" keys={['N']} />
-        <ShortcutHint label="Switcher" keys={[MOD_KEY, 'K']} />
-        <div className="pt-1.5 text-xs font-mono text-paper-400 dark:text-pitch-500">
-          v1.0.0
+      {/* Footer — settings + keyboard shortcuts */}
+      <div className="border-t border-paper-300 dark:border-pitch-700">
+        <div className="px-2 pt-2">
+          <SettingsMenu
+            displayName={displayName}
+            onChangeDisplayName={onChangeDisplayName}
+            dark={dark}
+            onToggleTheme={onToggleTheme}
+            font={font}
+            onChangeFont={onChangeFont}
+            textSize={textSize}
+            onChangeTextSize={onChangeTextSize}
+          />
+        </div>
+        <div className="px-4 pb-3 pt-1 space-y-1">
+          <ShortcutHint label="Capture" keys={['N']} />
+          <ShortcutHint label="Switcher" keys={[MOD_KEY, 'K']} />
+          <div className="pt-1 text-xs font-mono text-paper-400 dark:text-pitch-500">
+            v1.0.0
+          </div>
         </div>
       </div>
 
