@@ -6,6 +6,7 @@ import { areasApi } from '../api/client'
 import StatusBadge from '../components/StatusBadge'
 import ThreadCard from '../components/ThreadCard'
 import Modal from '../components/Modal'
+import IconPicker, { AreaIcon } from '../components/IconPicker'
 import { useToast } from '../components/Toast'
 import { AREA_STATUSES, THREAD_STATUSES } from '../utils/status'
 
@@ -154,8 +155,38 @@ export default function AreaView() {
         border-b border-paper-200 dark:border-pitch-700
       ">
         <div className="max-w-4xl mx-auto flex items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <h1 className="font-display font-bold text-xl uppercase tracking-widest text-pitch-800 dark:text-white">
+          <div className="flex items-center gap-3 min-w-0">
+            <IconPicker
+              value={area.icon}
+              onChange={async (nextIcon) => {
+                try {
+                  const updated = await areasApi.update(areaId, { icon: nextIcon })
+                  setArea(updated)
+                } catch (e) {
+                  toast(e.message, 'error')
+                }
+              }}
+            >
+              {({ open: openPicker, value }) => (
+                <button
+                  onClick={openPicker}
+                  title={value ? `Icon: ${value}` : 'Set icon'}
+                  className="
+                    flex items-center justify-center w-10 h-10 rounded-md flex-shrink-0
+                    bg-paper-200/60 dark:bg-pitch-700
+                    border border-paper-300 dark:border-pitch-500
+                    text-pitch-800 dark:text-white
+                    hover:border-paper-400 dark:hover:border-pitch-400
+                    transition-colors
+                  "
+                >
+                  {value
+                    ? <AreaIcon name={value} size={22} />
+                    : <Plus size={16} className="text-paper-500 dark:text-paper-600" />}
+                </button>
+              )}
+            </IconPicker>
+            <h1 className="font-display font-bold text-2xl uppercase tracking-widest text-pitch-800 dark:text-white truncate">
               {area.name}
             </h1>
 

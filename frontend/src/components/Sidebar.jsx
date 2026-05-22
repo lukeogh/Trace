@@ -4,6 +4,7 @@ import { LayoutDashboard, History, BrainCircuit, Search, Plus } from 'lucide-rea
 import { getAreaStatus } from '../utils/status'
 import { MOD_KEY } from '../utils/platform'
 import SettingsMenu from './SettingsMenu'
+import { AreaIcon } from './IconPicker'
 import Logo from './Logo'
 
 const MIN_WIDTH = 200
@@ -130,7 +131,7 @@ export default function Sidebar({
               key={area.id}
               to={`/area/${area.id}`}
               className={`
-                flex items-center gap-2.5 px-3 py-2 rounded-md text-sm transition-colors group
+                flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors group
                 ${isActive
                   ? 'bg-paper-200 dark:bg-pitch-700 text-pitch-800 dark:text-white'
                   : 'text-paper-600 dark:text-paper-500 hover:bg-paper-200 dark:hover:bg-pitch-700 hover:text-pitch-700 dark:hover:text-paper-200'
@@ -138,12 +139,15 @@ export default function Sidebar({
               `}
             >
               <span
-                className="w-2 h-2 rounded-full flex-shrink-0"
+                className="w-1.5 h-1.5 rounded-full flex-shrink-0"
                 style={{
                   backgroundColor: config.dot,
                   boxShadow: isActive ? `0 0 5px ${config.dot}` : 'none',
                 }}
               />
+              {area.icon ? (
+                <AreaIcon name={area.icon} size={13} className="flex-shrink-0" />
+              ) : null}
               <span className="flex-1 truncate font-medium text-xs font-display uppercase tracking-wide">
                 {area.name}
               </span>

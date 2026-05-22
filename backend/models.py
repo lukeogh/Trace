@@ -13,6 +13,8 @@ class Area(Base):
     # stable | active | review | blocked
     status = Column(String(50), default="stable", nullable=False)
     summary = Column(Text, default="")
+    # lucide-react icon name (e.g. "Code", "Database"). null = no icon set.
+    icon = Column(String(64), nullable=True)
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 

@@ -5,6 +5,7 @@ import { formatDistanceToNow, format, differenceInDays, differenceInCalendarDays
 import { areasApi, entriesApi } from '../api/client'
 import StatusBadge from '../components/StatusBadge'
 import WeeklyRoundupModal from '../components/WeeklyRoundupModal'
+import { AreaIcon } from '../components/IconPicker'
 import { getAreaStatus } from '../utils/status'
 
 const INACTIVITY_THRESHOLD_DAYS = 7
@@ -200,10 +201,17 @@ function AreaCard({ area }) {
 
       <div className="p-5 flex flex-col flex-1">
         {/* Header */}
-        <div className="flex items-start justify-between mb-3">
-          <h2 className="font-display font-bold text-base uppercase tracking-wider text-pitch-800 dark:text-white">
-            {area.name}
-          </h2>
+        <div className="flex items-start justify-between gap-3 mb-3">
+          <div className="flex items-center gap-2.5 min-w-0">
+            {area.icon && (
+              <span className="text-paper-700 dark:text-paper-200 flex-shrink-0">
+                <AreaIcon name={area.icon} size={18} />
+              </span>
+            )}
+            <h2 className="font-display font-bold text-base uppercase tracking-wider text-pitch-800 dark:text-white truncate">
+              {area.name}
+            </h2>
+          </div>
           <StatusBadge status={area.status} type="area" size="xs" />
         </div>
 

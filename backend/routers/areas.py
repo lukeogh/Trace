@@ -49,6 +49,7 @@ def _area_summary(area: models.Area, db: Session) -> schemas.AreaSummary:
         slug=area.slug,
         status=area.status,
         summary=area.summary or "",
+        icon=area.icon,
         created_at=area.created_at,
         updated_at=area.updated_at,
         thread_count=thread_count,
@@ -76,6 +77,7 @@ def create_area(payload: schemas.AreaCreate, db: Session = Depends(get_db)):
         slug=slug,
         status="stable",
         summary=(payload.summary or "").strip(),
+        icon=(payload.icon or None),
     )
     db.add(area)
     db.commit()
@@ -120,6 +122,12 @@ def update_area(area_id: int, payload: schemas.AreaUpdate, db: Session = Depends
         area.summary = payload.summary
     elif payload.summary is not None:
         area.summary = payload.summary
+
+    if payload.icon is not None and payload.icon != area.icon:
+        log_audit(db, entity_type='area', entity_id=area.id, area_id=area.id,
+                  action='updated', field='icon',
+                  old_value=area.icon, new_value=payload.icon or None)
+        area.icon = payload.icon or None
 
     area.updated_at = datetime.now(timezone.utc)
     db.commit()

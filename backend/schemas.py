@@ -119,11 +119,13 @@ class ThreadDetail(BaseModel):
 class AreaCreate(BaseModel):
     name: str
     summary: Optional[str] = ""
+    icon: Optional[str] = None
 
 
 class AreaUpdate(BaseModel):
     status: Optional[str] = None
     summary: Optional[str] = None
+    icon: Optional[str] = None
 
 
 class SummarySuggestion(BaseModel):
@@ -137,6 +139,7 @@ class AreaSummary(BaseModel):
     slug: str
     status: str
     summary: str
+    icon: Optional[str] = None
     created_at: datetime
     updated_at: datetime
     thread_count: int
@@ -152,6 +155,7 @@ class AreaDetail(BaseModel):
     slug: str
     status: str
     summary: str
+    icon: Optional[str] = None
     created_at: datetime
     updated_at: datetime
 

@@ -3,12 +3,14 @@ import { useNavigate } from 'react-router-dom'
 import { areasApi } from '../api/client'
 import { useToast } from './Toast'
 import Modal from './Modal'
+import IconPicker from './IconPicker'
 
 export default function NewAreaModal({ isOpen, onClose, onCreated }) {
   const navigate = useNavigate()
   const toast = useToast()
   const [name, setName] = useState('')
   const [summary, setSummary] = useState('')
+  const [icon, setIcon] = useState(null)
   const [submitting, setSubmitting] = useState(false)
   const inputRef = useRef(null)
 
@@ -16,6 +18,7 @@ export default function NewAreaModal({ isOpen, onClose, onCreated }) {
     if (!isOpen) return
     setName('')
     setSummary('')
+    setIcon(null)
     setTimeout(() => inputRef.current?.focus(), 50)
   }, [isOpen])
 
@@ -24,7 +27,7 @@ export default function NewAreaModal({ isOpen, onClose, onCreated }) {
     if (!trimmed) return
     setSubmitting(true)
     try {
-      const area = await areasApi.create({ name: trimmed, summary: summary.trim() })
+      const area = await areasApi.create({ name: trimmed, summary: summary.trim(), icon })
       toast(`Created “${area.name}”`)
       onCreated?.(area)
       onClose()
@@ -43,20 +46,23 @@ export default function NewAreaModal({ isOpen, onClose, onCreated }) {
           <label className="block text-xs font-display uppercase tracking-wide text-paper-600 dark:text-paper-500 mb-1.5">
             Name
           </label>
-          <input
-            ref={inputRef}
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) submit() }}
-            placeholder="e.g. Customer Portal"
-            className="
-              w-full px-3 py-2 text-sm rounded-lg
-              bg-paper-100 dark:bg-pitch-700 border border-paper-300 dark:border-paper-700
-              text-pitch-800 dark:text-white
-              placeholder:text-paper-400 dark:placeholder:text-paper-700
-              focus:outline-none focus:ring-2 focus:ring-accent-500
-            "
-          />
+          <div className="flex items-start gap-2">
+            <IconPicker value={icon} onChange={setIcon} />
+            <input
+              ref={inputRef}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) submit() }}
+              placeholder="e.g. Customer Portal"
+              className="
+                flex-1 px-3 py-2 text-sm rounded-lg
+                bg-paper-100 dark:bg-pitch-700 border border-paper-300 dark:border-paper-700
+                text-pitch-800 dark:text-white
+                placeholder:text-paper-400 dark:placeholder:text-paper-700
+                focus:outline-none focus:ring-2 focus:ring-accent-500
+              "
+            />
+          </div>
         </div>
 
         <div>
