@@ -77,7 +77,7 @@ def _translate_anthropic_error(exc: Exception) -> HTTPException:
 def generate_process(payload: schemas.ProcessRequest):
     client = get_anthropic_client()
 
-    base_system = """You extract structured work items from unstructured text for a software department management tool.
+    base_system = """You extract structured work items from unstructured text for Trace., a personal log for tracking work across multiple parallel areas of responsibility.
 Respond with a JSON array only. No preamble, no explanation, no markdown code fences.
 Each item must have exactly these fields:
   type:             "todo" | "entry" | "decision" | "meeting"
@@ -180,12 +180,12 @@ No preamble, no markdown."""
 def generate_roundup(payload: schemas.RoundupRequest):
     client = get_anthropic_client()
 
-    prompt = f"""You are writing a weekly department status update for the Head of Software at Axithra, a Belgian medtech company.
-The update covers seven software discipline areas. Write in a professional, direct tone suitable for sharing with a manager.
+    prompt = f"""You are writing a weekly status update summarising activity across the user's areas of work.
+Write in a professional, direct tone suitable for sharing or keeping as a personal record.
 Be concise. Use plain prose with no markdown formatting. Use dashes for list items if needed.
 
 Structure:
-1. One short executive paragraph (3-4 sentences) summarising the week across the whole department.
+1. One short executive paragraph (3-4 sentences) summarising the week across all areas.
 2. One line per area. Format: "Area Name - [summary]".
    Non-movers: "Area Name - No activity this week."
    Active areas: include status, tasks opened vs completed, any decisions made, key activity.

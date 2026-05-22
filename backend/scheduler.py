@@ -56,7 +56,7 @@ def _refresh_area(db, area: models.Area, client) -> bool:
     context = _gather_area_context(db, area)
 
     system = (
-        "You write concise status summaries for areas of a software department.\n"
+        "You write concise status summaries for an area of someone's work.\n"
         "Output exactly 2 sentences. No preamble, no formatting, no bullet points.\n"
         "Sentence 1: the current state — what's happening right now, what's in motion.\n"
         "Sentence 2: what's next or blocking — risks, pending decisions, what to watch.\n"

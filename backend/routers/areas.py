@@ -178,7 +178,7 @@ def suggest_area_summary(area_id: int, db: Session = Depends(get_db)):
     client = Anthropic(api_key=api_key)
 
     system = (
-        "You write concise status summaries for areas of a software department.\n"
+        "You write concise status summaries for an area of someone's work.\n"
         "Output exactly 2 sentences. No preamble, no formatting, no bullet points.\n"
         "Sentence 1: the current state — what's happening right now, what's in motion.\n"
         "Sentence 2: what's next or blocking — risks, pending decisions, what to watch.\n"

@@ -2,7 +2,7 @@
 
 > Stay across everything.
 
-A self-hosted department activity tracker for the Axithra software team. Tracks the current situation across seven software disciplines — Documentation, Firmware, Software Test, Software Development, Algorithm, Design, and Security — with named threads and chronological log entries per thread.
+A self-hosted activity log for anyone juggling multiple parallel responsibilities. Organise your world into **areas** (one per spinning plate), break each area into **threads** of focused work, and keep a chronological record of todos, decisions, meetings, blockers, and notes inside every thread. AI surfaces help where they materially save time — parse messy input into structured items, regenerate area summaries automatically, draft a weekly status digest in one click. Self-hosted, single Docker container, your data on a disk you own.
 
 ---
 
@@ -18,7 +18,7 @@ A self-hosted department activity tracker for the Axithra software team. Tracks 
 
 ```bash
 # Clone your repo (or navigate to the project directory)
-cd department-log
+cd trace
 
 # Build and start the container
 docker compose up --build -d
@@ -27,7 +27,7 @@ docker compose up --build -d
 # http://localhost:8080
 ```
 
-On first run, the database is created automatically and the seven areas are seeded. All data persists in the `./data/` directory.
+On first run, the database is created automatically. The app launches empty — add your first area from the sidebar (`+ Add your first area`). All data persists in the `./data/` directory.
 
 ### Stop the container
 
@@ -46,7 +46,7 @@ docker compose up --build -d
 ## Project Structure
 
 ```
-department-log/
+trace/
 │
 ├── backend/                  Python FastAPI application
 │   ├── main.py               App entry point — initialises DB, mounts routers, serves frontend
@@ -84,12 +84,14 @@ department-log/
 │       │   ├── Toast.jsx         In-app notification system
 │       │   └── ThreadCard.jsx    Area view card linking to a thread
 │       └── pages/
-│           ├── Dashboard.jsx   7-area grid with status, counts, summaries
-│           ├── AreaView.jsx    Single area — editable summary, thread list, new thread modal
-│           └── ThreadView.jsx  Full thread — entry log, file attachments, link attachments
+│           ├── Dashboard.jsx   Area grid with status, counts, AI-generated overviews
+│           ├── AreaView.jsx    Single area — Overview, thread list, new thread modal
+│           ├── ThreadView.jsx  Full thread — entry timeline, files, links, linked threads
+│           ├── LogView.jsx     Audit log viewer
+│           └── ProcessView.jsx Smart Generate — AI extracts items from notes / .eml / .ics / PDFs
 │
 ├── data/                     Runtime data (git-ignored, Docker volume mount)
-│   ├── department.db         SQLite database
+│   ├── department.db         SQLite database (filename kept for backward compatibility)
 │   └── uploads/              Uploaded files
 │
 ├── Dockerfile                Multi-stage: Node builds frontend; Python serves everything
@@ -122,6 +124,7 @@ mkdir -p ../data/uploads
 
 # Run the dev server
 DB_PATH=../data/department.db UPLOAD_DIR=../data/uploads uvicorn main:app --reload --port 8000
+# (DB filename kept for backward compatibility; rename freely on fresh installs)
 ```
 
 API is available at `http://localhost:8000`
@@ -149,9 +152,11 @@ All endpoints are prefixed with `/api`.
 
 | Method | Path | Description |
 |--------|------|-------------|
-| GET | `/areas` | List all 7 areas with thread counts |
+| GET | `/areas` | List all areas with thread counts |
+| POST | `/areas` | Create a new area |
 | GET | `/areas/:id` | Get a single area |
-| PUT | `/areas/:id` | Update area status or summary |
+| PUT | `/areas/:id` | Update area status, summary, or icon |
+| POST | `/areas/:id/summary/suggest` | AI-generated 2-sentence Overview |
 | GET | `/areas/:id/threads` | List threads for an area |
 | POST | `/areas/:id/threads` | Create a new thread |
 | GET | `/threads/:id` | Get thread with all entries and attachments |
@@ -162,7 +167,19 @@ All endpoints are prefixed with `/api`.
 | DELETE | `/entries/:id` | Delete an entry |
 | POST | `/threads/:id/attachments/file` | Upload a file (multipart) |
 | POST | `/threads/:id/attachments/link` | Add a URL link |
+| POST | `/threads/:id/links` | Link to another thread (blocks / relates_to) |
+| DELETE | `/links/:id` | Remove a thread-to-thread link |
 | DELETE | `/attachments/:id` | Remove an attachment |
+| POST | `/ingest/parse` | Parse a dropped file (PDF / EML / ICS / text) into plain text |
+| POST | `/generate/process` | AI extracts structured items from unstructured text |
+| POST | `/generate/refine` | AI re-suggests a rejected item with feedback |
+| POST | `/generate/roundup` | AI weekly status digest |
+| GET | `/roundup` | Pre-roundup data (stale areas + per-area activity) |
+| GET | `/audit` | Global audit log |
+| GET | `/threads/:id/audit` | Per-thread audit log |
+| GET | `/areas/:id/audit` | Per-area audit log |
+| GET | `/activity` | Recent activity feed |
+| GET | `/todos/upcoming` | Upcoming todos across all areas |
 
 Uploaded files are served at `/uploads/:stored_name`.
 
@@ -172,7 +189,7 @@ Uploaded files are served at `/uploads/:stored_name`.
 
 All data lives in `./data/` and is never committed to git.
 
-- `./data/department.db` — SQLite database. Back this up to preserve your records.
+- `./data/department.db` — SQLite database (filename kept for backward compatibility). Back this up to preserve your records.
 - `./data/uploads/` — Uploaded files. Include this in any backup.
 
 **Backup:**
@@ -203,6 +220,6 @@ cp -r ./data ./data_backup_$(date +%Y%m%d)
 
 This codebase is designed to be extended in future Claude sessions.
 Start any extension session with:
-> "Read README.md and REQUIREMENTS.md in the department-log project, then [your request]."
+> "Read README.md and REQUIREMENTS.md, then [your request]."
 
 The `REQUIREMENTS.md` contains the full product specification.

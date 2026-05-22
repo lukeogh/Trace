@@ -14,16 +14,12 @@ FRONTEND_DIST = os.environ.get(
     os.path.join(os.path.dirname(__file__), "..", "frontend", "dist"),
 )
 
-# The seven software department areas, seeded on first run
-INITIAL_AREAS = [
-    {"name": "Documentation", "slug": "documentation"},
-    {"name": "Firmware", "slug": "firmware"},
-    {"name": "Software Test", "slug": "software-test"},
-    {"name": "Software Development", "slug": "software-development"},
-    {"name": "Algorithm", "slug": "algorithm"},
-    {"name": "Design", "slug": "design"},
-    {"name": "Security", "slug": "security"},
-]
+# Trace. launches with no seeded areas — the user creates their own from the
+# sidebar's "+ Add your first area" prompt. The previous seven-area software
+# seed was removed when the product was broadened away from a single-team
+# deployment; existing installations are unaffected because the seed only
+# ever ran when the areas table was empty.
+INITIAL_AREAS = []
 
 
 def _init_db():
