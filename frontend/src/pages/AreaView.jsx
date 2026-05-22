@@ -378,6 +378,7 @@ export default function AreaView() {
         isOpen={newThreadOpen}
         onClose={() => { setNewThreadOpen(false); setThreadForm({ title: '', description: '', status: 'open' }) }}
         title="New Thread"
+        isDirty={Boolean(threadForm.title.trim() || threadForm.description.trim())}
       >
         <div className="space-y-4">
           <div>

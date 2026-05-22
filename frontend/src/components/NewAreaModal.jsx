@@ -39,8 +39,10 @@ export default function NewAreaModal({ isOpen, onClose, onCreated }) {
     }
   }
 
+  const isDirty = Boolean(name.trim() || summary.trim() || icon)
+
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="New area" width="max-w-md">
+    <Modal isOpen={isOpen} onClose={onClose} title="New area" width="max-w-md" isDirty={isDirty}>
       <div className="space-y-4">
         <div>
           <label className="block text-xs font-display uppercase tracking-wide text-paper-600 dark:text-paper-500 mb-1.5">

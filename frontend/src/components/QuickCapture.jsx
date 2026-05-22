@@ -85,7 +85,13 @@ export default function QuickCapture() {
   }, {})
 
   return (
-    <Modal isOpen={open} onClose={close} title="Quick Capture" width="max-w-md">
+    <Modal
+      isOpen={open}
+      onClose={close}
+      title="Quick Capture"
+      width="max-w-md"
+      isDirty={Boolean(content.trim() || selectedThreadId || dueDate)}
+    >
       <div className="space-y-4">
         {/* Entry type selector */}
         <div className="flex items-center gap-1.5">

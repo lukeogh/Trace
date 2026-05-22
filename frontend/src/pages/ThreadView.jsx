@@ -784,7 +784,13 @@ export default function ThreadView() {
 
       {/* ── Modals & dialogs ──────────────────────────────────────────────────── */}
 
-      <Modal isOpen={linkModalOpen} onClose={() => setLinkModalOpen(false)} title="Add Link" width="max-w-sm">
+      <Modal
+        isOpen={linkModalOpen}
+        onClose={() => setLinkModalOpen(false)}
+        title="Add Link"
+        width="max-w-sm"
+        isDirty={Boolean(linkForm.name.trim() || linkForm.url.trim())}
+      >
         <div className="space-y-3">
           <div>
             <label className="block text-xs font-display uppercase tracking-wide text-paper-600 dark:text-paper-500 mb-1.5">Label</label>
@@ -848,7 +854,13 @@ export default function ThreadView() {
         submitting={addingMeeting}
       />
 
-      <Modal isOpen={linkThreadOpen} onClose={() => setLinkThreadOpen(false)} title="Link to another thread" width="max-w-md">
+      <Modal
+        isOpen={linkThreadOpen}
+        onClose={() => setLinkThreadOpen(false)}
+        title="Link to another thread"
+        width="max-w-md"
+        isDirty={Boolean(linkThreadForm.to_thread_id)}
+      >
         <div className="space-y-3">
           <div>
             <label className="block text-xs font-display uppercase tracking-wide text-paper-600 dark:text-paper-500 mb-1.5">

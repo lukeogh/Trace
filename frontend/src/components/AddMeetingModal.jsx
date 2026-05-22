@@ -34,8 +34,10 @@ export default function AddMeetingModal({ isOpen, onClose, onSubmit, submitting 
     })
   }
 
+  const isDirty = Boolean(title.trim())
+
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Add meeting" width="max-w-md">
+    <Modal isOpen={isOpen} onClose={onClose} title="Add meeting" width="max-w-md" isDirty={isDirty}>
       <form onSubmit={submit} className="space-y-4">
         <div>
           <label className="block text-xs font-display uppercase tracking-wide text-paper-600 dark:text-paper-500 mb-1.5">
