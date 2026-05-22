@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { MessageSquare, ArrowRight, RefreshCw, Activity, Plus, PenLine, Link2, Paperclip, Clock, CheckSquare, CheckCheck, Sparkles, RotateCcw } from 'lucide-react'
+import { MessageSquare, ArrowRight, RefreshCw, Activity, Plus, PenLine, Link2, Paperclip, Clock, CheckSquare, CheckCheck, Sparkles, RotateCcw, ChevronDown, ChevronUp } from 'lucide-react'
 import { formatDistanceToNow, format, differenceInDays, differenceInCalendarDays, parseISO } from 'date-fns'
 import { areasApi, entriesApi } from '../api/client'
 import StatusBadge from '../components/StatusBadge'
 import WeeklyRoundupModal from '../components/WeeklyRoundupModal'
+import { AreaIcon } from '../components/IconPicker'
 import { getAreaStatus } from '../utils/status'
 
 const INACTIVITY_THRESHOLD_DAYS = 7
@@ -71,20 +72,20 @@ export default function Dashboard() {
   })()
 
   return (
-    <div className="flex-1 min-h-screen bg-navy-50 dark:bg-navy-900 bg-grid-light dark:bg-grid-dark">
+    <div className="flex-1 min-h-screen bg-paper-100 dark:bg-pitch-800 bg-grid-light dark:bg-grid-dark">
       {/* ── Sub-toolbar (page-level, no brand) ── */}
       <header className="
         sticky top-0 z-10 px-8 py-5
-        bg-navy-50/90 dark:bg-navy-900/90 backdrop-blur-md
-        border-b border-navy-200 dark:border-navy-800
+        bg-paper-100/90 dark:bg-pitch-800/90 backdrop-blur-md
+        border-b border-paper-300 dark:border-pitch-700
       ">
-        <div className="max-w-6xl mx-auto flex items-start justify-between gap-6">
+        <div className="max-w-6xl mx-auto flex items-start justify-between gap-6 pr-14">
           <div className="min-w-0">
-            <h1 className="font-display font-bold text-3xl uppercase tracking-widest text-navy-900 dark:text-white leading-tight">
-              Department Log
+            <h1 className="font-display font-medium text-4xl tracking-tightest text-pitch-800 dark:text-white leading-tight">
+              Trace.
             </h1>
-            <p className="text-sm font-display uppercase tracking-wider text-navy-500 dark:text-navy-400 mt-1.5">
-              The Software Department Brain
+            <p className="text-sm font-mono uppercase tracking-[0.25em] text-paper-600 dark:text-paper-500 mt-2">
+              Stay across everything.
             </p>
           </div>
 
@@ -94,8 +95,8 @@ export default function Dashboard() {
               onClick={() => setRoundupOpen(true)}
               className="
                 flex items-center gap-1.5 px-3 py-1.5 rounded-md
-                bg-signal-500/10 text-signal-600 dark:text-signal-400
-                hover:bg-signal-500/15 transition-colors
+                bg-accent-500/10 text-accent-600 dark:text-accent-400
+                hover:bg-accent-500/15 transition-colors
               "
             >
               <Sparkles size={13} />
@@ -106,15 +107,15 @@ export default function Dashboard() {
 
         {filterNotice && (
           <div className="max-w-6xl mx-auto mt-3 flex items-center gap-2">
-            <span className="text-xs font-mono uppercase tracking-widest text-navy-400 dark:text-navy-500">
+            <span className="text-xs font-mono uppercase tracking-widest text-paper-500 dark:text-paper-600">
               {filterNotice}
             </span>
             <button
               onClick={() => handleViewMode('default')}
               className="
                 inline-flex items-center gap-1 text-xs font-mono
-                text-navy-400 dark:text-navy-500
-                hover:text-signal-500 dark:hover:text-signal-400
+                text-paper-500 dark:text-paper-600
+                hover:text-accent-500 dark:hover:text-accent-400
                 transition-colors
               "
             >
@@ -136,7 +137,7 @@ export default function Dashboard() {
       {/* ── Below-fold sections ── */}
       <div className="max-w-6xl mx-auto px-8 pb-12">
         <ComingUp />
-        <RecentActivity />
+        <RecentActivity viewMode={viewMode} />
       </div>
 
       <WeeklyRoundupModal isOpen={roundupOpen} onClose={() => setRoundupOpen(false)} />
@@ -148,7 +149,7 @@ export default function Dashboard() {
 
 function ViewSegmentedControl({ viewMode, onChange }) {
   return (
-    <div className="inline-flex items-center gap-0.5 p-0.5 rounded-md bg-navy-100 dark:bg-navy-800/60 border border-navy-200 dark:border-navy-700">
+    <div className="inline-flex items-center gap-0.5 p-0.5 rounded-md bg-paper-200 dark:bg-pitch-700/60 border border-paper-300 dark:border-pitch-500">
       {VIEW_MODES.map(({ key, label }) => (
         <button
           key={key}
@@ -156,8 +157,8 @@ function ViewSegmentedControl({ viewMode, onChange }) {
           className={`
             px-3 py-1 rounded text-xs font-display uppercase tracking-wide transition-colors
             ${viewMode === key
-              ? 'bg-white dark:bg-navy-900 text-navy-900 dark:text-white shadow-sm'
-              : 'text-navy-500 dark:text-navy-400 hover:text-navy-800 dark:hover:text-navy-200'
+              ? 'bg-white dark:bg-pitch-800 text-pitch-800 dark:text-white shadow-sm'
+              : 'text-paper-600 dark:text-paper-500 hover:text-pitch-700 dark:hover:text-paper-300'
             }
           `}
         >
@@ -180,10 +181,10 @@ function AreaCard({ area }) {
       to={`/area/${area.id}`}
       className="
         group relative flex flex-col rounded-xl border overflow-hidden
-        bg-white dark:bg-navy-850
-        border-navy-200 dark:border-navy-700
-        hover:border-navy-300 dark:hover:border-navy-600
-        hover:shadow-lg dark:hover:shadow-navy-950/60
+        bg-white dark:bg-pitch-700
+        border-paper-300 dark:border-pitch-500
+        hover:border-paper-400 dark:hover:border-paper-700
+        hover:shadow-lg dark:hover:shadow-pitch-900/60
         hover:-translate-y-0.5
         transition-all duration-200
         animate-fade-in
@@ -200,31 +201,38 @@ function AreaCard({ area }) {
 
       <div className="p-5 flex flex-col flex-1">
         {/* Header */}
-        <div className="flex items-start justify-between mb-3">
-          <h2 className="font-display font-bold text-base uppercase tracking-wider text-navy-900 dark:text-white">
-            {area.name}
-          </h2>
+        <div className="flex items-start justify-between gap-3 mb-3">
+          <div className="flex items-center gap-2.5 min-w-0">
+            {area.icon && (
+              <span className="text-paper-700 dark:text-paper-200 flex-shrink-0">
+                <AreaIcon name={area.icon} size={18} />
+              </span>
+            )}
+            <h2 className="font-display font-bold text-base uppercase tracking-wider text-pitch-800 dark:text-white truncate">
+              {area.name}
+            </h2>
+          </div>
           <StatusBadge status={area.status} type="area" size="xs" />
         </div>
 
         {/* Summary */}
-        <p className="text-sm text-navy-500 dark:text-navy-400 leading-relaxed flex-1 line-clamp-3 mb-4">
+        <p className="text-sm text-paper-600 dark:text-paper-500 leading-relaxed flex-1 line-clamp-3 mb-4">
           {area.summary || (
-            <span className="italic text-navy-300 dark:text-navy-600">
+            <span className="italic text-paper-400 dark:text-paper-700">
               No summary yet — click to add one.
             </span>
           )}
         </p>
 
         {/* Footer */}
-        <div className="flex items-center justify-between pt-3 border-t border-navy-100 dark:border-navy-700">
-          <span className="flex items-center gap-1.5 text-xs text-navy-400 dark:text-navy-500">
+        <div className="flex items-center justify-between pt-3 border-t border-paper-200 dark:border-pitch-500">
+          <span className="flex items-center gap-1.5 text-xs text-paper-500 dark:text-paper-600">
             <MessageSquare size={12} />
             <span className="font-mono">
               {area.open_thread_count}
-              <span className="text-navy-300 dark:text-navy-700">/{area.thread_count}</span>
+              <span className="text-paper-400 dark:text-pitch-500">/{area.thread_count}</span>
             </span>
-            <span className="text-navy-300 dark:text-navy-700">active</span>
+            <span className="text-paper-400 dark:text-pitch-500">active</span>
           </span>
 
           <div className="flex items-center gap-2">
@@ -234,10 +242,10 @@ function AreaCard({ area }) {
                   {daysSinceUpdate}d quiet
                 </span>
               )}
-            <span className="text-xs font-mono text-navy-300 dark:text-navy-600">{relativeTime}</span>
+            <span className="text-xs font-mono text-paper-400 dark:text-paper-700">{relativeTime}</span>
             <ArrowRight
               size={13}
-              className="text-navy-300 dark:text-navy-600 group-hover:text-signal-500 group-hover:translate-x-0.5 transition-all"
+              className="text-paper-400 dark:text-paper-700 group-hover:text-accent-500 group-hover:translate-x-0.5 transition-all"
             />
           </div>
         </div>
@@ -248,10 +256,10 @@ function AreaCard({ area }) {
 
 function DashboardSkeleton() {
   return (
-    <div className="flex-1 min-h-screen bg-navy-50 dark:bg-navy-900 bg-grid-light dark:bg-grid-dark">
+    <div className="flex-1 min-h-screen bg-paper-100 dark:bg-pitch-800 bg-grid-light dark:bg-grid-dark">
       <div className="max-w-6xl mx-auto px-8 py-8 grid grid-cols-3 gap-4">
         {Array.from({ length: 7 }).map((_, i) => (
-          <div key={i} className="h-44 rounded-xl bg-navy-100 dark:bg-navy-800 animate-pulse" />
+          <div key={i} className="h-44 rounded-xl bg-paper-200 dark:bg-pitch-700 animate-pulse" />
         ))}
       </div>
     </div>
@@ -260,10 +268,10 @@ function DashboardSkeleton() {
 
 function ErrorState({ message, onRetry }) {
   return (
-    <div className="flex-1 flex items-center justify-center min-h-screen bg-navy-50 dark:bg-navy-900">
+    <div className="flex-1 flex items-center justify-center min-h-screen bg-paper-100 dark:bg-pitch-800">
       <div className="text-center">
         <p className="text-sm text-red-500 mb-3">{message}</p>
-        <button onClick={onRetry} className="flex items-center gap-2 px-4 py-2 rounded-md bg-navy-100 dark:bg-navy-800 text-sm text-navy-700 dark:text-navy-200 hover:bg-navy-200 dark:hover:bg-navy-700 transition-colors mx-auto">
+        <button onClick={onRetry} className="flex items-center gap-2 px-4 py-2 rounded-md bg-paper-200 dark:bg-pitch-700 text-sm text-pitch-500 dark:text-paper-300 hover:bg-paper-300 dark:hover:bg-pitch-500 transition-colors mx-auto">
           <RefreshCw size={13} /> Retry
         </button>
       </div>
@@ -276,7 +284,7 @@ function ErrorState({ message, onRetry }) {
 const EVENT_CONFIG = {
   thread_created: {
     Icon: Plus,
-    className: 'bg-signal-500/10 text-signal-500 dark:text-signal-400',
+    className: 'bg-accent-500/10 text-accent-500 dark:text-accent-400',
   },
   entry_added: {
     Icon: PenLine,
@@ -321,30 +329,30 @@ function ActivityRow({ item }) {
       to={`/thread/${item.thread_id}`}
       className="
         px-4 py-3 flex items-center gap-3 transition-colors duration-150
-        hover:bg-navy-100/50 dark:hover:bg-navy-800/40
+        hover:bg-paper-200/50 dark:hover:bg-pitch-700/40
         first:rounded-t-xl last:rounded-b-xl
       "
     >
       <span className={`p-1.5 rounded-md flex-shrink-0 ${cfg.className}`}>
         <Icon size={13} />
       </span>
-      <span className="font-display font-semibold uppercase tracking-wide text-xs text-navy-800 dark:text-navy-100 flex-shrink-0">
+      <span className="font-display font-semibold uppercase tracking-wide text-xs text-pitch-700 dark:text-paper-200 flex-shrink-0">
         {item.area_name}
       </span>
-      <span className="text-navy-300 dark:text-navy-600 text-xs flex-shrink-0">/</span>
+      <span className="text-paper-400 dark:text-paper-700 text-xs flex-shrink-0">/</span>
       <div className="flex flex-col flex-1 min-w-0">
-        <span className="text-xs text-navy-700 dark:text-navy-200 truncate">
+        <span className="text-xs text-pitch-500 dark:text-paper-300 truncate">
           {primaryText}
         </span>
         {showThreadContext && (
-          <span className="text-xs text-navy-400 dark:text-navy-600 truncate">
+          <span className="text-xs text-paper-500 dark:text-paper-700 truncate">
             {item.thread_title}
           </span>
         )}
       </div>
       <StatusBadge status={item.thread_status} type="thread" size="xs" />
       <span
-        className="font-mono text-xs text-navy-300 dark:text-navy-600 flex-shrink-0"
+        className="font-mono text-xs text-paper-400 dark:text-paper-700 flex-shrink-0"
         title={format(new Date(item.occurred_at), 'dd MMM yyyy HH:mm')}
       >
         {formatDistanceToNow(new Date(item.occurred_at), { addSuffix: true })}
@@ -369,8 +377,8 @@ function getDueGroup(dueDateStr) {
 const GROUP_CONFIG = {
   overdue: { label: 'Overdue', labelClass: 'text-red-500 dark:text-red-400' },
   today:   { label: 'Today',   labelClass: 'text-amber-500 dark:text-amber-400' },
-  week:    { label: 'This Week', labelClass: 'text-navy-500 dark:text-navy-400' },
-  later:   { label: 'Later',   labelClass: 'text-navy-400 dark:text-navy-500' },
+  week:    { label: 'This Week', labelClass: 'text-paper-600 dark:text-paper-500' },
+  later:   { label: 'Later',   labelClass: 'text-paper-500 dark:text-paper-600' },
 }
 
 function ComingUp() {
@@ -383,8 +391,8 @@ function ComingUp() {
   if (todos.length === 0) {
     return (
       <div className="mb-10 flex flex-col items-center justify-center min-h-[80px]">
-        <CheckSquare size={20} className="text-navy-300 dark:text-navy-600 mb-1.5" />
-        <p className="text-xs text-navy-400 dark:text-navy-600 italic">No open to-dos</p>
+        <CheckSquare size={20} className="text-paper-400 dark:text-paper-700 mb-1.5" />
+        <p className="text-xs text-paper-500 dark:text-paper-700 italic">No open to-dos</p>
       </div>
     )
   }
@@ -395,12 +403,12 @@ function ComingUp() {
   return (
     <div className="mb-10">
       <div className="flex items-center gap-2 mb-3">
-        <span className="font-display uppercase tracking-widest text-xs text-navy-400 dark:text-navy-500">
+        <span className="font-display uppercase tracking-widest text-xs text-paper-500 dark:text-paper-600">
           Coming Up
         </span>
       </div>
 
-      <div className="bg-white dark:bg-navy-850 border border-navy-200 dark:border-navy-700 rounded-xl divide-y divide-navy-100 dark:divide-navy-800 overflow-hidden">
+      <div className="bg-white dark:bg-pitch-700 border border-paper-300 dark:border-pitch-500 rounded-xl divide-y divide-paper-200 dark:divide-pitch-700 overflow-hidden">
         {Object.entries(groups).map(([groupKey, items]) => {
           if (items.length === 0) return null
           const { label, labelClass } = GROUP_CONFIG[groupKey]
@@ -410,22 +418,22 @@ function ComingUp() {
               to={`/thread/${todo.thread_id}`}
               className="
                 px-4 py-3 flex items-center gap-3 transition-colors duration-150
-                hover:bg-navy-100/50 dark:hover:bg-navy-800/40
+                hover:bg-paper-200/50 dark:hover:bg-pitch-700/40
                 first:rounded-t-xl last:rounded-b-xl
               "
             >
               <span className="p-1.5 rounded-md flex-shrink-0 bg-emerald-500/10 text-emerald-500 dark:text-emerald-400">
                 <CheckSquare size={13} />
               </span>
-              <span className="font-display font-semibold uppercase tracking-wide text-xs text-navy-800 dark:text-navy-100 flex-shrink-0">
+              <span className="font-display font-semibold uppercase tracking-wide text-xs text-pitch-700 dark:text-paper-200 flex-shrink-0">
                 {todo.area_name}
               </span>
-              <span className="text-navy-300 dark:text-navy-600 text-xs flex-shrink-0">/</span>
+              <span className="text-paper-400 dark:text-paper-700 text-xs flex-shrink-0">/</span>
               <div className="flex flex-col flex-1 min-w-0">
-                <span className="text-xs text-navy-700 dark:text-navy-200 truncate">
+                <span className="text-xs text-pitch-500 dark:text-paper-300 truncate">
                   {todo.content}
                 </span>
-                <span className="text-xs text-navy-400 dark:text-navy-600 truncate">
+                <span className="text-xs text-paper-500 dark:text-paper-700 truncate">
                   {todo.thread_title}
                 </span>
               </div>
@@ -434,7 +442,7 @@ function ComingUp() {
                   {label}
                 </span>
               )}
-              <span className="font-mono text-xs text-navy-300 dark:text-navy-600 flex-shrink-0">
+              <span className="font-mono text-xs text-paper-400 dark:text-paper-700 flex-shrink-0">
                 {todo.due_date ? format(parseISO(todo.due_date), 'EEE d MMM') : '—'}
               </span>
             </Link>
@@ -447,9 +455,32 @@ function ComingUp() {
 
 // ─── Recent activity ──────────────────────────────────────────────────────────
 
-function RecentActivity() {
+function RecentActivity({ viewMode }) {
   const [items, setItems] = useState([])
   const [showAll, setShowAll] = useState(false)
+
+  // Collapsed state — persisted, but Focus mode forces collapsed on first load.
+  const [collapsed, setCollapsed] = useState(() => {
+    const stored = localStorage.getItem('recentActivityCollapsed')
+    if (stored != null) return stored === 'true'
+    return viewMode === 'focus'
+  })
+
+  // When the view mode flips to focus, auto-collapse (and remember).
+  useEffect(() => {
+    if (viewMode === 'focus') {
+      setCollapsed(true)
+      localStorage.setItem('recentActivityCollapsed', 'true')
+    }
+  }, [viewMode])
+
+  const toggle = () => {
+    setCollapsed((c) => {
+      const next = !c
+      localStorage.setItem('recentActivityCollapsed', String(next))
+      return next
+    })
+  }
 
   useEffect(() => {
     areasApi.getActivity(10).then(setItems).catch(() => {})
@@ -461,43 +492,56 @@ function RecentActivity() {
   if (items.length === 0) {
     return (
       <div className="mt-10 flex flex-col items-center justify-center min-h-[80px]">
-        <Activity size={20} className="text-navy-300 dark:text-navy-600 mb-1.5" />
-        <p className="text-xs text-navy-400 dark:text-navy-600 italic">No activity recorded yet</p>
+        <Activity size={20} className="text-paper-400 dark:text-paper-700 mb-1.5" />
+        <p className="text-xs text-paper-500 dark:text-paper-700 italic">No activity recorded yet</p>
       </div>
     )
   }
 
   return (
     <div className="mt-10">
-      <div className="flex items-center gap-2 mb-3">
-        <span className="font-display uppercase tracking-widest text-xs text-navy-400 dark:text-navy-500">
+      <button
+        onClick={toggle}
+        className="
+          w-full flex items-center gap-2 mb-3 py-1
+          text-left transition-colors
+          text-paper-500 dark:text-paper-600
+          hover:text-pitch-700 dark:hover:text-paper-200
+        "
+      >
+        {collapsed ? <ChevronDown size={13} /> : <ChevronUp size={13} />}
+        <span className="font-display uppercase tracking-widest text-xs">
           Recent Activity
         </span>
-        <span className="font-mono text-xs text-navy-300 dark:text-navy-600">
-          {visible.length}
+        <span className="font-mono text-xs text-paper-400 dark:text-paper-700">
+          {items.length}
         </span>
-      </div>
+      </button>
 
-      <div className="bg-white dark:bg-navy-850 border border-navy-200 dark:border-navy-700 rounded-xl divide-y divide-navy-100 dark:divide-navy-800 overflow-hidden">
-        {visible.map((item, i) => (
-          <ActivityRow key={`${item.thread_id}-${item.occurred_at}-${i}`} item={item} />
-        ))}
-      </div>
+      {!collapsed && (
+        <>
+          <div className="bg-white dark:bg-pitch-700 border border-paper-300 dark:border-pitch-500 rounded-xl divide-y divide-paper-200 dark:divide-pitch-700 overflow-hidden">
+            {visible.map((item, i) => (
+              <ActivityRow key={`${item.thread_id}-${item.occurred_at}-${i}`} item={item} />
+            ))}
+          </div>
 
-      {hasMore && (
-        <div className="mt-2 flex justify-center">
-          <button
-            onClick={() => setShowAll(v => !v)}
-            className="
-              p-2 rounded-md text-xs font-display uppercase tracking-wide transition-colors duration-150
-              text-navy-400 dark:text-navy-500
-              hover:text-signal-500 dark:hover:text-signal-400
-              hover:bg-navy-100 dark:hover:bg-navy-800
-            "
-          >
-            {showAll ? 'Show less' : 'Show 5 more'}
-          </button>
-        </div>
+          {hasMore && (
+            <div className="mt-2 flex justify-center">
+              <button
+                onClick={() => setShowAll(v => !v)}
+                className="
+                  p-2 rounded-md text-xs font-display uppercase tracking-wide transition-colors duration-150
+                  text-paper-500 dark:text-paper-600
+                  hover:text-accent-500 dark:hover:text-accent-400
+                  hover:bg-paper-200 dark:hover:bg-pitch-700
+                "
+              >
+                {showAll ? 'Show less' : 'Show 5 more'}
+              </button>
+            </div>
+          )}
+        </>
       )}
     </div>
   )

@@ -1,24 +1,43 @@
-export default function Logo({ size = 32 }) {
+/**
+ * Trace logo mark — the fork.
+ *
+ * Props:
+ *   size      — pixel dimensions (default 32)
+ *   variant   — 'auto' (currentColor), 'ink' (#14130F), 'paper' (#F7F4ED)
+ *   className — optional extra Tailwind classes
+ *
+ * Stroke weight scales subtly inversely with size so the mark stays
+ * legible at favicon scale (≤24px) and elegant at hero scale.
+ */
+export default function Logo({ size = 32, variant = 'auto', className = '' }) {
+  const stroke = variant === 'ink'
+    ? '#14130F'
+    : variant === 'paper'
+      ? '#F7F4ED'
+      : 'currentColor'
+
+  // Slightly thicker stroke for very small renderings so the form survives
+  const strokeWidth = size <= 24 ? 14 : 11
+
   return (
     <svg
       width={size}
       height={size}
-      viewBox="0 0 32 32"
+      viewBox="0 0 100 100"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
-      aria-label="Department Log"
+      role="img"
+      aria-label="Trace"
+      className={className}
     >
-      {/* Navy background */}
-      <rect width="32" height="32" rx="5" fill="#0C1828" />
-      {/* Signal blue vertical bar */}
-      <rect x="3" y="3" width="4" height="26" rx="1.5" fill="#38BDF8" />
-      {/* Log entry lines — dot + rule at 100%, 65%, 38% opacity */}
-      <circle cx="11" cy="11" r="1.5" fill="#0EA5E9" />
-      <line x1="14" y1="11" x2="28" y2="11" stroke="#0EA5E9" strokeWidth="1.5" />
-      <circle cx="11" cy="17" r="1.5" fill="#0EA5E9" opacity="0.65" />
-      <line x1="14" y1="17" x2="28" y2="17" stroke="#0EA5E9" strokeWidth="1.5" opacity="0.65" />
-      <circle cx="11" cy="23" r="1.5" fill="#0EA5E9" opacity="0.38" />
-      <line x1="14" y1="23" x2="28" y2="23" stroke="#0EA5E9" strokeWidth="1.5" opacity="0.38" />
+      <path
+        d="M 22 50 L 50 50 L 78 26 M 50 50 L 78 74"
+        stroke={stroke}
+        strokeWidth={strokeWidth}
+        fill="none"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   )
 }

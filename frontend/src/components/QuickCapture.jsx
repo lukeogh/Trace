@@ -85,7 +85,13 @@ export default function QuickCapture() {
   }, {})
 
   return (
-    <Modal isOpen={open} onClose={close} title="Quick Capture" width="max-w-md">
+    <Modal
+      isOpen={open}
+      onClose={close}
+      title="Quick Capture"
+      width="max-w-md"
+      isDirty={Boolean(content.trim() || selectedThreadId || dueDate)}
+    >
       <div className="space-y-4">
         {/* Entry type selector */}
         <div className="flex items-center gap-1.5">
@@ -96,8 +102,8 @@ export default function QuickCapture() {
               className={`
                 px-3 py-1 rounded-full text-xs font-display uppercase tracking-wide transition-colors
                 ${entryType === key
-                  ? 'bg-signal-500 text-white'
-                  : 'text-navy-500 dark:text-navy-400 bg-navy-100 dark:bg-navy-800 hover:bg-navy-200 dark:hover:bg-navy-700'
+                  ? 'bg-accent-500 text-white'
+                  : 'text-paper-600 dark:text-paper-500 bg-paper-200 dark:bg-pitch-700 hover:bg-paper-300 dark:hover:bg-pitch-500'
                 }
               `}
             >
@@ -115,21 +121,21 @@ export default function QuickCapture() {
           rows={4}
           onKeyDown={(e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) submit() }}
           className="
-            w-full bg-navy-50 dark:bg-navy-800 border border-navy-200 dark:border-navy-600
+            w-full bg-paper-100 dark:bg-pitch-700 border border-paper-300 dark:border-paper-700
             rounded-lg px-3 py-2.5 text-sm resize-none
-            text-navy-900 dark:text-white
-            placeholder:text-navy-300 dark:placeholder:text-navy-600
-            focus:outline-none focus:ring-2 focus:ring-signal-500
+            text-pitch-800 dark:text-white
+            placeholder:text-paper-400 dark:placeholder:text-paper-700
+            focus:outline-none focus:ring-2 focus:ring-accent-500
           "
         />
 
         {/* Thread selector */}
         <div>
-          <label className="block text-xs font-display uppercase tracking-wide text-navy-500 dark:text-navy-400 mb-1.5">
+          <label className="block text-xs font-display uppercase tracking-wide text-paper-600 dark:text-paper-500 mb-1.5">
             Thread
           </label>
           {threads.length === 0 ? (
-            <p className="text-xs text-navy-400 dark:text-navy-600 italic">
+            <p className="text-xs text-paper-500 dark:text-paper-700 italic">
               Create a thread in an area first.
             </p>
           ) : (
@@ -138,9 +144,9 @@ export default function QuickCapture() {
               onChange={(e) => setSelectedThreadId(e.target.value)}
               className="
                 w-full px-3 py-2 text-sm rounded-lg
-                bg-navy-50 dark:bg-navy-800 border border-navy-200 dark:border-navy-600
-                text-navy-900 dark:text-white
-                focus:outline-none focus:ring-2 focus:ring-signal-500
+                bg-paper-100 dark:bg-pitch-700 border border-paper-300 dark:border-paper-700
+                text-pitch-800 dark:text-white
+                focus:outline-none focus:ring-2 focus:ring-accent-500
               "
             >
               <option value="">Select a thread…</option>
@@ -160,7 +166,7 @@ export default function QuickCapture() {
         {/* Due date row — To Do only */}
         {entryType === 'todo' && (
           <div>
-            <label className="block text-xs font-display uppercase tracking-wide text-navy-500 dark:text-navy-400 mb-1.5">
+            <label className="block text-xs font-display uppercase tracking-wide text-paper-600 dark:text-paper-500 mb-1.5">
               Due Date
             </label>
             <div className="flex flex-wrap gap-1.5">
@@ -171,8 +177,8 @@ export default function QuickCapture() {
                   className={`
                     px-2.5 py-1 rounded-full text-xs font-display uppercase tracking-wide transition-colors
                     ${dueDateOption === opt.label
-                      ? 'bg-signal-500 text-white'
-                      : 'text-navy-500 dark:text-navy-400 bg-navy-100 dark:bg-navy-800 hover:bg-navy-200 dark:hover:bg-navy-700'
+                      ? 'bg-accent-500 text-white'
+                      : 'text-paper-600 dark:text-paper-500 bg-paper-200 dark:bg-pitch-700 hover:bg-paper-300 dark:hover:bg-pitch-500'
                     }
                   `}
                 >
@@ -185,11 +191,11 @@ export default function QuickCapture() {
                 type="date"
                 value={dueDate || ''}
                 onChange={(e) => setDueDate(e.target.value)}
-                className="mt-2 w-full text-sm px-3 py-2 rounded-lg bg-navy-50 dark:bg-navy-800 border border-navy-200 dark:border-navy-600 text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-signal-500"
+                className="mt-2 w-full text-sm px-3 py-2 rounded-lg bg-paper-100 dark:bg-pitch-700 border border-paper-300 dark:border-paper-700 text-pitch-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-accent-500"
               />
             )}
             {dueDate && dueDateOption !== 'Pick date' && (
-              <p className="font-mono text-xs text-navy-400 mt-1">
+              <p className="font-mono text-xs text-paper-500 mt-1">
                 due {format(parseISO(dueDate), 'dd MMM yyyy')}
               </p>
             )}
@@ -200,14 +206,14 @@ export default function QuickCapture() {
         <div className="flex justify-end gap-2 pt-1">
           <button
             onClick={close}
-            className="px-4 py-2 text-sm rounded-md text-navy-600 dark:text-navy-300 hover:bg-navy-100 dark:hover:bg-navy-700 transition-colors"
+            className="px-4 py-2 text-sm rounded-md text-paper-700 dark:text-paper-400 hover:bg-paper-200 dark:hover:bg-pitch-500 transition-colors"
           >
             Cancel
           </button>
           <button
             onClick={submit}
             disabled={!content.trim() || !selectedThreadId || submitting}
-            className="px-4 py-2 text-sm rounded-md font-medium bg-signal-500 hover:bg-signal-600 text-white disabled:opacity-50 transition-colors"
+            className="px-4 py-2 text-sm rounded-md font-medium bg-accent-500 hover:bg-accent-600 text-white disabled:opacity-50 transition-colors"
           >
             {submitting ? 'Capturing…' : 'Capture'}
           </button>

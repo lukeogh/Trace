@@ -11,40 +11,44 @@ export const DUE_DATE_OPTIONS = [
   { label: 'Pick date',  resolve: () => null },
 ]
 
-// ─── Area statuses ────────────────────────────────────────────────────────────
+// ─── Area statuses (Trace v2 palette — muted, ADHD-friendly) ─────────────────
+//
+// Hex values match the design tokens defined in tokens.css. Tailwind classes
+// reference the new colour namespaces in tailwind.config.js. Both must stay
+// in sync if values are ever changed.
 
 export const AREA_STATUSES = {
   stable: {
     label: 'Stable',
-    dot: '#22C55E',         // green-500
-    textClass: 'text-green-600 dark:text-green-400',
-    bgClass: 'bg-green-50 dark:bg-green-900/20',
-    borderClass: 'border-green-200 dark:border-green-800',
-    ringClass: 'ring-green-500',
+    dot: '#7A9579',         // sage
+    textClass: 'text-sage dark:text-sage',
+    bgClass: 'bg-sage/10 dark:bg-sage/15',
+    borderClass: 'border-sage/30 dark:border-sage/40',
+    ringClass: 'ring-sage',
   },
   active: {
     label: 'Active',
-    dot: '#0EA5E9',         // signal-500
-    textClass: 'text-signal-600 dark:text-signal-400',
-    bgClass: 'bg-signal-50 dark:bg-signal-900/20',
-    borderClass: 'border-signal-200 dark:border-signal-800',
-    ringClass: 'ring-signal-500',
+    dot: '#6B8AB8',         // sky-muted
+    textClass: 'text-sky-muted dark:text-sky-muted',
+    bgClass: 'bg-sky-muted/10 dark:bg-sky-muted/15',
+    borderClass: 'border-sky-muted/30 dark:border-sky-muted/40',
+    ringClass: 'ring-sky-muted',
   },
   review: {
     label: 'On Hold',
-    dot: '#F59E0B',         // amber-500
-    textClass: 'text-amber-600 dark:text-amber-400',
-    bgClass: 'bg-amber-50 dark:bg-amber-900/20',
-    borderClass: 'border-amber-200 dark:border-amber-800',
-    ringClass: 'ring-amber-500',
+    dot: '#C99A5C',         // amber-muted
+    textClass: 'text-amber-muted dark:text-amber-muted',
+    bgClass: 'bg-amber-muted/10 dark:bg-amber-muted/15',
+    borderClass: 'border-amber-muted/30 dark:border-amber-muted/40',
+    ringClass: 'ring-amber-muted',
   },
   blocked: {
     label: 'Blocked',
-    dot: '#EF4444',         // red-500
-    textClass: 'text-red-600 dark:text-red-400',
-    bgClass: 'bg-red-50 dark:bg-red-900/20',
-    borderClass: 'border-red-200 dark:border-red-800',
-    ringClass: 'ring-red-500',
+    dot: '#B86A5C',         // terracotta
+    textClass: 'text-terracotta dark:text-terracotta',
+    bgClass: 'bg-terracotta/10 dark:bg-terracotta/15',
+    borderClass: 'border-terracotta/30 dark:border-terracotta/40',
+    ringClass: 'ring-terracotta',
   },
 }
 
@@ -53,31 +57,38 @@ export const AREA_STATUSES = {
 export const THREAD_STATUSES = {
   open: {
     label: 'Open',
-    dot: '#0EA5E9',
-    textClass: 'text-signal-600 dark:text-signal-400',
-    bgClass: 'bg-signal-50 dark:bg-signal-900/20',
-    borderClass: 'border-signal-200 dark:border-signal-800',
+    dot: '#6B8AB8',         // sky-muted
+    textClass: 'text-sky-muted dark:text-sky-muted',
+    bgClass: 'bg-sky-muted/10 dark:bg-sky-muted/15',
+    borderClass: 'border-sky-muted/30 dark:border-sky-muted/40',
   },
   'in-progress': {
     label: 'In Progress',
-    dot: '#F59E0B',
-    textClass: 'text-amber-600 dark:text-amber-400',
-    bgClass: 'bg-amber-50 dark:bg-amber-900/20',
-    borderClass: 'border-amber-200 dark:border-amber-800',
+    dot: '#C9A85C',         // mustard
+    textClass: 'text-mustard dark:text-mustard',
+    bgClass: 'bg-mustard/10 dark:bg-mustard/15',
+    borderClass: 'border-mustard/30 dark:border-mustard/40',
   },
   resolved: {
     label: 'Resolved',
-    dot: '#22C55E',
-    textClass: 'text-green-600 dark:text-green-400',
-    bgClass: 'bg-green-50 dark:bg-green-900/20',
-    borderClass: 'border-green-200 dark:border-green-800',
+    dot: '#7A9579',         // sage
+    textClass: 'text-sage dark:text-sage',
+    bgClass: 'bg-sage/10 dark:bg-sage/15',
+    borderClass: 'border-sage/30 dark:border-sage/40',
   },
   parked: {
     label: 'Parked',
-    dot: '#8B5CF6',
-    textClass: 'text-violet-600 dark:text-violet-400',
-    bgClass: 'bg-violet-50 dark:bg-violet-900/20',
-    borderClass: 'border-violet-200 dark:border-violet-800',
+    dot: '#8A7BB8',         // lavender
+    textClass: 'text-lavender dark:text-lavender',
+    bgClass: 'bg-lavender/10 dark:bg-lavender/15',
+    borderClass: 'border-lavender/30 dark:border-lavender/40',
+  },
+  blocked: {
+    label: 'Blocked',
+    dot: '#B86A5C',         // terracotta
+    textClass: 'text-terracotta dark:text-terracotta',
+    bgClass: 'bg-terracotta/10 dark:bg-terracotta/15',
+    borderClass: 'border-terracotta/30 dark:border-terracotta/40',
   },
 }
 

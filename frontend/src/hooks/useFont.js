@@ -1,13 +1,11 @@
 import { useState, useEffect } from 'react'
 
 export const FONT_OPTIONS = [
-  { key: 'lexend',   label: 'Lexend',                stack: "'Lexend', system-ui, sans-serif",                hint: 'ADHD-friendly' },
-  { key: 'atkinson', label: 'Atkinson Hyperlegible', stack: "'Atkinson Hyperlegible', system-ui, sans-serif", hint: 'Accessibility-first' },
-  { key: 'inter',    label: 'Inter',                 stack: "'Inter', system-ui, sans-serif",                 hint: 'Neutral UI' },
-  { key: 'barlow',   label: 'Barlow',                stack: "'Barlow', system-ui, sans-serif",                hint: 'Original' },
+  { key: 'geist',  label: 'Geist',  stack: "'Geist', system-ui, sans-serif",            hint: 'Brand default' },
+  { key: 'lexend', label: 'Lexend', stack: "'Lexend', 'Geist', system-ui, sans-serif",  hint: 'ADHD-friendly' },
 ]
 
-const DEFAULT_FONT = 'lexend'
+const DEFAULT_FONT = 'geist'
 
 /**
  * Manages the body font choice.

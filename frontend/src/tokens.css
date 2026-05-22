@@ -1,0 +1,92 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+   Trace · Design Tokens
+   The single source of truth for colour, spacing, type, motion.
+   Imported by index.css; surfaced to Tailwind via tailwind.config.js.
+   ───────────────────────────────────────────────────────────────────────────── */
+
+:root {
+  /* ── Brand neutrals · paper (light surfaces) ───────────────────────────── */
+  --paper:        #F7F4ED;  /* page bg */
+  --paper-2:      #EFECE3;  /* card surface */
+  --paper-3:      #E5E1D6;  /* sub-card / hover */
+  --stone:        #D4CFC2;  /* borders */
+  --ink-muted:    #8A877F;  /* meta text, placeholders */
+  --ink-soft:     #4A4845;  /* secondary text */
+  --ink:          #14130F;  /* primary text */
+
+  /* ── Brand neutrals · pitch (dark surfaces) ────────────────────────────── */
+  --pitch:        #0F0E0C;  /* page bg */
+  --pitch-2:      #181714;  /* card surface */
+  --pitch-3:      #232220;  /* sub-card / hover */
+  --stone-dark:   #38352F;  /* borders */
+  --paper-muted-d:#6B6862;  /* meta text */
+  --paper-soft-d: #A8A49E;  /* secondary text */
+  --paper-d:      #EDEAE3;  /* primary text */
+
+  /* ── Primary accent · muted indigo ─────────────────────────────────────── */
+  --accent:        #5B5BD6;
+  --accent-hover:  #4F4FC7;
+  --accent-soft:   #8C8CE6;
+  --accent-50:     rgba(91, 91, 214, 0.08);
+  --accent-ring:   rgba(91, 91, 214, 0.30);
+
+  /* ── Status palette · muted, ADHD-friendly ─────────────────────────────── */
+  --sage:         #7A9579;  /* stable, resolved */
+  --sage-50:      rgba(122, 149, 121, 0.10);
+  --sky-muted:    #6B8AB8;  /* active, open */
+  --sky-50:       rgba(107, 138, 184, 0.10);
+  --amber-muted:  #C99A5C;  /* on-hold */
+  --amber-50:     rgba(201, 154, 92, 0.10);
+  --mustard:      #C9A85C;  /* in-progress */
+  --mustard-50:   rgba(201, 168, 92, 0.10);
+  --terracotta:   #B86A5C;  /* blocked */
+  --terracotta-50:rgba(184, 106, 92, 0.10);
+  --lavender:     #8A7BB8;  /* parked */
+  --lavender-50:  rgba(138, 123, 184, 0.10);
+
+  /* ── Borders & dividers ────────────────────────────────────────────────── */
+  --rule:         rgba(20, 19, 15, 0.10);
+  --rule-strong:  rgba(20, 19, 15, 0.18);
+
+  /* ── Spacing scale ─────────────────────────────────────────────────────── */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+
+  /* ── Radius scale ──────────────────────────────────────────────────────── */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 24px;
+
+  /* ── Motion ────────────────────────────────────────────────────────────── */
+  --ease: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --duration-snap: 120ms;
+  --duration-base: 200ms;
+  --duration-slow: 400ms;
+}
+
+/* ── Dark mode overrides — applied when html.dark is present ─────────────── */
+html.dark {
+  --rule:        rgba(247, 244, 237, 0.10);
+  --rule-strong: rgba(247, 244, 237, 0.18);
+}
+
+/* ── Reduced motion · respect system preference ──────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

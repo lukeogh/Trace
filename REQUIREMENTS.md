@@ -1,7 +1,6 @@
-# Department Log — Requirements Specification
+# Trace. — Requirements Specification
 
 **Version:** 1.0.0
-**Owner:** Luke Eogh (Head of Software, Axithra)
 **Prepared by:** Claude (Anthropic)
 **Purpose:** This document captures the full agreed specification. Future Claude sessions should read this before extending the app.
 
@@ -9,21 +8,21 @@
 
 ## 1. Product Purpose
 
-A self-hosted personal department management tool for the Head of Software at Axithra. Tracks the current situation across seven software discipline areas, with named sub-topic threads and chronological log entries per thread. Replaces ad-hoc notes with a structured, queryable record of what is happening and why.
+A self-hosted activity log for anyone juggling multiple parallel responsibilities — a tool for people who need to keep their hand on several spinning plates at once. Organise your world into **areas** (one per plate), break each area into **threads** of focused work, and keep a chronological record of todos, decisions, meetings, blockers, and notes inside every thread.
+
+Replaces ad-hoc notes scattered across documents, chats, and inboxes with a single structured, searchable, audit-logged record of what is happening across all your areas — and why.
+
+AI surfaces (optional, gated on an Anthropic API key) accelerate the chores: parsing messy input into structured items, regenerating area Overviews on a daily schedule, drafting a weekly status digest.
 
 ---
 
 ## 2. Areas
 
-The seven fixed areas are seeded on first run and cannot be deleted or renamed through the UI:
+Areas are user-created — there is no fixed list. The app launches empty and prompts the user to create their first area from the sidebar.
 
-1. Documentation
-2. Firmware
-3. Software Test
-4. Software Development
-5. Algorithm
-6. Design
-7. Security
+Each area carries a name, a slug (auto-generated from the name), a chosen Lucide icon (optional), a free-text Overview (manually editable or AI-regenerated), and a status (`stable` / `active` / `review` / `blocked`).
+
+> *Historical note:* version 1.0.0 originally seeded seven software-discipline areas (Documentation, Firmware, Software Test, Software Development, Algorithm, Design, Security) on first run for a specific deployment. The seed has since been removed in favour of empty defaults so the app reads as a general-purpose tool.
 
 ---
 
@@ -134,24 +133,24 @@ The seven fixed areas are seeded on first run and cannot be deleted or renamed t
 ## 6. Design
 
 ### Aesthetic direction
-Clean, clinical, masculine, professional. Military-instrument-panel meets medical workstation. High information density with intentional whitespace.
+Warm, calm, professional. Paper-and-ink restraint with a single muted-indigo accent. High information density with intentional whitespace. Tailored for sustained-focus use; backgrounds and palette stay legible without shouting.
 
-### Palette (Tailwind config: `navy` + `signal`)
+### Palette (Tailwind config: `paper` + `pitch` + `accent`)
 | Token | Dark value | Light value |
 |-------|-----------|-------------|
-| Background | `#07101F` (navy-900) | `#EFF3F8` (navy-50) |
-| Surface | `#102540` (navy-800) | `#FFFFFF` |
-| Border | `#1D3A58` (navy-700) | `#C8D8E8` (navy-200) |
-| Text primary | `#DDE8F5` | `#0A1628` (navy-950) |
-| Text secondary | `#7499B8` (navy-400) | `#4A7096` (navy-500) |
-| Accent | `#0EA5E9` (signal-500) | `#0284C7` (signal-600) |
+| Background | `#0F0E0C` (pitch) | `#F7F4ED` (paper) |
+| Surface | `#181714` (pitch-700) | `#EFECE3` (paper-200) |
+| Border | `#38352F` (pitch-400) | `#D4CFC2` (paper-400) |
+| Text primary | `#EDEAE3` (pitch-50) | `#14130F` (paper-900) |
+| Text secondary | `#A8A49E` (pitch-100) | `#4A4845` (paper-700) |
+| Accent | `#5B5BD6` (accent-500) | `#4F4FC7` (accent-600) |
 
 ### Typography
 | Role | Font | Source |
 |------|------|--------|
-| Headings, labels, badges | Oxanium | Google Fonts |
-| Body text, UI | Barlow | Google Fonts |
-| Timestamps, IDs, code | JetBrains Mono | Google Fonts |
+| Brand, headings, UI | Geist | Google Fonts |
+| Body alternative (ADHD-friendly) | Lexend | Google Fonts |
+| Timestamps, IDs, code | Geist Mono | Google Fonts |
 
 ### Theme
 - Dark/light toggle with `useTheme` hook

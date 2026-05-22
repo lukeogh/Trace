@@ -7,8 +7,8 @@ export default function ThemeToggle({ dark, onToggle }) {
       title={dark ? 'Switch to light mode' : 'Switch to dark mode'}
       className="
         p-2 rounded-md
-        text-navy-400 hover:text-navy-700 dark:text-navy-400 dark:hover:text-navy-100
-        hover:bg-navy-100 dark:hover:bg-navy-800
+        text-paper-500 hover:text-pitch-500 dark:text-paper-500 dark:hover:text-paper-200
+        hover:bg-paper-200 dark:hover:bg-pitch-700
         transition-colors duration-150
       "
     >

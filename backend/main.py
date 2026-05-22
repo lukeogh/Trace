@@ -14,16 +14,12 @@ FRONTEND_DIST = os.environ.get(
     os.path.join(os.path.dirname(__file__), "..", "frontend", "dist"),
 )
 
-# The seven software department areas, seeded on first run
-INITIAL_AREAS = [
-    {"name": "Documentation", "slug": "documentation"},
-    {"name": "Firmware", "slug": "firmware"},
-    {"name": "Software Test", "slug": "software-test"},
-    {"name": "Software Development", "slug": "software-development"},
-    {"name": "Algorithm", "slug": "algorithm"},
-    {"name": "Design", "slug": "design"},
-    {"name": "Security", "slug": "security"},
-]
+# Trace. launches with no seeded areas — the user creates their own from the
+# sidebar's "+ Add your first area" prompt. The previous seven-area software
+# seed was removed when the product was broadened away from a single-team
+# deployment; existing installations are unaffected because the seed only
+# ever ran when the areas table was empty.
+INITIAL_AREAS = []
 
 
 def _init_db():
@@ -42,6 +38,9 @@ def _init_db():
             "ALTER TABLE activity_events ADD COLUMN detail VARCHAR(200)",
             "CREATE TABLE IF NOT EXISTS audit_logs (id INTEGER PRIMARY KEY, entity_type VARCHAR(50), entity_id INTEGER, area_id INTEGER REFERENCES areas(id) ON DELETE CASCADE, thread_id INTEGER REFERENCES threads(id) ON DELETE SET NULL, action VARCHAR(50), field VARCHAR(100), old_value TEXT, new_value TEXT, occurred_at DATETIME DEFAULT CURRENT_TIMESTAMP)",
             "ALTER TABLE audit_logs ADD COLUMN area_id INTEGER REFERENCES areas(id) ON DELETE CASCADE",
+            "ALTER TABLE areas ADD COLUMN icon VARCHAR(64)",
+            "ALTER TABLE entries ADD COLUMN meeting_at DATETIME",
+            "ALTER TABLE entries ADD COLUMN notes TEXT",
         ]:
             try:
                 conn.execute(text(sql))
@@ -113,10 +112,22 @@ def _init_db():
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     _init_db()
+    try:
+        import scheduler
+        scheduler.start()
+    except Exception as e:
+        # Don't let a scheduler bug take the whole API down
+        import logging
+        logging.getLogger("trace").warning("Scheduler failed to start: %s", e)
     yield
+    try:
+        import scheduler
+        scheduler.shutdown()
+    except Exception:
+        pass
 
 
-app = FastAPI(title="Department Log", version="1.0.0", lifespan=lifespan)
+app = FastAPI(title="Trace.", version="1.0.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,

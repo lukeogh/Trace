@@ -168,7 +168,7 @@ def update_thread(
         thread.description = payload.description
 
     if payload.status is not None:
-        valid = {"open", "in-progress", "resolved", "parked"}
+        valid = {"open", "in-progress", "resolved", "parked", "blocked"}
         if payload.status not in valid:
             raise HTTPException(status_code=422, detail=f"status must be one of {valid}")
         if payload.status != thread.status:

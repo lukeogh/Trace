@@ -23,9 +23,9 @@ export default function FontPicker({ font, onChange }) {
         title="Change font"
         className="
           p-1.5 rounded-md transition-colors
-          text-navy-400 dark:text-navy-500
-          hover:text-navy-700 dark:hover:text-navy-200
-          hover:bg-navy-100 dark:hover:bg-navy-800
+          text-paper-500 dark:text-paper-600
+          hover:text-pitch-500 dark:hover:text-paper-300
+          hover:bg-paper-200 dark:hover:bg-pitch-700
         "
       >
         <Type size={15} />
@@ -35,12 +35,12 @@ export default function FontPicker({ font, onChange }) {
         <div className="
           absolute right-0 top-full mt-1 z-30 w-56
           rounded-lg shadow-xl
-          bg-white dark:bg-navy-850
-          border border-navy-200 dark:border-navy-700
+          bg-white dark:bg-pitch-700
+          border border-paper-300 dark:border-pitch-500
           p-1
           animate-fade-in
         ">
-          <div className="px-2 py-1.5 text-xs font-display uppercase tracking-widest text-navy-400 dark:text-navy-600">
+          <div className="px-2 py-1.5 text-xs font-display uppercase tracking-widest text-paper-500 dark:text-paper-700">
             Body font
           </div>
           {FONT_OPTIONS.map((opt) => {
@@ -53,8 +53,8 @@ export default function FontPicker({ font, onChange }) {
                 className={`
                   w-full flex items-center gap-2 px-2 py-2 rounded-md text-left text-sm transition-colors
                   ${active
-                    ? 'bg-signal-500/10 text-signal-600 dark:text-signal-400'
-                    : 'text-navy-700 dark:text-navy-200 hover:bg-navy-100 dark:hover:bg-navy-800'
+                    ? 'bg-accent-500/10 text-accent-600 dark:text-accent-400'
+                    : 'text-pitch-500 dark:text-paper-300 hover:bg-paper-200 dark:hover:bg-pitch-700'
                   }
                 `}
               >
@@ -63,7 +63,7 @@ export default function FontPicker({ font, onChange }) {
                   className={`flex-shrink-0 ${active ? 'opacity-100' : 'opacity-0'}`}
                 />
                 <span className="flex-1">{opt.label}</span>
-                <span className="text-xs font-mono text-navy-400 dark:text-navy-600">
+                <span className="text-xs font-mono text-paper-500 dark:text-paper-700">
                   {opt.hint}
                 </span>
               </button>
