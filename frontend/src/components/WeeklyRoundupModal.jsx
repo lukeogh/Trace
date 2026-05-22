@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
-import { Copy, Check } from 'lucide-react'
+import { Link as RouterLink } from 'react-router-dom'
+import { Copy, Check, Clock } from 'lucide-react'
 import { format } from 'date-fns'
 import Modal from './Modal'
 import { areasApi } from '../api/client'
@@ -11,6 +12,7 @@ export default function WeeklyRoundupModal({ isOpen, onClose }) {
   const [copied, setCopied] = useState(false)
   const [dotStep, setDotStep] = useState(0)
   const [generatedAt, setGeneratedAt] = useState('')
+  const [staleAreas, setStaleAreas] = useState([])
 
   useEffect(() => {
     if (phase !== 'loading') return
@@ -25,6 +27,7 @@ export default function WeeklyRoundupModal({ isOpen, onClose }) {
     try {
       const data = await areasApi.getRoundupData()
       setGeneratedAt(data.generated_at)
+      setStaleAreas(data.stale_areas || [])
       const result = await areasApi.generateRoundup({
         areas: data.areas,
         period_days: data.period_days,
@@ -85,6 +88,31 @@ export default function WeeklyRoundupModal({ isOpen, onClose }) {
           <p className="font-display uppercase tracking-widest text-xs text-navy-400 dark:text-navy-500 mb-3">
             Weekly Roundup — W/E {formattedDate}
           </p>
+
+          {staleAreas.length > 0 && (
+            <div className="mb-4 px-3 py-2.5 rounded-lg bg-amber-500/5 dark:bg-amber-500/10 border border-amber-500/30 dark:border-amber-500/30">
+              <div className="flex items-center gap-1.5 mb-1.5">
+                <Clock size={12} className="text-amber-500 dark:text-amber-400" />
+                <span className="font-display uppercase tracking-widest text-xs text-amber-600 dark:text-amber-400">
+                  Quiet · 14+ days
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-x-3 gap-y-1">
+                {staleAreas.map((a) => (
+                  <RouterLink
+                    key={a.id}
+                    to={`/area/${a.id}`}
+                    onClick={onClose}
+                    className="text-xs text-navy-700 dark:text-navy-200 hover:text-signal-500 dark:hover:text-signal-400 transition-colors"
+                  >
+                    <span className="font-display uppercase tracking-wide">{a.name}</span>
+                    <span className="ml-1.5 font-mono text-navy-400 dark:text-navy-500">{a.days_inactive}d</span>
+                  </RouterLink>
+                ))}
+              </div>
+            </div>
+          )}
+
           <textarea
             value={text}
             onChange={(e) => setText(e.target.value)}

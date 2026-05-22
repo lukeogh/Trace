@@ -40,11 +40,17 @@ export const areasApi = {
   list: () =>
     request('/areas'),
 
+  create: (payload) =>
+    request('/areas', { method: 'POST', body: payload }),
+
   get: (id) =>
     request(`/areas/${id}`),
 
   update: (id, payload) =>
     request(`/areas/${id}`, { method: 'PUT', body: payload }),
+
+  suggestSummary: (id) =>
+    request(`/areas/${id}/summary/suggest`, { method: 'POST' }),
 
   listThreads: (areaId) =>
     request(`/areas/${areaId}/threads`),
@@ -85,6 +91,12 @@ export const threadsApi = {
 
   getAudit: (threadId) =>
     request(`/threads/${threadId}/audit`),
+
+  addLink: (threadId, payload) =>
+    request(`/threads/${threadId}/links`, { method: 'POST', body: payload }),
+
+  deleteLink: (linkId) =>
+    request(`/links/${linkId}`, { method: 'DELETE' }),
 }
 
 // ─── Entries ──────────────────────────────────────────────────────────────────
@@ -102,6 +114,25 @@ export const entriesApi = {
   getUpcoming: (limit = 10) =>
     request(`/todos/upcoming?limit=${limit}`),
 }
+
+// ─── Ingest (drag-drop files) ─────────────────────────────────────────────────
+
+export const ingestApi = {
+  parseFile: async (file) => {
+    const formData = new FormData()
+    formData.append('file', file)
+    const res = await fetch(`${BASE}/ingest/parse`, {
+      method: 'POST',
+      body: formData,
+    })
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      throw new Error(data.detail || `HTTP ${res.status}`)
+    }
+    return res.json()
+  },
+}
+
 
 // ─── Generate / Process ───────────────────────────────────────────────────────
 

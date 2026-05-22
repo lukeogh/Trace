@@ -5,7 +5,7 @@
 /* ─── Google Font import fallback ──────────────────────────────────────────── */
 @layer base {
   html {
-    font-family: 'Barlow', ui-sans-serif, system-ui, sans-serif;
+    font-family: var(--font-body, 'Lexend'), 'Barlow', ui-sans-serif, system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }

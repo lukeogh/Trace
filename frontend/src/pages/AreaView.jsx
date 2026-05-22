@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { Plus, Check, X, Edit3, RefreshCw, History, ChevronDown, ChevronUp } from 'lucide-react'
+import { Plus, Check, X, Edit3, RefreshCw, History, ChevronDown, ChevronUp, Sparkles } from 'lucide-react'
 import { format } from 'date-fns'
 import { areasApi } from '../api/client'
 import StatusBadge from '../components/StatusBadge'
@@ -23,6 +23,7 @@ export default function AreaView() {
   const [editingSummary, setEditingSummary] = useState(false)
   const [summaryDraft, setSummaryDraft] = useState('')
   const [savingSummary, setSavingSummary] = useState(false)
+  const [suggestingSummary, setSuggestingSummary] = useState(false)
 
   const [editingStatus, setEditingStatus] = useState(false)
 
@@ -79,6 +80,20 @@ export default function AreaView() {
   const cancelSummary = () => {
     setSummaryDraft(area?.summary || '')
     setEditingSummary(false)
+  }
+
+  const suggestSummary = async () => {
+    setSuggestingSummary(true)
+    if (!editingSummary) setEditingSummary(true)
+    try {
+      const result = await areasApi.suggestSummary(areaId)
+      setSummaryDraft(result.summary)
+      toast('Suggestion ready — review and save')
+    } catch (e) {
+      toast(e.message, 'error')
+    } finally {
+      setSuggestingSummary(false)
+    }
   }
 
   // ── Status change ───────────────────────────────────────────────────────────
@@ -198,15 +213,26 @@ export default function AreaView() {
             <span className="text-xs font-display uppercase tracking-widest text-navy-400 dark:text-navy-500">
               Current Situation
             </span>
-            {!editingSummary && (
+            <div className="flex items-center gap-3">
               <button
-                onClick={() => setEditingSummary(true)}
-                className="flex items-center gap-1.5 text-xs text-navy-400 dark:text-navy-500 hover:text-signal-500 transition-colors"
+                onClick={suggestSummary}
+                disabled={suggestingSummary}
+                title="Generate a 2-line summary from recent activity"
+                className="flex items-center gap-1.5 text-xs text-navy-400 dark:text-navy-500 hover:text-signal-500 dark:hover:text-signal-400 disabled:opacity-50 transition-colors"
               >
-                <Edit3 size={12} />
-                Edit
+                <Sparkles size={12} className={suggestingSummary ? 'animate-pulse' : ''} />
+                {suggestingSummary ? 'Thinking…' : 'Suggest'}
               </button>
-            )}
+              {!editingSummary && (
+                <button
+                  onClick={() => setEditingSummary(true)}
+                  className="flex items-center gap-1.5 text-xs text-navy-400 dark:text-navy-500 hover:text-signal-500 transition-colors"
+                >
+                  <Edit3 size={12} />
+                  Edit
+                </button>
+              )}
+            </div>
           </div>
 
           {editingSummary ? (

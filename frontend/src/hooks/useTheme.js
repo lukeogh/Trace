@@ -9,7 +9,10 @@ export function useTheme() {
   const [dark, setDark] = useState(() => {
     const stored = localStorage.getItem('theme')
     if (stored) return stored === 'dark'
-    // Default to dark — matches the product aesthetic
+    // First-load: honour the OS preference; fall back to dark if unsupported
+    if (typeof window !== 'undefined' && window.matchMedia) {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches
+    }
     return true
   })
 

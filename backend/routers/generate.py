@@ -18,6 +18,61 @@ def get_anthropic_client():
     return Anthropic(api_key=api_key)
 
 
+def _translate_anthropic_error(exc: Exception) -> HTTPException:
+    """
+    Convert an Anthropic SDK exception into a clear HTTPException the UI can show.
+    Falls through to a generic 502 for anything we don't recognise.
+    """
+    try:
+        from anthropic import (
+            APIStatusError, RateLimitError, APIConnectionError,
+            APITimeoutError, AuthenticationError, BadRequestError,
+        )
+    except Exception:
+        # If the SDK can't be imported here, just return a generic 502
+        return HTTPException(status_code=502, detail=f"AI request failed: {exc}")
+
+    status = getattr(exc, "status_code", None)
+
+    if isinstance(exc, APITimeoutError):
+        return HTTPException(
+            status_code=504,
+            detail="Claude took too long to respond. Try again.",
+        )
+    if isinstance(exc, APIConnectionError):
+        return HTTPException(
+            status_code=502,
+            detail="Couldn't reach Claude. Check your network and try again.",
+        )
+    if isinstance(exc, AuthenticationError):
+        return HTTPException(
+            status_code=502,
+            detail="Anthropic API key is invalid or expired. Update ANTHROPIC_API_KEY and rebuild.",
+        )
+    if isinstance(exc, RateLimitError) or status == 429:
+        return HTTPException(
+            status_code=503,
+            detail="Rate-limited by Claude. Wait a few seconds and retry.",
+        )
+    # 529 — Anthropic's "service overloaded" — comes through as APIStatusError
+    if status == 529:
+        return HTTPException(
+            status_code=503,
+            detail="Claude is overloaded right now. Wait a few seconds and retry.",
+        )
+    if isinstance(exc, BadRequestError):
+        return HTTPException(
+            status_code=400,
+            detail=f"Claude rejected the request: {exc}",
+        )
+    if isinstance(exc, APIStatusError):
+        return HTTPException(
+            status_code=502,
+            detail=f"Claude API error ({status}): {exc}",
+        )
+    return HTTPException(status_code=502, detail=f"AI request failed: {exc}")
+
+
 @router.post("/generate/process", response_model=schemas.ProcessResponse)
 def generate_process(payload: schemas.ProcessRequest):
     client = get_anthropic_client()
@@ -32,15 +87,20 @@ Each item must have exactly these fields:
   due_date:         string | null (ISO date YYYY-MM-DD if applicable, else null)
 Maximum 8 items. Prioritise actionable items over contextual ones."""
 
-    message = client.messages.create(
-        model="claude-sonnet-4-6",
-        max_tokens=2000,
-        system=system,
-        messages=[{
-            "role": "user",
-            "content": f"Area: {payload.area_name}\n\nText to process:\n{payload.input_text}",
-        }],
-    )
+    try:
+        message = client.messages.create(
+            model="claude-sonnet-4-6",
+            max_tokens=2000,
+            system=system,
+            messages=[{
+                "role": "user",
+                "content": f"Area: {payload.area_name}\n\nText to process:\n{payload.input_text}",
+            }],
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise _translate_anthropic_error(e)
 
     try:
         items = json.loads(message.content[0].text)
@@ -57,15 +117,20 @@ def generate_refine(payload: schemas.RefineRequest):
 Return a JSON object only with fields: type, content, rationale, suggested_thread, due_date.
 No preamble, no markdown."""
 
-    message = client.messages.create(
-        model="claude-sonnet-4-6",
-        max_tokens=500,
-        system=system,
-        messages=[{
-            "role": "user",
-            "content": f"Original item: {json.dumps(payload.item)}\nRejection reason: {payload.rejection_reason}\nArea: {payload.area_name}",
-        }],
-    )
+    try:
+        message = client.messages.create(
+            model="claude-sonnet-4-6",
+            max_tokens=500,
+            system=system,
+            messages=[{
+                "role": "user",
+                "content": f"Original item: {json.dumps(payload.item)}\nRejection reason: {payload.rejection_reason}\nArea: {payload.area_name}",
+            }],
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise _translate_anthropic_error(e)
 
     try:
         refined = json.loads(message.content[0].text)
@@ -91,9 +156,15 @@ Structure:
 Data for the 7 days ending {payload.generated_at}:
 {json.dumps(payload.areas, indent=2)}"""
 
-    message = client.messages.create(
-        model="claude-sonnet-4-6",
-        max_tokens=2500,
-        messages=[{"role": "user", "content": prompt}],
-    )
+    try:
+        message = client.messages.create(
+            model="claude-sonnet-4-6",
+            max_tokens=2500,
+            messages=[{"role": "user", "content": prompt}],
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise _translate_anthropic_error(e)
+
     return schemas.RoundupResponse(text=message.content[0].text)

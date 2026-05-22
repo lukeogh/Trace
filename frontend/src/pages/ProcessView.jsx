@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { Cpu, Check, X, Loader2, RotateCcw } from 'lucide-react'
-import { areasApi, generateApi, entriesApi } from '../api/client'
+import { BrainCircuit, Check, X, Loader2, RotateCcw, Upload, FileText, Mail, Calendar } from 'lucide-react'
+import { areasApi, generateApi, entriesApi, ingestApi } from '../api/client'
 import { useToast } from '../components/Toast'
 
 const STATUS_MESSAGES = ['Reading…', 'Identifying tasks…', 'Structuring items…', 'Preparing review…']
@@ -73,6 +73,49 @@ function ProgressBar({ done }) {
     </div>
   )
 }
+
+// ─── Source chip ──────────────────────────────────────────────────────────────
+
+const KIND_META = {
+  pdf:  { Icon: FileText, label: 'PDF',      tint: 'text-red-500    dark:text-red-400'    },
+  eml:  { Icon: Mail,     label: 'Email',    tint: 'text-violet-500 dark:text-violet-400' },
+  ics:  { Icon: Calendar, label: 'Calendar', tint: 'text-emerald-500 dark:text-emerald-400' },
+  text: { Icon: FileText, label: 'Text',     tint: 'text-navy-500   dark:text-navy-400'   },
+}
+
+function formatBytes(n) {
+  if (!n) return ''
+  if (n < 1024) return `${n} B`
+  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`
+  return `${(n / 1024 / 1024).toFixed(1)} MB`
+}
+
+function SourceChip({ source, onRemove }) {
+  const meta = KIND_META[source.kind] || KIND_META.text
+  const { Icon } = meta
+  return (
+    <div className="flex items-center gap-2 mb-3 px-3 py-2 rounded-lg bg-navy-50 dark:bg-navy-800 border border-navy-200 dark:border-navy-700">
+      <Icon size={14} className={`flex-shrink-0 ${meta.tint}`} />
+      <span className="text-xs font-mono text-navy-700 dark:text-navy-200 truncate flex-1 min-w-0">
+        {source.name}
+      </span>
+      <span className="font-display uppercase tracking-wider text-xs text-navy-400 dark:text-navy-500 flex-shrink-0">
+        {meta.label}
+      </span>
+      <span className="font-mono text-xs text-navy-300 dark:text-navy-600 flex-shrink-0">
+        {formatBytes(source.bytes)}
+      </span>
+      <button
+        onClick={onRemove}
+        title="Remove source reference (text stays)"
+        className="p-1 rounded text-navy-300 dark:text-navy-600 hover:text-red-500 transition-colors flex-shrink-0"
+      >
+        <X size={12} />
+      </button>
+    </div>
+  )
+}
+
 
 function StatusCycler() {
   const [idx, setIdx] = useState(0)
@@ -324,6 +367,14 @@ export default function ProcessView() {
   const [bulkApproving, setBulkApproving] = useState(false)
   const [bulkRemaining, setBulkRemaining] = useState(0)
 
+  // Drag-drop ingest state
+  const [parsing, setParsing]         = useState(false)
+  const [parseSource, setParseSource] = useState(null)  // { name, kind, bytes }
+  const [dragActive, setDragActive]   = useState(false)
+  const dragCounterRef = useRef(0)
+  const fileInputRef   = useRef(null)
+  const toast = useToast()
+
   // Persist state whenever it changes
   useEffect(() => {
     saveSaved({ selectedAreaId, inputText, items, hasExtracted })
@@ -340,7 +391,58 @@ export default function ProcessView() {
     areasApi.listThreads(selectedAreaId).then(setAreaThreads).catch(() => {})
   }, [selectedAreaId])
 
-  const canSubmit = selectedAreaId && inputText.trim().length > 0 && !processing
+  const canSubmit = selectedAreaId && inputText.trim().length > 0 && !processing && !parsing
+
+  // ── Drag-and-drop ingest ────────────────────────────────────────────────────
+
+  const ingestFile = async (file) => {
+    if (!file) return
+    setParsing(true)
+    setError(null)
+    try {
+      const result = await ingestApi.parseFile(file)
+      setInputText((prev) => prev.trim() ? `${prev}\n\n${result.text}` : result.text)
+      setParseSource({ name: result.source_name, kind: result.kind, bytes: result.bytes })
+      toast(`Parsed ${result.source_name}`)
+    } catch (e) {
+      const msg = e.message || 'Failed to parse file'
+      setError(msg)
+      toast(msg, 'error')
+    } finally {
+      setParsing(false)
+    }
+  }
+
+  const onDragEnter = (e) => {
+    if (!e.dataTransfer?.types?.includes('Files')) return
+    e.preventDefault()
+    dragCounterRef.current++
+    setDragActive(true)
+  }
+  const onDragLeave = (e) => {
+    e.preventDefault()
+    dragCounterRef.current--
+    if (dragCounterRef.current <= 0) {
+      dragCounterRef.current = 0
+      setDragActive(false)
+    }
+  }
+  const onDragOver = (e) => {
+    if (e.dataTransfer?.types?.includes('Files')) e.preventDefault()
+  }
+  const onDrop = (e) => {
+    e.preventDefault()
+    dragCounterRef.current = 0
+    setDragActive(false)
+    const file = e.dataTransfer.files?.[0]
+    if (file) ingestFile(file)
+  }
+
+  const handleBrowse = (e) => {
+    const file = e.target.files?.[0]
+    if (file) ingestFile(file)
+    e.target.value = ''  // allow re-uploading the same filename
+  }
 
   const handleProcess = async () => {
     if (!canSubmit) return
@@ -403,6 +505,7 @@ export default function ProcessView() {
     setHasExtracted(false)
     setError(null)
     setBulkApproving(false)
+    setParseSource(null)
   }
 
   // All items reviewed — show completion banner instead of results panel
@@ -417,22 +520,66 @@ export default function ProcessView() {
         border-b border-navy-100 dark:border-navy-800
       ">
         <div className="max-w-3xl mx-auto flex items-center gap-3">
-          <Cpu size={16} className="text-navy-400 dark:text-navy-500" />
+          <BrainCircuit size={18} className="text-signal-500 dark:text-signal-400" />
           <h1 className="font-display font-bold text-xl uppercase tracking-widest text-navy-900 dark:text-white">
-            Process
+            Auto Generate
           </h1>
         </div>
       </header>
 
       <div className="max-w-3xl mx-auto px-8 py-6 space-y-6">
         {/* Input Panel */}
-        <div className="bg-white dark:bg-navy-850 border border-navy-200 dark:border-navy-700 rounded-xl p-6">
-          <p className="font-display uppercase tracking-widest text-xs text-navy-400 dark:text-navy-500 mb-4">
-            Process Information
-          </p>
+        <div
+          onDragEnter={onDragEnter}
+          onDragLeave={onDragLeave}
+          onDragOver={onDragOver}
+          onDrop={onDrop}
+          className={`
+            relative bg-white dark:bg-navy-850 border rounded-xl p-6 transition-colors
+            ${dragActive
+              ? 'border-signal-500 ring-2 ring-signal-500/40'
+              : 'border-navy-200 dark:border-navy-700'
+            }
+          `}
+        >
+          <div className="flex items-center justify-between mb-4">
+            <p className="font-display uppercase tracking-widest text-xs text-navy-400 dark:text-navy-500">
+              Generate from notes
+            </p>
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={parsing}
+              className="
+                flex items-center gap-1.5 text-xs font-display uppercase tracking-wide transition-colors
+                text-navy-400 dark:text-navy-500
+                hover:text-signal-500 dark:hover:text-signal-400
+                disabled:opacity-50
+              "
+            >
+              <Upload size={12} />
+              {parsing ? 'Parsing…' : 'Browse file'}
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".pdf,.eml,.ics,.ical,.txt,.md,.markdown,.log,.csv"
+              onChange={handleBrowse}
+              className="hidden"
+            />
+          </div>
 
-          {/* Area selector pills */}
-          <div className="flex flex-wrap gap-2 mb-4">
+          {/* Area selector */}
+          <div className="mb-4">
+            <p className="block text-xs font-display uppercase tracking-wide text-navy-500 dark:text-navy-400 mb-1.5">
+              Area <span className="text-red-500">*</span>
+            </p>
+            <div className={`
+              flex flex-wrap gap-2 p-1 -m-1 rounded-md transition-colors
+              ${!selectedAreaId && inputText.trim().length > 0
+                ? 'ring-1 ring-amber-500/40 bg-amber-500/5'
+                : ''
+              }
+            `}>
             {areas.map((area) => (
               <button
                 key={area.id}
@@ -448,13 +595,22 @@ export default function ProcessView() {
                 {area.name}
               </button>
             ))}
+            </div>
           </div>
+
+          {/* Parsed-source chip */}
+          {parseSource && (
+            <SourceChip
+              source={parseSource}
+              onRemove={() => setParseSource(null)}
+            />
+          )}
 
           {/* Textarea */}
           <textarea
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
-            placeholder="Paste meeting notes, emails, documents, or any unstructured text here…"
+            placeholder="Paste notes, or drop a PDF, email (.eml), or calendar invite (.ics) anywhere on this panel…"
             className="
               w-full min-h-[200px] bg-navy-50 dark:bg-navy-800
               border border-navy-200 dark:border-navy-600
@@ -462,9 +618,43 @@ export default function ProcessView() {
               text-navy-900 dark:text-white
               placeholder:text-navy-300 dark:placeholder:text-navy-600
               focus:outline-none focus:ring-2 focus:ring-signal-500
-              mb-4
+              mb-2
             "
           />
+
+          <p className="text-xs font-mono text-navy-300 dark:text-navy-600 mb-4">
+            Drop a file anywhere on this panel to ingest it.
+          </p>
+
+          {/* Drop overlay */}
+          {dragActive && (
+            <div className="
+              absolute inset-0 z-20 rounded-xl flex flex-col items-center justify-center gap-2
+              bg-signal-500/10 dark:bg-signal-500/15 backdrop-blur-sm pointer-events-none
+              border-2 border-dashed border-signal-500
+            ">
+              <Upload size={28} className="text-signal-500" />
+              <p className="font-display uppercase tracking-widest text-sm text-signal-600 dark:text-signal-400">
+                Drop to parse
+              </p>
+              <p className="font-mono text-xs text-navy-500 dark:text-navy-400">
+                PDF · EML · ICS · TXT
+              </p>
+            </div>
+          )}
+
+          {/* Parsing overlay */}
+          {parsing && !dragActive && (
+            <div className="
+              absolute inset-0 z-20 rounded-xl flex flex-col items-center justify-center gap-2
+              bg-white/70 dark:bg-navy-850/80 backdrop-blur-sm pointer-events-none
+            ">
+              <Loader2 size={24} className="text-signal-500 animate-spin" />
+              <p className="font-display uppercase tracking-widest text-xs text-navy-500 dark:text-navy-400">
+                Parsing…
+              </p>
+            </div>
+          )}
 
           {/* Loading state or submit button */}
           {processing ? (
@@ -473,19 +663,35 @@ export default function ProcessView() {
               <StatusCycler />
             </div>
           ) : (
-            <button
-              onClick={handleProcess}
-              disabled={!canSubmit}
-              className="
-                w-full flex items-center justify-center gap-2 py-2.5 rounded-lg
-                bg-signal-500 hover:bg-signal-600 text-white text-sm
-                font-display uppercase tracking-wide
-                disabled:opacity-50 disabled:cursor-not-allowed transition-colors
-              "
-            >
-              <Cpu size={14} />
-              Extract Items
-            </button>
+            <>
+              <button
+                onClick={handleProcess}
+                disabled={!canSubmit}
+                title={
+                  !selectedAreaId      ? 'Select an area first' :
+                  !inputText.trim()    ? 'Add text first' :
+                  parsing              ? 'Parsing file…' :
+                  'Send to AI'
+                }
+                className="
+                  w-full flex items-center justify-center gap-2 py-2.5 rounded-lg
+                  bg-signal-500 hover:bg-signal-600 text-white text-sm
+                  font-display uppercase tracking-wide
+                  disabled:opacity-50 disabled:cursor-not-allowed transition-colors
+                "
+              >
+                <BrainCircuit size={14} />
+                Extract Items
+              </button>
+              {!canSubmit && (
+                <p className="mt-2 text-xs font-mono text-amber-500 dark:text-amber-400 text-center">
+                  {!selectedAreaId   ? '↑ Select an area to enable' :
+                   !inputText.trim() ? 'Add some text or drop a file' :
+                   parsing           ? 'Parsing file…' :
+                   ''}
+                </p>
+              )}
+            </>
           )}
 
           {/* Error state */}

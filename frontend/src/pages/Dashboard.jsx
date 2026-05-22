@@ -1,22 +1,24 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { MessageSquare, ArrowRight, RefreshCw, LayoutGrid, ArrowDownUp, Activity, Plus, PenLine, EyeOff, Link2, Paperclip, Clock, CheckSquare, CheckCheck, Sparkles } from 'lucide-react'
+import { MessageSquare, ArrowRight, RefreshCw, Activity, Plus, PenLine, Link2, Paperclip, Clock, CheckSquare, CheckCheck, Sparkles, RotateCcw } from 'lucide-react'
 import { formatDistanceToNow, format, differenceInDays, differenceInCalendarDays, parseISO } from 'date-fns'
 import { areasApi, entriesApi } from '../api/client'
 import StatusBadge from '../components/StatusBadge'
-import ThemeToggle from '../components/ThemeToggle'
-import Logo from '../components/Logo'
 import WeeklyRoundupModal from '../components/WeeklyRoundupModal'
 import { getAreaStatus } from '../utils/status'
-import { useTheme } from '../hooks/useTheme'
 
 const INACTIVITY_THRESHOLD_DAYS = 7
 
 // Priority order: blocked (most urgent) → on hold → active → stable (least urgent)
 const STATUS_PRIORITY = { blocked: 0, review: 1, active: 2, stable: 3 }
 
+const VIEW_MODES = [
+  { key: 'default',  label: 'All' },
+  { key: 'priority', label: 'Priority' },
+  { key: 'focus',    label: 'Focus' },
+]
+
 export default function Dashboard() {
-  const { dark, toggle } = useTheme()
   const [areas, setAreas]       = useState([])
   const [loading, setLoading]   = useState(true)
   const [error, setError]       = useState(null)
@@ -62,97 +64,76 @@ export default function Dashboard() {
   if (loading) return <DashboardSkeleton />
   if (error)   return <ErrorState message={error} onRetry={load} />
 
+  const filterNotice = (() => {
+    if (viewMode === 'priority') return 'Priority order — blocked first'
+    if (viewMode === 'focus')    return 'Focus mode — stable areas hidden'
+    return null
+  })()
+
   return (
     <div className="flex-1 min-h-screen bg-navy-50 dark:bg-navy-900 bg-grid-light dark:bg-grid-dark">
-      {/* ── Top bar ── */}
+      {/* ── Sub-toolbar (page-level, no brand) ── */}
       <header className="
-        sticky top-0 z-10 px-8 py-4
+        sticky top-0 z-10 px-8 py-5
         bg-navy-50/90 dark:bg-navy-900/90 backdrop-blur-md
         border-b border-navy-200 dark:border-navy-800
       ">
-        <div className="max-w-6xl mx-auto flex items-center justify-between gap-6">
-
-          {/* Brand */}
-          <div className="flex-shrink-0">
-            <Link to="/" className="flex items-center gap-3">
-              <Logo size={36} />
-              <div>
-                <h1 className="font-display font-bold text-xl uppercase tracking-widest text-navy-900 dark:text-white">
-                  Department Log
-                </h1>
-                <p className="text-xs font-mono text-navy-400 dark:text-navy-500 mt-0.5">
-                  Axithra · Software Department
-                </p>
-              </div>
-            </Link>
+        <div className="max-w-6xl mx-auto flex items-start justify-between gap-6">
+          <div className="min-w-0">
+            <h1 className="font-display font-bold text-3xl uppercase tracking-widest text-navy-900 dark:text-white leading-tight">
+              Department Log
+            </h1>
+            <p className="text-sm font-display uppercase tracking-wider text-navy-500 dark:text-navy-400 mt-1.5">
+              The Software Department Brain
+            </p>
           </div>
 
-          {/* Controls: view mode + theme */}
-          <div className="flex items-center gap-0.5 flex-shrink-0">
-            <ViewButton
-              icon={<LayoutGrid size={16} />}
-              label="Default view"
-              active={viewMode === 'default'}
-              onClick={() => handleViewMode('default')}
-            />
-            <ViewButton
-              icon={<ArrowDownUp size={16} />}
-              label="Priority order"
-              active={viewMode === 'priority'}
-              onClick={() => handleViewMode('priority')}
-            />
-            <ViewButton
-              icon={<EyeOff size={16} />}
-              label="Focus mode"
-              active={viewMode === 'focus'}
-              onClick={() => handleViewMode('focus')}
-            />
-            <ViewButton
-              icon={<Sparkles size={16} />}
-              label="Weekly roundup"
-              active={false}
+          <div className="flex items-center gap-2 flex-shrink-0 pt-1">
+            <ViewSegmentedControl viewMode={viewMode} onChange={handleViewMode} />
+            <button
               onClick={() => setRoundupOpen(true)}
-            />
-            <div className="w-px h-4 bg-navy-200 dark:bg-navy-700 mx-1.5" />
-            <ThemeToggle dark={dark} onToggle={toggle} />
+              className="
+                flex items-center gap-1.5 px-3 py-1.5 rounded-md
+                bg-signal-500/10 text-signal-600 dark:text-signal-400
+                hover:bg-signal-500/15 transition-colors
+              "
+            >
+              <Sparkles size={13} />
+              <span className="text-xs font-display uppercase tracking-wide">Weekly Roundup</span>
+            </button>
           </div>
         </div>
+
+        {filterNotice && (
+          <div className="max-w-6xl mx-auto mt-3 flex items-center gap-2">
+            <span className="text-xs font-mono uppercase tracking-widest text-navy-400 dark:text-navy-500">
+              {filterNotice}
+            </span>
+            <button
+              onClick={() => handleViewMode('default')}
+              className="
+                inline-flex items-center gap-1 text-xs font-mono
+                text-navy-400 dark:text-navy-500
+                hover:text-signal-500 dark:hover:text-signal-400
+                transition-colors
+              "
+            >
+              <RotateCcw size={11} /> reset
+            </button>
+          </div>
+        )}
       </header>
 
       {/* ── Area grid ── */}
       <main className="max-w-6xl mx-auto px-8 py-8">
-        {viewMode === 'priority' && (
-          <p className="text-xs font-mono text-navy-400 dark:text-navy-600 mb-5 uppercase tracking-widest">
-            Priority order — blocked first
-          </p>
-        )}
-        {viewMode === 'focus' && (
-          <p className="text-xs font-mono text-navy-400 dark:text-navy-600 mb-5 uppercase tracking-widest">
-            Focus mode — stable areas hidden
-          </p>
-        )}
-
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {displayAreas.map((area) => (
             <AreaCard key={area.id} area={area} />
           ))}
         </div>
-
       </main>
 
       {/* ── Below-fold sections ── */}
-      <div className="max-w-6xl mx-auto px-8">
-        <div className="flex items-center gap-3 my-8">
-          <div className="flex-1 h-px bg-navy-200 dark:bg-navy-800" />
-          <div className="flex gap-1.5">
-            <span className="w-1 h-1 rounded-full bg-navy-300 dark:bg-navy-700" />
-            <span className="w-1 h-1 rounded-full bg-navy-300 dark:bg-navy-700" />
-            <span className="w-1 h-1 rounded-full bg-navy-300 dark:bg-navy-700" />
-          </div>
-          <div className="flex-1 h-px bg-navy-200 dark:bg-navy-800" />
-        </div>
-      </div>
-
       <div className="max-w-6xl mx-auto px-8 pb-12">
         <ComingUp />
         <RecentActivity />
@@ -163,23 +144,27 @@ export default function Dashboard() {
   )
 }
 
-// ─── View mode button ─────────────────────────────────────────────────────────
+// ─── View mode segmented control ──────────────────────────────────────────────
 
-function ViewButton({ icon, label, active, onClick }) {
+function ViewSegmentedControl({ viewMode, onChange }) {
   return (
-    <button
-      onClick={onClick}
-      title={label}
-      className={`
-        p-2 rounded-md transition-colors duration-150
-        ${active
-          ? 'text-signal-500 dark:text-signal-400 bg-signal-500/10'
-          : 'text-navy-400 dark:text-navy-500 hover:text-navy-700 dark:hover:text-navy-200 hover:bg-navy-100 dark:hover:bg-navy-800'
-        }
-      `}
-    >
-      {icon}
-    </button>
+    <div className="inline-flex items-center gap-0.5 p-0.5 rounded-md bg-navy-100 dark:bg-navy-800/60 border border-navy-200 dark:border-navy-700">
+      {VIEW_MODES.map(({ key, label }) => (
+        <button
+          key={key}
+          onClick={() => onChange(key)}
+          className={`
+            px-3 py-1 rounded text-xs font-display uppercase tracking-wide transition-colors
+            ${viewMode === key
+              ? 'bg-white dark:bg-navy-900 text-navy-900 dark:text-white shadow-sm'
+              : 'text-navy-500 dark:text-navy-400 hover:text-navy-800 dark:hover:text-navy-200'
+            }
+          `}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
   )
 }
 

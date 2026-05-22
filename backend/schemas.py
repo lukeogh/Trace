@@ -82,6 +82,21 @@ class ThreadSummary(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class LinkedThreadRef(BaseModel):
+    link_id: int
+    thread_id: int
+    thread_title: str
+    thread_status: str
+    area_id: int
+    area_name: str
+    kind: str  # blocks | relates_to
+
+
+class ThreadLinkCreate(BaseModel):
+    to_thread_id: int
+    kind: str  # blocks | relates_to
+
+
 class ThreadDetail(BaseModel):
     """Full thread with all entries and attachments."""
     id: int
@@ -93,15 +108,26 @@ class ThreadDetail(BaseModel):
     updated_at: datetime
     entries: List[EntryOut] = []
     attachments: List[AttachmentOut] = []
+    outgoing_links: List[LinkedThreadRef] = []
+    incoming_links: List[LinkedThreadRef] = []
 
     model_config = {"from_attributes": True}
 
 
 # ── Areas ─────────────────────────────────────────────────────────────────────
 
+class AreaCreate(BaseModel):
+    name: str
+    summary: Optional[str] = ""
+
+
 class AreaUpdate(BaseModel):
     status: Optional[str] = None
     summary: Optional[str] = None
+
+
+class SummarySuggestion(BaseModel):
+    summary: str
 
 
 class AreaSummary(BaseModel):
@@ -244,10 +270,18 @@ class AreaRoundupData(BaseModel):
     has_activity: bool
 
 
+class StaleArea(BaseModel):
+    id: int
+    name: str
+    status: str
+    days_inactive: int
+
+
 class RoundupData(BaseModel):
     generated_at: str
     period_days: int
     areas: List[AreaRoundupData]
+    stale_areas: List[StaleArea] = []
 
 
 class RoundupRequest(BaseModel):

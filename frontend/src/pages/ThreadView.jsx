@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom'
 import {
   Plus, Edit3, Trash2, Check, X,
   Paperclip, Link2, Upload, ExternalLink,
-  RefreshCw, FileText
+  RefreshCw, FileText, GitBranch, ArrowRight, ArrowLeft
 } from 'lucide-react'
 import { format, formatDistanceToNow, parseISO } from 'date-fns'
 import ReactMarkdown from 'react-markdown'
@@ -69,6 +69,12 @@ export default function ThreadView() {
   const [deleteThreadOpen, setDeleteThreadOpen] = useState(false)
   const [deleteEntryId, setDeleteEntryId] = useState(null)
   const [deleteAttachmentId, setDeleteAttachmentId] = useState(null)
+
+  // Thread-link modal
+  const [linkThreadOpen, setLinkThreadOpen] = useState(false)
+  const [linkThreadForm, setLinkThreadForm] = useState({ to_thread_id: '', kind: 'blocks' })
+  const [allThreads, setAllThreads] = useState([])
+  const [addingThreadLink, setAddingThreadLink] = useState(false)
 
   const load = async () => {
     setLoading(true)
@@ -248,6 +254,46 @@ export default function ThreadView() {
     } catch (e) { toast(e.message, 'error') }
   }
 
+  // ── Thread links ────────────────────────────────────────────────────────────
+
+  useEffect(() => {
+    if (!linkThreadOpen) return
+    threadsApi.getAll().then(setAllThreads).catch(() => {})
+  }, [linkThreadOpen])
+
+  const addThreadLink = async () => {
+    if (!linkThreadForm.to_thread_id) return
+    setAddingThreadLink(true)
+    try {
+      const ref = await threadsApi.addLink(threadId, {
+        to_thread_id: Number(linkThreadForm.to_thread_id),
+        kind: linkThreadForm.kind,
+      })
+      setThread((t) => ({ ...t, outgoing_links: [...(t.outgoing_links || []), ref] }))
+      setLinkThreadOpen(false)
+      setLinkThreadForm({ to_thread_id: '', kind: 'blocks' })
+      toast('Link added')
+    } catch (e) {
+      toast(e.message, 'error')
+    } finally {
+      setAddingThreadLink(false)
+    }
+  }
+
+  const removeThreadLink = async (linkId) => {
+    try {
+      await threadsApi.deleteLink(linkId)
+      setThread((t) => ({
+        ...t,
+        outgoing_links: (t.outgoing_links || []).filter((l) => l.link_id !== linkId),
+        incoming_links: (t.incoming_links || []).filter((l) => l.link_id !== linkId),
+      }))
+      toast('Link removed')
+    } catch (e) {
+      toast(e.message, 'error')
+    }
+  }
+
   // ── Render ──────────────────────────────────────────────────────────────────
 
   if (loading) return <ThreadSkeleton />
@@ -338,7 +384,8 @@ export default function ThreadView() {
                   </h1>
                   <button
                     onClick={() => setEditingTitle(true)}
-                    className="p-1 opacity-0 group-hover:opacity-100 text-navy-300 hover:text-signal-500 transition-all"
+                    title="Edit title"
+                    className="p-1 opacity-40 hover:opacity-100 text-navy-400 dark:text-navy-500 hover:text-signal-500 dark:hover:text-signal-400 transition-all"
                   >
                     <Edit3 size={14} />
                   </button>
@@ -409,7 +456,7 @@ export default function ThreadView() {
                     <span className="italic text-navy-300 dark:text-navy-600">Add a description…</span>
                   )}
                 </p>
-                <Edit3 size={12} className="text-navy-300 opacity-0 group-hover:opacity-100 flex-shrink-0 mt-0.5 transition-opacity" />
+                <Edit3 size={12} className="text-navy-400 dark:text-navy-500 opacity-40 group-hover:opacity-100 hover:text-signal-500 dark:hover:text-signal-400 flex-shrink-0 mt-0.5 transition-opacity" />
               </div>
             )}
           </div>
@@ -642,6 +689,29 @@ export default function ThreadView() {
                 </div>
               )}
             </div>
+
+            {/* Linked threads */}
+            <div className="p-4 rounded-xl bg-navy-50 dark:bg-navy-850 border border-navy-200 dark:border-navy-700">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-xs font-display uppercase tracking-widest text-navy-400 dark:text-navy-500 flex items-center gap-1.5">
+                  <GitBranch size={11} />
+                  Linked threads
+                </h3>
+                <button
+                  onClick={() => setLinkThreadOpen(true)}
+                  className="flex items-center gap-1 text-xs text-signal-600 dark:text-signal-400 hover:text-signal-500 transition-colors"
+                >
+                  <Plus size={12} />
+                  Add
+                </button>
+              </div>
+
+              <ThreadLinksList
+                outgoing={thread.outgoing_links || []}
+                incoming={thread.incoming_links || []}
+                onRemove={removeThreadLink}
+              />
+            </div>
           </div>
         </aside>
       </div>
@@ -704,6 +774,144 @@ export default function ThreadView() {
         title="Remove Attachment"
         message="Remove this attachment? Uploaded files will be deleted from the server."
       />
+
+      <Modal isOpen={linkThreadOpen} onClose={() => setLinkThreadOpen(false)} title="Link to another thread" width="max-w-md">
+        <div className="space-y-3">
+          <div>
+            <label className="block text-xs font-display uppercase tracking-wide text-navy-500 dark:text-navy-400 mb-1.5">
+              Relationship
+            </label>
+            <div className="flex items-center gap-1.5">
+              {[
+                { key: 'blocks',     label: 'Blocks' },
+                { key: 'relates_to', label: 'Relates to' },
+              ].map(({ key, label }) => (
+                <button
+                  key={key}
+                  onClick={() => setLinkThreadForm((f) => ({ ...f, kind: key }))}
+                  className={`
+                    px-3 py-1 rounded-full text-xs font-display uppercase tracking-wide transition-colors
+                    ${linkThreadForm.kind === key
+                      ? 'bg-signal-500 text-white'
+                      : 'text-navy-500 dark:text-navy-400 bg-navy-100 dark:bg-navy-800 hover:bg-navy-200 dark:hover:bg-navy-700'
+                    }
+                  `}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-display uppercase tracking-wide text-navy-500 dark:text-navy-400 mb-1.5">
+              Target thread
+            </label>
+            <select
+              value={linkThreadForm.to_thread_id}
+              onChange={(e) => setLinkThreadForm((f) => ({ ...f, to_thread_id: e.target.value }))}
+              className="
+                w-full px-3 py-2 text-sm rounded-lg
+                bg-navy-50 dark:bg-navy-800 border border-navy-200 dark:border-navy-600
+                text-navy-900 dark:text-white
+                focus:outline-none focus:ring-2 focus:ring-signal-500
+              "
+            >
+              <option value="">Select a thread…</option>
+              {Object.entries(
+                allThreads
+                  .filter((t) => String(t.id) !== String(threadId))
+                  .reduce((acc, t) => {
+                    if (!acc[t.area_name]) acc[t.area_name] = []
+                    acc[t.area_name].push(t)
+                    return acc
+                  }, {})
+              ).map(([areaName, threads]) => (
+                <optgroup key={areaName} label={areaName}>
+                  {threads.map((t) => (
+                    <option key={t.id} value={t.id}>{t.title}</option>
+                  ))}
+                </optgroup>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex justify-end gap-2 pt-1">
+            <button
+              onClick={() => setLinkThreadOpen(false)}
+              className="px-4 py-2 text-sm rounded-md text-navy-600 dark:text-navy-300 hover:bg-navy-100 dark:hover:bg-navy-700 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={addThreadLink}
+              disabled={!linkThreadForm.to_thread_id || addingThreadLink}
+              className="px-4 py-2 text-sm rounded-md font-medium bg-signal-500 hover:bg-signal-600 text-white disabled:opacity-50 transition-colors"
+            >
+              {addingThreadLink ? 'Linking…' : 'Add link'}
+            </button>
+          </div>
+        </div>
+      </Modal>
+    </div>
+  )
+}
+
+// ─── Linked threads list ─────────────────────────────────────────────────────
+
+function ThreadLinksList({ outgoing, incoming, onRemove }) {
+  if (outgoing.length === 0 && incoming.length === 0) {
+    return (
+      <p className="text-xs italic text-navy-300 dark:text-navy-600">
+        No linked threads.
+      </p>
+    )
+  }
+
+  const LABELS = {
+    outgoing: { blocks: 'Blocks',     relates_to: 'Relates to' },
+    incoming: { blocks: 'Blocked by', relates_to: 'Related'    },
+  }
+
+  const rows = [
+    ...outgoing.map((l) => ({ ...l, direction: 'outgoing', arrow: ArrowRight })),
+    ...incoming.map((l) => ({ ...l, direction: 'incoming', arrow: ArrowLeft  })),
+  ]
+
+  return (
+    <div className="space-y-2">
+      {rows.map((row) => {
+        const ArrowIcon = row.arrow
+        const label = LABELS[row.direction][row.kind] || row.kind
+        return (
+          <div key={`${row.direction}-${row.link_id}`} className="group flex items-start gap-2 text-xs">
+            <ArrowIcon size={11} className="text-navy-400 dark:text-navy-500 mt-0.5 flex-shrink-0" />
+            <div className="flex-1 min-w-0">
+              <div className="font-display uppercase tracking-wide text-navy-400 dark:text-navy-500 mb-0.5">
+                {label}
+              </div>
+              <Link
+                to={`/thread/${row.thread_id}`}
+                className="text-navy-700 dark:text-navy-200 hover:text-signal-500 dark:hover:text-signal-400 transition-colors block truncate"
+              >
+                {row.thread_title}
+              </Link>
+              <div className="text-navy-400 dark:text-navy-600 font-mono mt-0.5 truncate">
+                {row.area_name}
+              </div>
+            </div>
+            {row.direction === 'outgoing' && (
+              <button
+                onClick={() => onRemove(row.link_id)}
+                title="Remove link"
+                className="p-1 rounded opacity-0 group-hover:opacity-100 text-navy-300 dark:text-navy-600 hover:text-red-500 transition-all"
+              >
+                <X size={11} />
+              </button>
+            )}
+          </div>
+        )
+      })}
     </div>
   )
 }
