@@ -32,6 +32,10 @@ export default function StatusChangeModal({
     setTimeout(() => inputRef.current?.focus(), 50)
   }, [isOpen, targetStatus])
 
+  // Guard: ThreadView keeps the modal mounted with targetStatus=null when
+  // closed, so we'd otherwise try to compute labels off a null status.
+  if (!isOpen || !targetStatus) return null
+
   const isBlocking = targetStatus === 'blocked'
   const targetLabel = THREAD_STATUSES[targetStatus]?.label || targetStatus
   const currentLabel = THREAD_STATUSES[currentStatus]?.label || currentStatus
