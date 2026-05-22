@@ -2,12 +2,28 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ─── Google Font import fallback ──────────────────────────────────────────── */
+/* ── Design tokens (single source of truth) ─────────────────────────────── */
+@import './tokens.css';
+
+/* ─── Base ───────────────────────────────────────────────────────────────── */
 @layer base {
   html {
-    font-family: var(--font-body, 'Lexend'), 'Barlow', ui-sans-serif, system-ui, sans-serif;
+    font-family: var(--font-body, 'Geist'), 'Lexend', ui-sans-serif, system-ui, -apple-system, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    background: var(--paper);
+    color: var(--ink);
+  }
+
+  html.dark {
+    background: var(--pitch);
+    color: var(--paper-d);
+  }
+
+  body {
+    background: inherit;
+    color: inherit;
   }
 
   /* Scrollbar styling */
@@ -21,66 +37,72 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    @apply bg-navy-300 dark:bg-navy-700 rounded-full;
+    @apply bg-paper-400 dark:bg-pitch-500 rounded-full;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-navy-400 dark:bg-navy-600;
+    @apply bg-paper-500 dark:bg-pitch-400;
   }
 
-  /* Focus ring */
+  /* Focus ring — uses the accent */
   *:focus-visible {
-    @apply outline-none ring-2 ring-signal-500 ring-offset-1 ring-offset-white dark:ring-offset-navy-900;
+    @apply outline-none ring-2 ring-accent ring-offset-2 ring-offset-paper dark:ring-offset-pitch;
   }
 
-  /* Smooth theme transitions */
+  /* Smooth theme transitions, but instant on text/border colour for content */
   *, *::before, *::after {
     transition-property: background-color, border-color;
     transition-duration: 150ms;
     transition-timing-function: ease;
   }
 
-  /* Exclude transitions that should be instant */
   button, a, input, textarea {
     transition-property: background-color, border-color, color, opacity, box-shadow, transform;
   }
 }
 
-/* ─── Typography utilities ──────────────────────────────────────────────────── */
+/* ─── Typography utilities ──────────────────────────────────────────────── */
 @layer utilities {
   .font-display {
-    font-family: 'Oxanium', ui-monospace, monospace;
+    font-family: 'Geist', ui-sans-serif, system-ui, sans-serif;
+    font-weight: 500;
+    letter-spacing: -0.025em;
+  }
+
+  .font-lexend {
+    font-family: 'Lexend', 'Geist', ui-sans-serif, system-ui, sans-serif;
   }
 
   .font-mono {
-    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-family: 'Geist Mono', 'JetBrains Mono', ui-monospace, monospace;
   }
 
-  /* Subtle grid texture for dark mode dashboard */
-  .bg-grid-dark {
-    background-image:
-      linear-gradient(rgba(14, 165, 233, 0.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(14, 165, 233, 0.03) 1px, transparent 1px);
-    background-size: 32px 32px;
-  }
-
+  /* Subtle grid texture — calmer than before, reduced opacity */
   .bg-grid-light {
     background-image:
-      linear-gradient(rgba(50, 86, 120, 0.04) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(50, 86, 120, 0.04) 1px, transparent 1px);
+      linear-gradient(rgba(20, 19, 15, 0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(20, 19, 15, 0.025) 1px, transparent 1px);
     background-size: 32px 32px;
   }
 
-  /* Glow effect for accent elements */
-  .glow-signal {
-    box-shadow: 0 0 12px rgba(14, 165, 233, 0.3);
+  .bg-grid-dark {
+    background-image:
+      linear-gradient(rgba(247, 244, 237, 0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(247, 244, 237, 0.025) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+
+  /* Soft glow for accent elements — sparingly used */
+  .glow-accent {
+    box-shadow: 0 0 16px rgba(91, 91, 214, 0.25);
   }
 }
 
-/* ─── Markdown content rendered inside entries ──────────────────────────────── */
+/* ─── Markdown content rendered inside entries ──────────────────────────── */
 .prose-entry {
   @apply text-sm leading-relaxed;
   color: inherit;
+  font-family: 'Geist', 'Lexend', ui-sans-serif, system-ui, sans-serif;
 }
 
 .prose-entry p {
@@ -109,16 +131,16 @@
 
 .prose-entry code {
   @apply font-mono text-xs px-1.5 py-0.5 rounded;
-  @apply bg-navy-100 text-navy-800;
-  @apply dark:bg-navy-800 dark:text-signal-300;
+  @apply bg-paper-200 text-ink;
+  @apply dark:bg-pitch-700 dark:text-paper-100;
 }
 
 .prose-entry pre {
   @apply font-mono text-xs p-3 rounded-md overflow-x-auto mb-2;
-  @apply bg-navy-100 text-navy-800;
-  @apply dark:bg-navy-900 dark:text-signal-300;
+  @apply bg-paper-200 text-ink;
+  @apply dark:bg-pitch-800 dark:text-paper-100;
   border: 1px solid;
-  @apply border-navy-200 dark:border-navy-700;
+  @apply border-paper-300 dark:border-pitch-500;
 }
 
 .prose-entry pre code {
@@ -126,7 +148,7 @@
 }
 
 .prose-entry a {
-  @apply text-signal-600 dark:text-signal-400 underline underline-offset-2 hover:text-signal-500;
+  @apply text-accent-600 dark:text-accent-300 underline underline-offset-2 hover:text-accent-500;
 }
 
 .prose-entry h1, .prose-entry h2, .prose-entry h3 {
@@ -139,11 +161,11 @@
 
 .prose-entry blockquote {
   @apply border-l-2 pl-3 italic;
-  @apply border-navy-300 text-navy-500;
-  @apply dark:border-navy-600 dark:text-navy-400;
+  @apply border-paper-400 text-paper-700;
+  @apply dark:border-pitch-400 dark:text-pitch-100;
 }
 
 .prose-entry hr {
   @apply my-3;
-  @apply border-navy-200 dark:border-navy-700;
+  @apply border-paper-300 dark:border-pitch-500;
 }
