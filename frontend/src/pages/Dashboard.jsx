@@ -79,7 +79,7 @@ export default function Dashboard() {
         bg-paper-100/90 dark:bg-pitch-800/90 backdrop-blur-md
         border-b border-paper-300 dark:border-pitch-700
       ">
-        <div className="max-w-6xl mx-auto flex items-start justify-between gap-6">
+        <div className="max-w-6xl mx-auto flex items-start justify-between gap-6 pr-14">
           <div className="min-w-0">
             <h1 className="font-display font-medium text-4xl tracking-tightest text-pitch-800 dark:text-white leading-tight">
               Trace

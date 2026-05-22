@@ -118,6 +118,31 @@ function SourceChip({ source, onRemove }) {
 }
 
 
+// ─── Intro step card ──────────────────────────────────────────────────────────
+
+function Step({ n, label, hint }) {
+  return (
+    <div className="
+      flex items-start gap-2.5 px-3 py-2.5 rounded-lg
+      bg-white/60 dark:bg-pitch-700/60
+      border border-paper-200 dark:border-pitch-500
+    ">
+      <span className="font-mono text-xs text-accent-500 dark:text-accent-400 mt-0.5 tabular-nums">
+        {n}
+      </span>
+      <div className="min-w-0">
+        <div className="font-display uppercase tracking-wide text-xs text-pitch-800 dark:text-white">
+          {label}
+        </div>
+        <div className="text-xs text-paper-600 dark:text-paper-500 mt-0.5 leading-snug">
+          {hint}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+
 function StatusCycler() {
   const [idx, setIdx] = useState(0)
   useEffect(() => {
@@ -520,7 +545,7 @@ export default function ProcessView() {
         bg-paper-100/90 dark:bg-pitch-800/90 backdrop-blur-md
         border-b border-paper-200 dark:border-pitch-700
       ">
-        <div className="max-w-3xl mx-auto flex items-center gap-3">
+        <div className="max-w-3xl mx-auto flex items-center gap-3 pr-14">
           <BrainCircuit size={28} className="text-accent-500 dark:text-accent-400 flex-shrink-0" />
           <h1 className="font-display font-bold text-2xl uppercase tracking-widest text-pitch-800 dark:text-white">
             Smart Generate
@@ -529,6 +554,20 @@ export default function ProcessView() {
       </header>
 
       <div className="max-w-3xl mx-auto px-8 py-6 space-y-6">
+        {/* Intro — short tagline + three-step "how it works" */}
+        <div className="space-y-4">
+          <p className="text-base leading-relaxed text-pitch-700 dark:text-paper-200 max-w-2xl">
+            Turn messy input into structured items. Drop notes, emails,
+            calendar invites, or PDFs — Trace extracts the to-dos,
+            decisions, and context for you to approve.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+            <Step n="01" label="Pick an area" hint="Where items will land" />
+            <Step n="02" label="Drop or paste" hint="Email, calendar, PDF, or text" />
+            <Step n="03" label="Review & approve" hint="Edit, refine, or reject each item" />
+          </div>
+        </div>
+
         {/* Input Panel */}
         <div
           onDragEnter={onDragEnter}
@@ -684,14 +723,6 @@ export default function ProcessView() {
                 <BrainCircuit size={14} />
                 Extract Items
               </button>
-              {!canSubmit && (
-                <p className="mt-2 text-xs font-mono text-amber-500 dark:text-amber-400 text-center">
-                  {!selectedAreaId   ? '↑ Select an area to enable' :
-                   !inputText.trim() ? 'Add some text or drop a file' :
-                   parsing           ? 'Parsing file…' :
-                   ''}
-                </p>
-              )}
             </>
           )}
 

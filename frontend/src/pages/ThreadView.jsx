@@ -342,7 +342,7 @@ export default function ThreadView() {
         bg-paper-100/90 dark:bg-pitch-800/90 backdrop-blur-md
         border-b border-paper-200 dark:border-pitch-700
       ">
-        <div className="max-w-5xl mx-auto">
+        <div className="max-w-5xl mx-auto pr-14">
           {/* Breadcrumb */}
           <nav className="flex items-center gap-2 text-xs font-mono text-paper-500 dark:text-paper-600 mb-3">
             <Link to="/" className="hover:text-accent-500 transition-colors">Dashboard</Link>

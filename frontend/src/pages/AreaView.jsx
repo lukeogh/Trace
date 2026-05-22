@@ -154,7 +154,7 @@ export default function AreaView() {
         bg-paper-100/90 dark:bg-pitch-800/90 backdrop-blur-md
         border-b border-paper-200 dark:border-pitch-700
       ">
-        <div className="max-w-4xl mx-auto flex items-center justify-between gap-4">
+        <div className="max-w-4xl mx-auto flex items-center justify-between gap-4 pr-14">
           <div className="flex items-center gap-3 min-w-0">
             <IconPicker
               value={area.icon}

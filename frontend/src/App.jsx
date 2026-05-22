@@ -4,6 +4,8 @@ import { useTheme } from './hooks/useTheme'
 import { useFont } from './hooks/useFont'
 import { useDisplayName } from './hooks/useDisplayName'
 import { useTextSize } from './hooks/useTextSize'
+import { useAvatar } from './hooks/useAvatar'
+import SettingsMenu from './components/SettingsMenu'
 import { ToastProvider } from './components/Toast'
 import QuickCapture from './components/QuickCapture'
 import QuickSwitcher from './components/QuickSwitcher'
@@ -24,6 +26,7 @@ export default function App() {
   const { font, setFont } = useFont()
   const { displayName, setDisplayName } = useDisplayName()
   const { textSize, setTextSize } = useTextSize()
+  const { avatar, setAvatar } = useAvatar()
   const [switcherOpen, setSwitcherOpen] = useState(false)
   const [newAreaOpen, setNewAreaOpen] = useState(false)
   const [booting, setBooting] = useState(true)
@@ -65,16 +68,21 @@ export default function App() {
       <SplashScreen visible={booting} />
       <BrowserRouter>
         <Shell
+          onOpenSwitcher={() => setSwitcherOpen(true)}
+          onOpenNewArea={() => setNewAreaOpen(true)}
+        />
+        {/* Global top-right settings — same place on every page */}
+        <SettingsMenu
+          avatar={avatar}
+          onChangeAvatar={setAvatar}
+          displayName={displayName}
+          onChangeDisplayName={setDisplayName}
           dark={dark}
           onToggleTheme={toggle}
           font={font}
           onChangeFont={setFont}
-          displayName={displayName}
-          onChangeDisplayName={setDisplayName}
           textSize={textSize}
           onChangeTextSize={setTextSize}
-          onOpenSwitcher={() => setSwitcherOpen(true)}
-          onOpenNewArea={() => setNewAreaOpen(true)}
         />
         <QuickCapture />
         <QuickSwitcher
@@ -91,13 +99,7 @@ export default function App() {
 }
 
 // Shell wraps every route so navigation is always visible
-function Shell({
-  dark, onToggleTheme,
-  font, onChangeFont,
-  displayName, onChangeDisplayName,
-  textSize, onChangeTextSize,
-  onOpenSwitcher, onOpenNewArea,
-}) {
+function Shell({ onOpenSwitcher, onOpenNewArea }) {
   const [areas, setAreas] = useState([])
   const location = useLocation()
 
@@ -111,14 +113,6 @@ function Shell({
     <div className="flex min-h-screen bg-white dark:bg-pitch-800">
       <Sidebar
         areas={areas}
-        dark={dark}
-        onToggleTheme={onToggleTheme}
-        font={font}
-        onChangeFont={onChangeFont}
-        displayName={displayName}
-        onChangeDisplayName={onChangeDisplayName}
-        textSize={textSize}
-        onChangeTextSize={onChangeTextSize}
         onOpenSwitcher={onOpenSwitcher}
         onOpenNewArea={onOpenNewArea}
       />

@@ -3,7 +3,6 @@ import { Link, useParams, useLocation } from 'react-router-dom'
 import { LayoutDashboard, History, BrainCircuit, Search, Plus } from 'lucide-react'
 import { getAreaStatus } from '../utils/status'
 import { MOD_KEY } from '../utils/platform'
-import SettingsMenu from './SettingsMenu'
 import { AreaIcon } from './IconPicker'
 import Logo from './Logo'
 
@@ -13,14 +12,6 @@ const DEFAULT_WIDTH = 240
 
 export default function Sidebar({
   areas,
-  dark,
-  onToggleTheme,
-  font,
-  onChangeFont,
-  displayName,
-  onChangeDisplayName,
-  textSize,
-  onChangeTextSize,
   onOpenSwitcher,
   onOpenNewArea,
 }) {
@@ -178,26 +169,12 @@ export default function Sidebar({
         </button>
       </nav>
 
-      {/* Footer — settings + keyboard shortcuts */}
-      <div className="border-t border-paper-300 dark:border-pitch-700">
-        <div className="px-2 pt-2">
-          <SettingsMenu
-            displayName={displayName}
-            onChangeDisplayName={onChangeDisplayName}
-            dark={dark}
-            onToggleTheme={onToggleTheme}
-            font={font}
-            onChangeFont={onChangeFont}
-            textSize={textSize}
-            onChangeTextSize={onChangeTextSize}
-          />
-        </div>
-        <div className="px-4 pb-3 pt-1 space-y-1">
-          <ShortcutHint label="Capture" keys={['N']} />
-          <ShortcutHint label="Switcher" keys={[MOD_KEY, 'K']} />
-          <div className="pt-1 text-xs font-mono text-paper-400 dark:text-pitch-500">
-            v1.0.0
-          </div>
+      {/* Footer — keyboard shortcut hints */}
+      <div className="px-4 py-3 border-t border-paper-300 dark:border-pitch-700 space-y-1.5">
+        <ShortcutHint label="Capture" keys={['N']} />
+        <ShortcutHint label="Switcher" keys={[MOD_KEY, 'K']} />
+        <div className="pt-1.5 text-xs font-mono text-paper-400 dark:text-pitch-500">
+          v1.0.0
         </div>
       </div>
 

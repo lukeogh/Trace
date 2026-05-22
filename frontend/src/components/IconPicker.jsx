@@ -12,17 +12,26 @@ import { Search, X } from 'lucide-react'
 export function AreaIcon({ name, size = 16, className = '' }) {
   if (!name) return null
   const Icon = LucideIcons[name]
-  if (!Icon || typeof Icon !== 'function') return null
+  if (!Icon) return null
   return <Icon size={size} className={className} />
 }
 
 // Build a stable list of all icon names ONCE at module load. Lucide ships
-// every icon as a named export plus a few helpers — filter to PascalCase
-// React components only.
+// every icon as a named export plus a few helpers. Icons are forwardRef
+// components (objects with $$typeof) in current versions — we identify
+// them by their PascalCase name and an explicit exclusion list rather
+// than typeof, which would discard them all.
+const NON_ICON_EXPORTS = new Set([
+  'Icon',
+  'LucideIcon',
+  'createLucideIcon',
+  'icons',  // the dynamic icon map
+])
+
 const ALL_ICON_NAMES = Object.keys(LucideIcons)
   .filter((k) => /^[A-Z][A-Za-z0-9]+$/.test(k))
-  .filter((k) => typeof LucideIcons[k] === 'function')
-  .filter((k) => !['Icon', 'LucideIcon', 'createLucideIcon'].includes(k))
+  .filter((k) => !NON_ICON_EXPORTS.has(k))
+  .filter((k) => LucideIcons[k] != null)
   .sort()
 
 const RESULT_LIMIT = 120

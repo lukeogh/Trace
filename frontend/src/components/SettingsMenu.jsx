@@ -1,10 +1,19 @@
 import { useState, useEffect, useRef } from 'react'
-import { ChevronUp, Sun, Moon, Check } from 'lucide-react'
+import { Sun, Moon, Check, Upload, X } from 'lucide-react'
 import { getInitials } from '../hooks/useDisplayName'
 import { FONT_OPTIONS } from '../hooks/useFont'
 import { TEXT_SIZES } from '../hooks/useTextSize'
 
+const MAX_AVATAR_BYTES = 2 * 1024 * 1024  // 2 MB
+
+/**
+ * Global top-right settings — circular avatar button + popover with profile
+ * photo upload, display name, theme, font, text size. Renders fixed in the
+ * top-right corner so it's reachable from every page.
+ */
 export default function SettingsMenu({
+  avatar,
+  onChangeAvatar,
   displayName,
   onChangeDisplayName,
   dark,
@@ -16,6 +25,8 @@ export default function SettingsMenu({
 }) {
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
+  const fileInputRef = useRef(null)
+  const [uploadError, setUploadError] = useState('')
 
   useEffect(() => {
     if (!open) return
@@ -32,50 +43,123 @@ export default function SettingsMenu({
   }, [open])
 
   const initials = getInitials(displayName)
-  const hasName = Boolean(displayName)
+
+  const handlePickFile = () => fileInputRef.current?.click()
+
+  const handleFileChange = (e) => {
+    const file = e.target.files?.[0]
+    e.target.value = ''  // allow re-uploading the same filename later
+    setUploadError('')
+    if (!file) return
+    if (!file.type.startsWith('image/')) {
+      setUploadError('Pick an image file (PNG, JPG, WEBP).')
+      return
+    }
+    if (file.size > MAX_AVATAR_BYTES) {
+      setUploadError(`Image too large (max ${MAX_AVATAR_BYTES / 1024 / 1024} MB).`)
+      return
+    }
+    const reader = new FileReader()
+    reader.onload = (ev) => {
+      onChangeAvatar(ev.target.result)
+    }
+    reader.onerror = () => setUploadError('Could not read that file.')
+    reader.readAsDataURL(file)
+  }
 
   return (
-    <div className="relative" ref={ref}>
-      {/* Avatar row — looks like a profile entry, clickable */}
+    <div ref={ref} className="fixed top-4 right-4 z-30">
+      {/* Trigger */}
       <button
         onClick={() => setOpen((v) => !v)}
+        title="Settings"
         className={`
-          w-full flex items-center gap-2.5 px-2 py-2 rounded-md text-left transition-colors
-          ${open
-            ? 'bg-paper-200 dark:bg-pitch-700'
-            : 'hover:bg-paper-200/70 dark:hover:bg-pitch-700/70'
+          w-10 h-10 rounded-full overflow-hidden flex items-center justify-center
+          font-display font-semibold text-sm
+          shadow-md ring-2 transition-all
+          ${avatar
+            ? 'ring-paper-300/80 dark:ring-pitch-500/80'
+            : 'bg-accent-500 text-white ring-paper-300/40 dark:ring-pitch-500/60'
           }
+          ${open ? 'ring-accent-500/60 dark:ring-accent-500/60' : ''}
+          hover:ring-accent-500/40
         `}
       >
-        <span className="
-          w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center
-          bg-accent-500 text-white text-xs font-display font-semibold
-        ">
-          {initials}
-        </span>
-        <span className="flex-1 min-w-0">
-          <span className="block text-xs font-display font-medium text-pitch-800 dark:text-white truncate">
-            {hasName ? displayName : 'Set your name'}
-          </span>
-          <span className="block text-[10px] font-mono uppercase tracking-widest text-paper-500 dark:text-paper-600">
-            Settings
-          </span>
-        </span>
-        <ChevronUp
-          size={13}
-          className={`text-paper-500 dark:text-paper-600 flex-shrink-0 transition-transform ${open ? '' : 'rotate-180'}`}
-        />
+        {avatar ? (
+          <img src={avatar} alt="" className="w-full h-full object-cover" />
+        ) : (
+          <span>{initials}</span>
+        )}
       </button>
+
+      {/* Hidden input for photo upload */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/png,image/jpeg,image/webp,image/gif"
+        onChange={handleFileChange}
+        className="hidden"
+      />
 
       {open && (
         <div className="
-          absolute bottom-full left-0 right-0 mb-2 z-30
-          rounded-lg shadow-xl
+          absolute right-0 top-full mt-2 w-72
+          rounded-lg shadow-2xl
           bg-white dark:bg-pitch-700
           border border-paper-300 dark:border-pitch-500
           p-3 space-y-3
           animate-fade-in
         ">
+          {/* Profile photo */}
+          <Section label="Profile">
+            <div className="flex items-center gap-3">
+              <span className="
+                w-12 h-12 rounded-full overflow-hidden flex-shrink-0
+                flex items-center justify-center
+                bg-accent-500 text-white font-display font-semibold text-base
+              ">
+                {avatar
+                  ? <img src={avatar} alt="" className="w-full h-full object-cover" />
+                  : <span>{initials}</span>
+                }
+              </span>
+              <div className="flex-1 flex flex-col gap-1">
+                <button
+                  onClick={handlePickFile}
+                  className="
+                    flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs
+                    bg-paper-200 dark:bg-pitch-800
+                    text-pitch-700 dark:text-paper-200
+                    hover:bg-paper-300 dark:hover:bg-pitch-500
+                    font-display uppercase tracking-wide transition-colors
+                  "
+                >
+                  <Upload size={11} />
+                  {avatar ? 'Change photo' : 'Upload photo'}
+                </button>
+                {avatar && (
+                  <button
+                    onClick={() => onChangeAvatar('')}
+                    className="
+                      flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs
+                      text-paper-600 dark:text-paper-500
+                      hover:bg-paper-100 dark:hover:bg-pitch-800
+                      font-display uppercase tracking-wide transition-colors
+                    "
+                  >
+                    <X size={11} />
+                    Remove
+                  </button>
+                )}
+              </div>
+            </div>
+            {uploadError && (
+              <p className="mt-1.5 text-[10px] text-red-500 font-mono">
+                {uploadError}
+              </p>
+            )}
+          </Section>
+
           {/* Display name */}
           <Section label="Display name">
             <input
