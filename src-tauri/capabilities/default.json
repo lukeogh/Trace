@@ -11,6 +11,7 @@
   },
   "permissions": [
     "core:default",
+    "default",
     "shell:default",
     "shell:allow-execute",
     "shell:allow-spawn",

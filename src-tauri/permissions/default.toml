@@ -1,0 +1,25 @@
+"$schema" = "schemas/schema.json"
+
+# Default permission set for Trace.'s custom Tauri commands.
+#
+# Without this, custom commands defined via #[tauri::command] are blocked
+# by the ACL when invoked from a remote origin — and the bundled FastAPI
+# sidecar serves the UI from http://127.0.0.1:PORT, which is "remote"
+# from Tauri's perspective.
+#
+# Referenced from capabilities/default.json as `trace:default` (where
+# `trace` is the package name from Cargo.toml).
+
+[[permission]]
+identifier = "default"
+description = "Allow all custom Trace. desktop commands."
+commands.allow = [
+    "get_data_dir",
+    "pick_data_dir",
+    "migrate_and_set_data_dir",
+    "relaunch",
+    "get_update_channel",
+    "set_update_channel",
+    "get_update_endpoint",
+    "get_updater_auth_header",
+]
