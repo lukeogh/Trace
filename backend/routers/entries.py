@@ -18,7 +18,7 @@ def create_entry(
     if not thread:
         raise HTTPException(status_code=404, detail="Thread not found")
 
-    valid_types = {"entry", "todo", "decision", "meeting"}
+    valid_types = {"entry", "todo", "decision", "meeting", "blockage"}
     if payload.type not in valid_types:
         raise HTTPException(status_code=422, detail=f"type must be one of {valid_types}")
 

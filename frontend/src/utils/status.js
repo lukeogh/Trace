@@ -83,6 +83,13 @@ export const THREAD_STATUSES = {
     bgClass: 'bg-lavender/10 dark:bg-lavender/15',
     borderClass: 'border-lavender/30 dark:border-lavender/40',
   },
+  blocked: {
+    label: 'Blocked',
+    dot: '#B86A5C',         // terracotta
+    textClass: 'text-terracotta dark:text-terracotta',
+    bgClass: 'bg-terracotta/10 dark:bg-terracotta/15',
+    borderClass: 'border-terracotta/30 dark:border-terracotta/40',
+  },
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────

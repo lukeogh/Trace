@@ -1,4 +1,4 @@
-import { PenLine, CheckSquare, Scale, Calendar, MessageSquare, Eye, Activity, Paperclip, Link2 } from 'lucide-react'
+import { PenLine, CheckSquare, Scale, Calendar, MessageSquare, Eye, Activity, Paperclip, Link2, Ban } from 'lucide-react'
 
 /**
  * Single source of truth for the icon + label + colour token used for each
@@ -37,6 +37,13 @@ export const ENTITY = {
     tint: 'text-lavender dark:text-lavender',
     badge: 'bg-lavender/10 text-lavender dark:text-lavender',
     borderLeft: 'border-l-lavender',
+  },
+  blockage: {
+    label: 'Blocked',
+    Icon: Ban,
+    tint: 'text-terracotta dark:text-terracotta',
+    badge: 'bg-terracotta/10 text-terracotta dark:text-terracotta',
+    borderLeft: 'border-l-terracotta',
   },
 }
 

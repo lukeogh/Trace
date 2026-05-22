@@ -4,7 +4,7 @@ import {
   Plus, Edit3, Trash2, Check, X,
   Paperclip, Link2, Upload, ExternalLink,
   RefreshCw, FileText, GitBranch, ArrowRight, ArrowLeft,
-  ChevronDown, ChevronUp, Calendar
+  ChevronDown, ChevronUp, Calendar, Ban
 } from 'lucide-react'
 import { format, formatDistanceToNow, parseISO } from 'date-fns'
 import ReactMarkdown from 'react-markdown'
@@ -13,6 +13,7 @@ import StatusBadge from '../components/StatusBadge'
 import Modal from '../components/Modal'
 import ConfirmDialog from '../components/ConfirmDialog'
 import AddMeetingModal from '../components/AddMeetingModal'
+import StatusChangeModal from '../components/StatusChangeModal'
 import { useToast } from '../components/Toast'
 import { THREAD_STATUSES, formatBytes, DUE_DATE_OPTIONS } from '../utils/status'
 
@@ -91,6 +92,11 @@ export default function ThreadView() {
   const [meetingOpen, setMeetingOpen] = useState(false)
   const [addingMeeting, setAddingMeeting] = useState(false)
 
+  // Status-change modal — driven by the picker. Holds the target status
+  // until the user confirms or cancels.
+  const [statusTarget, setStatusTarget] = useState(null)
+  const [changingStatus, setChangingStatus] = useState(false)
+
   const load = async () => {
     setLoading(true)
     setError(null)
@@ -144,14 +150,49 @@ export default function ThreadView() {
     } catch (e) { toast(e.message, 'error') }
   }
 
-  const changeStatus = async (newStatus) => {
+  // The picker now just selects a target status; the modal handles confirm.
+  const requestStatusChange = (newStatus) => {
     setEditingStatus(false)
     if (newStatus === thread.status) return
+    setStatusTarget(newStatus)
+  }
+
+  const submitStatusChange = async ({ text }) => {
+    if (!statusTarget) return
+    const newStatus = statusTarget
+    const isBlocking = newStatus === 'blocked'
+    setChangingStatus(true)
     try {
+      // 1. Flip the status on the thread
       const updated = await threadsApi.update(threadId, { status: newStatus })
-      setThread(updated)
-      toast(`Status → ${THREAD_STATUSES[newStatus]?.label}`)
-    } catch (e) { toast(e.message, 'error') }
+      setThread((t) => ({ ...updated, entries: t.entries, attachments: t.attachments,
+                          outgoing_links: t.outgoing_links, incoming_links: t.incoming_links }))
+
+      // 2. Capture the reason / optional note as a timeline entry
+      if (isBlocking) {
+        // Required reason → mandatory blockage entry
+        const entry = await entriesApi.create(threadId, {
+          content: text,
+          type: 'blockage',
+        })
+        setThread((t) => ({ ...t, entries: [...t.entries, entry] }))
+      } else if (text) {
+        // Optional note for non-blocking status changes
+        const label = THREAD_STATUSES[newStatus]?.label || newStatus
+        const entry = await entriesApi.create(threadId, {
+          content: `Status changed to ${label}. ${text}`,
+          type: 'entry',
+        })
+        setThread((t) => ({ ...t, entries: [...t.entries, entry] }))
+      }
+
+      toast(isBlocking ? 'Thread blocked' : `Status → ${THREAD_STATUSES[newStatus]?.label}`)
+      setStatusTarget(null)
+    } catch (e) {
+      toast(e.message, 'error')
+    } finally {
+      setChangingStatus(false)
+    }
   }
 
   const deleteThread = async () => {
@@ -516,7 +557,7 @@ export default function ThreadView() {
                       {Object.entries(THREAD_STATUSES).map(([key, cfg]) => (
                         <button
                           key={key}
-                          onClick={() => changeStatus(key)}
+                          onClick={() => requestStatusChange(key)}
                           className={`flex items-center gap-2 w-full px-4 py-2.5 text-left text-xs font-display uppercase tracking-wide hover:bg-paper-100 dark:hover:bg-pitch-700 transition-colors ${cfg.textClass}`}
                         >
                           <span className="w-2 h-2 rounded-full" style={{ backgroundColor: cfg.dot }} />
@@ -996,6 +1037,15 @@ export default function ThreadView() {
         submitting={addingMeeting}
       />
 
+      <StatusChangeModal
+        isOpen={statusTarget !== null}
+        currentStatus={thread?.status}
+        targetStatus={statusTarget}
+        onClose={() => { if (!changingStatus) setStatusTarget(null) }}
+        onConfirm={submitStatusChange}
+        submitting={changingStatus}
+      />
+
       <Modal
         isOpen={linkThreadOpen}
         onClose={() => setLinkThreadOpen(false)}
@@ -1182,6 +1232,7 @@ function EntryBlock({ entry, editing, draft, onEditStart, onDraftChange, onSave,
   const isDecision = entry.type === 'decision'
   const isTodo = entry.type === 'todo'
   const isMeeting = entry.type === 'meeting'
+  const isBlockage = entry.type === 'blockage'
 
   // Inline meeting-edit state (independent of the regular content edit path)
   const [editingMeeting, setEditingMeeting] = useState(false)
@@ -1197,7 +1248,10 @@ function EntryBlock({ entry, editing, draft, onEditStart, onDraftChange, onSave,
       <div className={`
         relative rounded-xl border overflow-hidden
         bg-white dark:bg-pitch-700
-        border-paper-200 dark:border-pitch-500
+        ${isBlockage
+          ? 'border-terracotta/40 dark:border-terracotta/40'
+          : 'border-paper-200 dark:border-pitch-500'
+        }
         group-hover:border-paper-300 dark:group-hover:border-paper-700
         transition-colors
         ${isTodo && entry.completed ? 'opacity-60' : ''}
@@ -1209,9 +1263,12 @@ function EntryBlock({ entry, editing, draft, onEditStart, onDraftChange, onSave,
         {isMeeting && (
           <div className="absolute left-0 top-0 bottom-0 w-1 bg-lavender rounded-l-xl" />
         )}
+        {isBlockage && (
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-terracotta rounded-l-xl" />
+        )}
 
         {/* Entry header */}
-        <div className={`flex items-center justify-between px-4 py-2.5 border-b border-paper-100 dark:border-pitch-500 bg-paper-100/50 dark:bg-pitch-800/30 ${(isDecision || isMeeting) ? 'pl-5' : ''}`}>
+        <div className={`flex items-center justify-between px-4 py-2.5 border-b border-paper-100 dark:border-pitch-500 ${isBlockage ? 'bg-terracotta/5 dark:bg-terracotta/10' : 'bg-paper-100/50 dark:bg-pitch-800/30'} ${(isDecision || isMeeting || isBlockage) ? 'pl-5' : ''}`}>
           <div className="flex items-center gap-2">
             {isDecision && (
               <span className="font-display uppercase text-xs bg-amber-500/10 text-amber-600 dark:text-amber-400 px-1.5 py-0.5 rounded">
@@ -1221,6 +1278,11 @@ function EntryBlock({ entry, editing, draft, onEditStart, onDraftChange, onSave,
             {isMeeting && (
               <span className="font-display uppercase text-xs bg-lavender/10 text-lavender px-1.5 py-0.5 rounded inline-flex items-center gap-1">
                 <Calendar size={10} /> Meeting
+              </span>
+            )}
+            {isBlockage && (
+              <span className="font-display uppercase text-xs bg-terracotta/10 text-terracotta px-1.5 py-0.5 rounded inline-flex items-center gap-1">
+                <Ban size={10} /> Blocked
               </span>
             )}
             <span className="text-xs font-mono font-medium text-accent-600 dark:text-accent-400">
