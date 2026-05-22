@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react'
-import { Sun, Moon, Check, Upload, X } from 'lucide-react'
+import { Sun, Moon, Check, Upload, X, FolderOpen, RefreshCw, AlertCircle } from 'lucide-react'
 import { getInitials } from '../hooks/useDisplayName'
 import { FONT_OPTIONS } from '../hooks/useFont'
 import { TEXT_SIZES } from '../hooks/useTextSize'
+import { isTauri, getDataDir, pickDataDir, migrateAndSetDataDir, relaunch } from '../api/tauri'
 
 const MAX_AVATAR_BYTES = 2 * 1024 * 1024  // 2 MB
 
@@ -28,6 +29,12 @@ export default function SettingsMenu({
   const fileInputRef = useRef(null)
   const [uploadError, setUploadError] = useState('')
 
+  // Data path (Tauri only). `dataDir` stays null in browser/Docker.
+  const [dataDir, setDataDir] = useState(null)
+  const [dataDirMigrating, setDataDirMigrating] = useState(false)
+  const [dataDirError, setDataDirError] = useState('')
+  const [restartPending, setRestartPending] = useState(false)
+
   useEffect(() => {
     if (!open) return
     const handler = (e) => {
@@ -40,6 +47,13 @@ export default function SettingsMenu({
       document.removeEventListener('mousedown', handler)
       document.removeEventListener('keydown', esc)
     }
+  }, [open])
+
+  // Lazy-load the current data dir when the popover opens. Costs nothing
+  // outside Tauri (isTauri() short-circuits).
+  useEffect(() => {
+    if (!open || !isTauri()) return
+    getDataDir().then(setDataDir)
   }, [open])
 
   const initials = getInitials(displayName)
@@ -65,6 +79,26 @@ export default function SettingsMenu({
     }
     reader.onerror = () => setUploadError('Could not read that file.')
     reader.readAsDataURL(file)
+  }
+
+  const handleChangeDataDir = async () => {
+    setDataDirError('')
+    try {
+      const chosen = await pickDataDir()
+      if (!chosen) return  // user cancelled the picker
+      setDataDirMigrating(true)
+      await migrateAndSetDataDir(chosen)
+      setDataDir(chosen)
+      setRestartPending(true)
+    } catch (err) {
+      setDataDirError(
+        typeof err === 'string'
+          ? err
+          : 'Migration failed. Your data was not moved.'
+      )
+    } finally {
+      setDataDirMigrating(false)
+    }
   }
 
   return (
@@ -216,6 +250,79 @@ export default function SettingsMenu({
               onChange={onChangeTextSize}
             />
           </Section>
+
+          {/* Data storage — Tauri only. Hidden in browser/Docker so non-desktop
+              users don't see a setting that doesn't apply to them. */}
+          {isTauri() && (
+            <Section label="Data storage">
+              {restartPending ? (
+                <div className="rounded-md p-2 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800">
+                  <p className="text-[11px] text-amber-700 dark:text-amber-400 mb-2 leading-snug">
+                    Data moved. Trace. needs to restart to use the new location.
+                  </p>
+                  <button
+                    onClick={relaunch}
+                    className="
+                      w-full flex items-center justify-center gap-1.5
+                      px-2.5 py-1.5 rounded-md text-xs
+                      bg-amber-500 hover:bg-amber-600 text-white
+                      font-display uppercase tracking-wide transition-colors
+                    "
+                  >
+                    <RefreshCw size={11} />
+                    Restart now
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <div className="
+                    flex items-center gap-2 px-2.5 py-1.5 rounded-md
+                    bg-paper-100 dark:bg-pitch-800
+                    border border-paper-300 dark:border-pitch-500
+                  ">
+                    <FolderOpen size={12} className="flex-shrink-0 text-paper-500 dark:text-paper-600" />
+                    <span
+                      className="
+                        flex-1 text-[11px] font-mono truncate
+                        text-pitch-700 dark:text-paper-300
+                      "
+                      title={dataDir || ''}
+                    >
+                      {/* Truncate to last two segments so a long
+                          %APPDATA%-style path doesn't overflow the popover.
+                          Full path lives in the title attribute on hover. */}
+                      {dataDir
+                        ? dataDir.split(/[/\\]/).filter(Boolean).slice(-2).join('/')
+                        : '…'}
+                    </span>
+                    <button
+                      onClick={handleChangeDataDir}
+                      disabled={dataDirMigrating}
+                      className="
+                        flex-shrink-0 px-2 py-0.5 rounded text-[10px]
+                        font-display uppercase tracking-wide
+                        text-paper-600 dark:text-paper-400
+                        hover:bg-paper-200 dark:hover:bg-pitch-700
+                        disabled:opacity-40 transition-colors
+                      "
+                    >
+                      {dataDirMigrating ? 'Moving…' : 'Change…'}
+                    </button>
+                  </div>
+                  {dataDirError && (
+                    <div className="mt-1.5 flex items-start gap-1">
+                      <AlertCircle size={11} className="flex-shrink-0 mt-0.5 text-red-500" />
+                      <p className="text-[10px] text-red-500 leading-snug">{dataDirError}</p>
+                    </div>
+                  )}
+                  <p className="mt-1 text-[10px] text-paper-500 dark:text-paper-600 leading-snug">
+                    Your database and uploads. Changing this copies your data —
+                    the old folder is not deleted.
+                  </p>
+                </>
+              )}
+            </Section>
+          )}
         </div>
       )}
     </div>
