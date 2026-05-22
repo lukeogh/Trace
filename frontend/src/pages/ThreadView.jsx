@@ -67,6 +67,15 @@ export default function ThreadView() {
   const [uploadingFile, setUploadingFile] = useState(false)
   const fileInputRef = useRef(null)
 
+  // Files-card drop state
+  const [filesDragActive, setFilesDragActive] = useState(false)
+  const filesDragCounter = useRef(0)
+
+  // Inline Link composer (paste URL → optional label → enter)
+  const [inlineLinkUrl, setInlineLinkUrl] = useState('')
+  const [inlineLinkName, setInlineLinkName] = useState('')
+  const [addingInlineLink, setAddingInlineLink] = useState(false)
+
   // Delete dialogs
   const [deleteThreadOpen, setDeleteThreadOpen] = useState(false)
   const [deleteEntryId, setDeleteEntryId] = useState(null)
@@ -263,11 +272,14 @@ export default function ThreadView() {
 
   // ── Attachments ─────────────────────────────────────────────────────────────
 
-  const addLink = async () => {
-    if (!linkForm.name.trim() || !linkForm.url.trim()) return
+  // Modal-driven link add (Label + URL form). Kept as an optional fallback —
+  // drag/paste straight onto the Links card is the primary path now.
+  const addLink = async (payload) => {
+    const form = payload ?? linkForm
+    if (!form.name?.trim() || !form.url?.trim()) return
     setAddingLink(true)
     try {
-      const att = await attachmentsApi.addLink(threadId, linkForm)
+      const att = await attachmentsApi.addLink(threadId, form)
       setThread((t) => ({ ...t, attachments: [...t.attachments, att] }))
       setLinkModalOpen(false)
       setLinkForm({ name: '', url: '' })
@@ -276,8 +288,8 @@ export default function ThreadView() {
     finally { setAddingLink(false) }
   }
 
-  const uploadFile = async (e) => {
-    const file = e.target.files?.[0]
+  // Upload a single File object — used by both the file input and drag-drop.
+  const uploadFileObject = async (file) => {
     if (!file) return
     setUploadingFile(true)
     try {
@@ -285,10 +297,63 @@ export default function ThreadView() {
       setThread((t) => ({ ...t, attachments: [...t.attachments, att] }))
       toast(`File "${file.name}" uploaded`)
     } catch (e) { toast(e.message, 'error') }
-    finally {
-      setUploadingFile(false)
-      e.target.value = ''
+    finally { setUploadingFile(false) }
+  }
+
+  const onFileInputChange = async (e) => {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (file) await uploadFileObject(file)
+  }
+
+  // ── Files-card drag-and-drop ──────────────────────────────────────────────
+  const onFilesDragEnter = (e) => {
+    if (!e.dataTransfer?.types?.includes('Files')) return
+    e.preventDefault()
+    filesDragCounter.current++
+    setFilesDragActive(true)
+  }
+  const onFilesDragLeave = (e) => {
+    e.preventDefault()
+    filesDragCounter.current--
+    if (filesDragCounter.current <= 0) {
+      filesDragCounter.current = 0
+      setFilesDragActive(false)
     }
+  }
+  const onFilesDragOver = (e) => {
+    if (e.dataTransfer?.types?.includes('Files')) e.preventDefault()
+  }
+  const onFilesDrop = async (e) => {
+    e.preventDefault()
+    filesDragCounter.current = 0
+    setFilesDragActive(false)
+    const file = e.dataTransfer.files?.[0]
+    if (file) await uploadFileObject(file)
+  }
+
+  // ── Inline link composer ─────────────────────────────────────────────────
+  const submitInlineLink = async () => {
+    const url = inlineLinkUrl.trim()
+    if (!url) return
+    // Sensible fallback for the label if user didn't fill one in.
+    let name = inlineLinkName.trim()
+    if (!name) {
+      try {
+        name = new URL(url).hostname.replace(/^www\./, '')
+      } catch {
+        name = url
+      }
+    }
+    setAddingInlineLink(true)
+    try {
+      const att = await attachmentsApi.addLink(threadId, { name, url })
+      setThread((t) => ({ ...t, attachments: [...t.attachments, att] }))
+      setInlineLinkUrl('')
+      setInlineLinkName('')
+      toast('Link added')
+    } catch (e) { toast(e.message, 'error') }
+    finally { setAddingInlineLink(false) }
   }
 
   const deleteAttachment = async (attId) => {
@@ -700,8 +765,21 @@ export default function ThreadView() {
         {/* ── Right: Attachments ───────────────────────────────────────────── */}
         <aside className="w-72 flex-shrink-0">
           <div className="sticky top-32 space-y-5">
-            {/* Files */}
-            <div className="p-4 rounded-xl bg-paper-100 dark:bg-pitch-700 border border-paper-300 dark:border-pitch-500">
+            {/* Files — drop a file anywhere on this card, or click Upload */}
+            <div
+              onDragEnter={onFilesDragEnter}
+              onDragLeave={onFilesDragLeave}
+              onDragOver={onFilesDragOver}
+              onDrop={onFilesDrop}
+              className={`
+                relative p-4 rounded-xl bg-paper-100 dark:bg-pitch-700
+                border transition-colors
+                ${filesDragActive
+                  ? 'border-accent-500 ring-2 ring-accent-500/40'
+                  : 'border-paper-300 dark:border-pitch-500'
+                }
+              `}
+            >
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-xs font-display uppercase tracking-widest text-paper-500 dark:text-paper-600 flex items-center gap-1.5">
                   <Paperclip size={11} />
@@ -715,11 +793,13 @@ export default function ThreadView() {
                   <Upload size={12} />
                   {uploadingFile ? 'Uploading…' : 'Upload'}
                 </button>
-                <input ref={fileInputRef} type="file" className="hidden" onChange={uploadFile} />
+                <input ref={fileInputRef} type="file" className="hidden" onChange={onFileInputChange} />
               </div>
 
               {files.length === 0 ? (
-                <p className="text-xs italic text-paper-400 dark:text-paper-700">No files attached.</p>
+                <p className="text-xs italic text-paper-400 dark:text-paper-700 leading-relaxed">
+                  Drag a file here, or click Upload.
+                </p>
               ) : (
                 <div className="space-y-2">
                   {files.map((f) => (
@@ -727,9 +807,23 @@ export default function ThreadView() {
                   ))}
                 </div>
               )}
+
+              {/* Drop overlay */}
+              {filesDragActive && (
+                <div className="
+                  absolute inset-0 z-10 rounded-xl flex flex-col items-center justify-center gap-1.5
+                  bg-accent-500/10 dark:bg-accent-500/15 backdrop-blur-sm pointer-events-none
+                  border-2 border-dashed border-accent-500
+                ">
+                  <Upload size={20} className="text-accent-500" />
+                  <p className="font-display uppercase tracking-widest text-[10px] text-accent-600 dark:text-accent-400">
+                    Drop to upload
+                  </p>
+                </div>
+              )}
             </div>
 
-            {/* Links */}
+            {/* Links — paste a URL inline, label after, or click +Add */}
             <div className="p-4 rounded-xl bg-paper-100 dark:bg-pitch-700 border border-paper-300 dark:border-pitch-500">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-xs font-display uppercase tracking-widest text-paper-500 dark:text-paper-600 flex items-center gap-1.5">
@@ -745,8 +839,56 @@ export default function ThreadView() {
                 </button>
               </div>
 
+              {/* Inline composer — type or paste a URL, then label it */}
+              <div className="mb-3 space-y-1.5">
+                <input
+                  type="url"
+                  value={inlineLinkUrl}
+                  onChange={(e) => setInlineLinkUrl(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter' && inlineLinkUrl.trim()) submitInlineLink() }}
+                  placeholder="Paste a URL…"
+                  className="
+                    w-full px-2.5 py-1.5 text-xs rounded-md
+                    bg-white dark:bg-pitch-800 border border-paper-300 dark:border-pitch-500
+                    text-pitch-800 dark:text-white
+                    placeholder:text-paper-400 dark:placeholder:text-paper-700
+                    focus:outline-none focus:ring-2 focus:ring-accent-500
+                  "
+                />
+                {inlineLinkUrl.trim() && (
+                  <div className="flex items-center gap-1.5 animate-fade-in">
+                    <input
+                      type="text"
+                      value={inlineLinkName}
+                      onChange={(e) => setInlineLinkName(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === 'Enter') submitInlineLink() }}
+                      placeholder="Label (optional)"
+                      className="
+                        flex-1 px-2.5 py-1.5 text-xs rounded-md
+                        bg-white dark:bg-pitch-800 border border-paper-300 dark:border-pitch-500
+                        text-pitch-800 dark:text-white
+                        placeholder:text-paper-400 dark:placeholder:text-paper-700
+                        focus:outline-none focus:ring-2 focus:ring-accent-500
+                      "
+                    />
+                    <button
+                      onClick={submitInlineLink}
+                      disabled={addingInlineLink}
+                      title="Save link (Enter)"
+                      className="
+                        flex items-center justify-center w-7 h-7 rounded-md
+                        bg-accent-500 hover:bg-accent-600 text-white
+                        disabled:opacity-50 transition-colors
+                      "
+                    >
+                      <Check size={12} />
+                    </button>
+                  </div>
+                )}
+              </div>
+
               {links.length === 0 ? (
-                <p className="text-xs italic text-paper-400 dark:text-paper-700">No links added.</p>
+                <p className="text-xs italic text-paper-400 dark:text-paper-700">No links yet.</p>
               ) : (
                 <div className="space-y-2">
                   {links.map((l) => (
