@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import {
   Plus, Edit3, Trash2, Check, X,
-  Paperclip, Link2, Upload, ExternalLink,
+  Paperclip, Link2, Upload, ExternalLink, UploadCloud,
   RefreshCw, FileText, GitBranch, ArrowRight, ArrowLeft,
   ChevronDown, ChevronUp, Calendar, Ban
 } from 'lucide-react'
@@ -837,17 +837,32 @@ export default function ThreadView() {
                 <input ref={fileInputRef} type="file" className="hidden" onChange={onFileInputChange} />
               </div>
 
-              {files.length === 0 ? (
-                <p className="text-xs italic text-paper-400 dark:text-paper-700 leading-relaxed">
-                  Drag a file here, or click Upload.
-                </p>
-              ) : (
-                <div className="space-y-2">
+              {files.length > 0 && (
+                <div className="space-y-2 mb-3">
                   {files.map((f) => (
                     <FileItem key={f.id} file={f} onDelete={() => setDeleteAttachmentId(f.id)} />
                   ))}
                 </div>
               )}
+
+              {/* Always-visible drop zone — primary affordance, not just an
+                  empty state. Sits beneath the file list. */}
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="
+                  w-full flex flex-col items-center justify-center gap-1.5 py-4 px-3 rounded-lg
+                  border border-dashed border-paper-300 dark:border-pitch-500
+                  text-paper-500 dark:text-paper-600
+                  hover:border-accent-500/60 hover:text-accent-600 dark:hover:text-accent-400
+                  transition-colors
+                "
+              >
+                <UploadCloud size={20} className="opacity-70" />
+                <span className="text-[10px] font-display uppercase tracking-widest">
+                  Drop a file to upload
+                </span>
+              </button>
 
               {/* Drop overlay */}
               {filesDragActive && (
@@ -1382,12 +1397,42 @@ function EntryBlock({ entry, editing, draft, onEditStart, onDraftChange, onSave,
 
 // ─── File item ────────────────────────────────────────────────────────────────
 
+// Extensions the browser can render natively — open in a new tab.
+// Everything else: the browser will use Content-Disposition (download
+// then OS app) which is the best a web app can do for "open in the
+// program of the extension".
+const PREVIEWABLE_EXTS = new Set([
+  'pdf', 'png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'bmp',
+  'mp3', 'wav', 'ogg',
+  'mp4', 'webm', 'mov',
+  'txt', 'md', 'log', 'json', 'csv', 'xml', 'yaml', 'yml',
+  'html', 'htm',
+])
+
+function isPreviewable(file) {
+  const name = (file.original_name || file.name || '').toLowerCase()
+  const dot = name.lastIndexOf('.')
+  if (dot < 0) return false
+  return PREVIEWABLE_EXTS.has(name.slice(dot + 1))
+}
+
 function FileItem({ file, onDelete }) {
+  const previewable = isPreviewable(file)
   return (
     <div className="flex items-center justify-between gap-2 group py-1">
+      {/*
+        PDFs, images, audio, video and plain-text formats open inline in a
+        new tab. Everything else carries `download` so the browser hands the
+        file off to the OS, which opens it in the default app for the
+        extension — the closest a web app can get to "open in the program
+        of the extension".
+      */}
       <a
         href={`/uploads/${file.stored_name}`}
-        download={file.original_name}
+        {...(previewable
+          ? { target: '_blank', rel: 'noopener noreferrer' }
+          : { download: file.original_name })}
+        title={previewable ? 'Open in new tab' : 'Download and open in default app'}
         className="flex items-center gap-2 min-w-0 text-xs text-pitch-500 dark:text-paper-400 hover:text-accent-500 transition-colors"
       >
         <FileText size={12} className="flex-shrink-0 text-paper-500 dark:text-paper-600" />
