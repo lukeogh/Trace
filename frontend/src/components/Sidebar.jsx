@@ -73,16 +73,11 @@ export default function Sidebar({
     >
       {/* Brand */}
       <div className="px-4 py-5 border-b border-paper-300 dark:border-pitch-700">
-        <div className="flex items-start justify-between gap-2">
-          <Link to="/" className="flex items-center gap-2.5 min-w-0">
-            <Logo size={40} />
-            <div className="min-w-0">
-              <div className="font-display font-medium text-xl tracking-tightest text-pitch-800 dark:text-white leading-tight">
-                Trace
-              </div>
-              <div className="text-xs text-paper-500 dark:text-paper-600 mt-1 font-mono truncate">
-                Axithra · SW
-              </div>
+        <div className="flex items-center justify-between gap-2">
+          <Link to="/" className="flex items-center gap-3 min-w-0">
+            <Logo size={36} />
+            <div className="font-display font-medium text-xl tracking-tightest text-pitch-800 dark:text-white leading-none">
+              Trace
             </div>
           </Link>
           <div className="flex items-center gap-0.5 flex-shrink-0">
@@ -117,7 +112,7 @@ export default function Sidebar({
       <div className="px-3 pt-3 pb-1 space-y-0.5">
         <NavLink to="/" icon={LayoutDashboard} label="Dashboard" active={location.pathname === '/'} />
         <NavLink to="/log" icon={History} label="Audit Log" active={location.pathname === '/log'} />
-        <NavLink to="/process" icon={BrainCircuit} label="Auto Generate" active={location.pathname === '/process'} />
+        <NavLink to="/process" icon={BrainCircuit} label="Smart Generate" active={location.pathname === '/process'} />
       </div>
 
       {/* Areas section header */}
@@ -127,8 +122,8 @@ export default function Sidebar({
         </span>
       </div>
 
-      {/* Area list */}
-      <nav className="flex-1 overflow-y-auto px-3 pb-1 space-y-0.5">
+      {/* Area list + inline Add area */}
+      <nav className="flex-1 overflow-y-auto px-3 pb-3 space-y-0.5">
         {areas.map((area) => {
           const config = getAreaStatus(area.status)
           const isActive = areaId && parseInt(areaId) === area.id
@@ -163,14 +158,12 @@ export default function Sidebar({
             </Link>
           )
         })}
-      </nav>
 
-      {/* Subtle Add area link — sits under the area list */}
-      <div className="px-3 pb-3">
+        {/* Subtle add-area row — sits directly under the last area entry */}
         <button
           onClick={onOpenNewArea}
           className="
-            w-full flex items-center gap-2 px-3 py-1.5 rounded-md
+            w-full flex items-center gap-2 px-3 py-1.5 rounded-md mt-0.5
             text-xs text-paper-500 dark:text-paper-700
             hover:text-paper-700 dark:hover:text-paper-500
             hover:bg-paper-200/60 dark:hover:bg-pitch-700/40
@@ -182,7 +175,7 @@ export default function Sidebar({
             {areas.length === 0 ? 'Add your first area' : 'Add area'}
           </span>
         </button>
-      </div>
+      </nav>
 
       {/* Footer — keyboard shortcut hints */}
       <div className="px-4 py-3 border-t border-paper-300 dark:border-pitch-700 space-y-1.5">

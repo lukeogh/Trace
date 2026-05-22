@@ -124,8 +124,8 @@ export default function LogView() {
       ">
         <div className="max-w-5xl mx-auto flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <History size={16} className="text-paper-500 dark:text-paper-600" />
-            <h1 className="font-display font-bold text-xl uppercase tracking-widest text-pitch-800 dark:text-white">
+            <History size={28} className="text-accent-500 dark:text-accent-400 flex-shrink-0" />
+            <h1 className="font-display font-bold text-2xl uppercase tracking-widest text-pitch-800 dark:text-white">
               Audit Log
             </h1>
             {!loading && (

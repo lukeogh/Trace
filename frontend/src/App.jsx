@@ -36,19 +36,24 @@ export default function App() {
     return () => document.removeEventListener('keydown', handler)
   }, [])
 
-  // Boot splash: dismiss once the first areas fetch resolves, OR after 1.2s
-  // as a hard fallback so the user is never stuck if the backend is down.
+  // Boot splash: hold for a minimum so the Draw animation has time to play,
+  // then dismiss as soon as the first areas fetch resolves. Hard ceiling of
+  // 4s so the user is never stuck if the backend is down.
   useEffect(() => {
+    const MIN_SPLASH_MS = 1500
+    const MAX_SPLASH_MS = 4000
+    const startedAt = Date.now()
     let cancelled = false
     const finish = () => { if (!cancelled) setBooting(false) }
-    const timeout = setTimeout(finish, 1200)
+    const finishAfterMin = () => {
+      const remaining = Math.max(0, MIN_SPLASH_MS - (Date.now() - startedAt))
+      setTimeout(finish, remaining)
+    }
+    const hardTimeout = setTimeout(finish, MAX_SPLASH_MS)
     areasApi.list()
       .catch(() => {})
-      .finally(() => {
-        // Settle for one frame so the splash has a chance to be seen
-        setTimeout(finish, 200)
-      })
-    return () => { cancelled = true; clearTimeout(timeout) }
+      .finally(finishAfterMin)
+    return () => { cancelled = true; clearTimeout(hardTimeout) }
   }, [])
 
   return (

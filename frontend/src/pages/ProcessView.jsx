@@ -521,9 +521,9 @@ export default function ProcessView() {
         border-b border-paper-200 dark:border-pitch-700
       ">
         <div className="max-w-3xl mx-auto flex items-center gap-3">
-          <BrainCircuit size={18} className="text-accent-500 dark:text-accent-400" />
-          <h1 className="font-display font-bold text-xl uppercase tracking-widest text-pitch-800 dark:text-white">
-            Auto Generate
+          <BrainCircuit size={28} className="text-accent-500 dark:text-accent-400 flex-shrink-0" />
+          <h1 className="font-display font-bold text-2xl uppercase tracking-widest text-pitch-800 dark:text-white">
+            Smart Generate
           </h1>
         </div>
       </header>
