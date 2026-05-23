@@ -193,7 +193,7 @@ const GUIDES = {
   claude: {
     badge: 'Paid',
     icon: '🟠',
-    what: "The AI built into Trace. by default. Strongest results for smart capture, area summaries, and the weekly roundup. Needs an Anthropic API key.",
+    what: "The AI built into Trace by default. Strongest results for smart capture, area summaries, and the weekly roundup. Needs an Anthropic API key.",
     time: 'About 3 minutes',
     steps: [
       { text: 'Go to', link: { label: 'console.anthropic.com', url: 'https://console.anthropic.com' } },
@@ -633,7 +633,7 @@ function Field({ label, hint, value, onChange, placeholder, type = 'text', autoC
   )
 }
 
-// ─── Update channel ───────────────────────────────────────────────────────────
+// ─── Updates ──────────────────────────────────────────────────────────────────
 
 function UpdateSection({ updater }) {
   const version = useAppVersion()
@@ -928,8 +928,35 @@ function AboutSection() {
   return (
     <Card>
       <CardHeader icon={SettingsIcon} title="About" />
-      <dl className="space-y-1.5 text-sm">
+      <dl className="space-y-2 text-sm">
         <Row label="Version" value={version ? `v${version}` : '—'} />
+        <Row
+          label="What's new"
+          value={
+            <a
+              href="https://github.com/lukeogh/Trace/releases"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-mint-700 dark:text-mint-300 hover:underline"
+            >
+              Release notes ↗
+            </a>
+          }
+        />
+        <Row
+          label="Source"
+          value={
+            <a
+              href="https://github.com/lukeogh/Trace"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-mint-700 dark:text-mint-300 hover:underline"
+            >
+              github.com/lukeogh/Trace ↗
+            </a>
+          }
+        />
+        <Row label="Made by" value="LKEOGH QA LTD" />
       </dl>
     </Card>
   )
