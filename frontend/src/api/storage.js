@@ -40,10 +40,21 @@ export async function disconnectStorage() {
   )
 }
 
-/** Dry-run a connection against the *currently saved* config. */
-export async function testStorageConnection() {
+/**
+ * Dry-run a connection. Pass a config to test those values without saving
+ * (the wizard path) — or call with no args to test the currently-saved config.
+ *
+ * Critical: the wizard MUST pass a config, otherwise a failed test would
+ * still leave the previous saved config in place + the UI's is_connected
+ * flag would lie about working credentials.
+ */
+export async function testStorageConnection(config) {
   return _handle(
-    await fetch(`${BASE}/storage/test`, { method: 'POST' }),
+    await fetch(`${BASE}/storage/test`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: config ? JSON.stringify(config) : 'null',
+    }),
     'Test request failed'
   )
 }

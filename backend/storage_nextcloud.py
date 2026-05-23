@@ -127,6 +127,11 @@ class NextcloudBackend(StorageBackend):
             msg = str(e).lower()
             if "401" in msg or "unauthorized" in msg:
                 return False, "Invalid username or app password. Check your Nextcloud Security settings."
+            if "502" in msg or "503" in msg or "504" in msg:
+                # Proxy got a bad/empty response from the upstream — Nextcloud
+                # itself is down, restarting, or your reverse proxy isn't
+                # forwarding WebDAV methods (PROPFIND, etc.).
+                return False, f"{self._url} is reachable but its upstream returned an error. Is Nextcloud running? If you're behind a reverse proxy, make sure it forwards WebDAV methods."
             if "connection" in msg or "refused" in msg or "timeout" in msg:
                 return False, f"Could not reach {self._url} — check the server URL and your network."
             if "404" in msg:

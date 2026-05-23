@@ -107,8 +107,10 @@ export default function StorageSetupModal({ onClose, onSaved, currentConfig }) {
     setTestResult(null)
     setError('')
     try {
-      // Save the config first so the backend tests against the actual values.
-      await saveStorageConfig({
+      // Test against the form values directly — do NOT save first. A failed
+      // test used to corrupt the saved config (provider='nextcloud' with bad
+      // creds) which then made is_connected falsely report a working link.
+      const result = await testStorageConnection({
         provider: 'nextcloud',
         server_url: serverUrl,
         username,
@@ -116,7 +118,6 @@ export default function StorageSetupModal({ onClose, onSaved, currentConfig }) {
         remote_folder: remoteFolder,
         backup_enabled: backupEnabled,
       })
-      const result = await testStorageConnection()
       setTestResult(result)
     } catch (e) {
       setTestResult({ ok: false, message: e.message })

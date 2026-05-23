@@ -133,23 +133,38 @@ class LocalBackend(StorageBackend):
 
 def get_storage_backend(db: Session) -> StorageBackend:
     """
-    Resolve the active backend for the current config. Routers call this
-    on every request — cheap because config is just a JSON row in app_settings.
-
-    Defaults to LocalBackend if nothing is configured or the configured
-    provider name doesn't match a known adapter.
+    Resolve the active backend for the current SAVED config.
+    Routers call this on every request — cheap because config is just a JSON
+    row in app_settings.
     """
-    config = _read_storage_config(db)
+    return build_storage_backend(_read_storage_config(db))
+
+
+def build_storage_backend(config: dict) -> StorageBackend:
+    """
+    Build a backend from any config dict — no DB read.
+
+    Used by the test endpoint so we can dry-run a user's input without
+    saving it to the DB first. Critical: without this split, a failed
+    Test would still persist the (bad) config, then `is_connected`
+    would falsely report a working connection on the next page load.
+
+    Password handling: if the supplied password starts with "gAAAAA" it's
+    a Fernet token we wrote ourselves (already in app_settings) — decrypt.
+    Otherwise treat as plaintext from a form field.
+    """
     provider = config.get("provider", "local")
 
     if provider == "nextcloud":
         # Lazy import — webdavclient3 isn't loaded unless Nextcloud is in use,
         # which keeps cold-start time tighter for local-only installs.
         from storage_nextcloud import NextcloudBackend
+        raw_password = config.get("password", "") or ""
+        password = decrypt_secret(raw_password) if raw_password.startswith("gAAAAA") else raw_password
         return NextcloudBackend(
             server_url=config.get("server_url", ""),
             username=config.get("username", ""),
-            password=decrypt_secret(config.get("password", "")),
+            password=password,
             remote_folder=config.get("remote_folder", "Trace"),
         )
 

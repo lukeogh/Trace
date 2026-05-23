@@ -11,6 +11,7 @@ Routes (all under /api/storage):
 """
 
 import logging
+from typing import Optional
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -19,6 +20,7 @@ import schemas
 from database import get_db
 from storage_backend import (
     get_storage_backend,
+    build_storage_backend,
     get_storage_config_for_api,
     write_storage_config,
     _read_storage_config,
@@ -78,9 +80,25 @@ def disconnect(db: Session = Depends(get_db)):
 
 
 @router.post("/storage/test")
-def test_connection(db: Session = Depends(get_db)):
-    """Test the currently-saved backend (whatever provider is active)."""
-    backend = get_storage_backend(db)
+def test_connection(
+    payload: Optional[schemas.StorageConfig] = None,
+    db: Session = Depends(get_db),
+):
+    """
+    Dry-run a connection check.
+
+    If `payload` is supplied, build a transient backend from those values
+    and test against them WITHOUT saving. This is the path the wizard takes —
+    a failed test no longer corrupts the stored config (which used to make
+    `is_connected` falsely report success).
+
+    With no payload, test the currently-saved backend — used by future
+    Manage-view "re-test" affordances.
+    """
+    if payload is not None:
+        backend = build_storage_backend(payload.dict())
+    else:
+        backend = get_storage_backend(db)
     ok, message = backend.test()
     return {"ok": ok, "message": message, "provider": backend.provider_name}
 
