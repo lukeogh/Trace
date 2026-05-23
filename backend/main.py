@@ -74,6 +74,8 @@ def _init_db():
             "ALTER TABLE areas ADD COLUMN icon VARCHAR(64)",
             "ALTER TABLE entries ADD COLUMN meeting_at DATETIME",
             "ALTER TABLE entries ADD COLUMN notes TEXT",
+            # AI engine config + future generic app settings
+            "CREATE TABLE IF NOT EXISTS app_settings (key VARCHAR(100) PRIMARY KEY, value TEXT, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP)",
         ]:
             try:
                 conn.execute(text(sql))
