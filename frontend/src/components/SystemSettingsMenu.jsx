@@ -119,9 +119,11 @@ export default function SystemSettingsMenu({ isOpen, onClose, updater }) {
         </button>
       </div>
 
-      {/* Update available banner — only if there's one pending. Mirrors the
-          toast so the cog → menu path always reveals it too. */}
-      {updater?.status === 'available' && updater.available && (
+      {/* Update available banner — shown for BOTH 'available' (just detected,
+          toast also showing) and 'dismissed' (user clicked Later — only the
+          cog badge is showing, this menu is where they come back to act).
+          Either way the menu always surfaces the install option. */}
+      {(updater?.status === 'available' || updater?.status === 'dismissed') && updater.available && (
         <Section label="Update">
           <div className="
             rounded-md p-2.5

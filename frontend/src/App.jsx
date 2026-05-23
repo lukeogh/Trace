@@ -8,6 +8,7 @@ import { useAvatar } from './hooks/useAvatar'
 import { useUpdater } from './hooks/useUpdater'
 import SettingsMenu from './components/SettingsMenu'
 import SystemSettingsMenu from './components/SystemSettingsMenu'
+import UpdateToast from './components/UpdateToast'
 import { ToastProvider } from './components/Toast'
 import QuickCapture from './components/QuickCapture'
 import QuickSwitcher from './components/QuickSwitcher'
@@ -75,7 +76,11 @@ export default function App() {
           onOpenSwitcher={() => setSwitcherOpen(true)}
           onOpenNewArea={() => setNewAreaOpen(true)}
           onOpenSystemSettings={() => setSystemSettingsOpen(true)}
-          systemSettingsBadge={updater?.status === 'available'}
+          // Badge lights up for both 'available' (just detected) and
+          // 'dismissed' (user clicked Later but the update is still pending).
+          systemSettingsBadge={
+            updater?.status === 'available' || updater?.status === 'dismissed'
+          }
         />
         {/* Personal settings — top-right avatar, on every page */}
         <SettingsMenu
@@ -96,6 +101,9 @@ export default function App() {
           onClose={() => setSystemSettingsOpen(false)}
           updater={updater}
         />
+        {/* Update prompt — appears once per detected new version, then
+            collapses into the cog badge until installed. */}
+        <UpdateToast updater={updater} />
         <QuickCapture />
         <QuickSwitcher
           isOpen={switcherOpen}
