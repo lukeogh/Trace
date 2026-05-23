@@ -123,7 +123,7 @@ export default function QuickSwitcher({ isOpen, onClose }) {
               bg-paper-100 dark:bg-pitch-700 border border-paper-300 dark:border-paper-700
               text-pitch-800 dark:text-white
               placeholder:text-paper-400 dark:placeholder:text-paper-700
-              focus:outline-none focus:ring-2 focus:ring-accent-500
+              focus:outline-none focus:ring-2 focus:ring-mint-500
             "
           />
         </div>
@@ -208,7 +208,7 @@ function ItemIcon({ item }) {
   if (item.kind === 'action') {
     const Icon = item.icon
     return (
-      <span className="p-1.5 rounded-md bg-accent-500/10 text-accent-500 dark:text-accent-400 flex-shrink-0">
+      <span className="p-1.5 rounded-md bg-paper-200 dark:bg-pitch-700 text-paper-700 dark:text-paper-200 flex-shrink-0">
         <Icon size={13} />
       </span>
     )

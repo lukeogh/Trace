@@ -128,7 +128,7 @@ export default function IconPicker({ value, onChange, children }) {
                 border border-paper-300 dark:border-pitch-500
                 text-pitch-800 dark:text-white
                 placeholder:text-paper-400 dark:placeholder:text-paper-700
-                focus:outline-none focus:ring-2 focus:ring-accent-500
+                focus:outline-none focus:ring-2 focus:ring-mint-500
               "
             />
           </div>
@@ -166,7 +166,7 @@ export default function IconPicker({ value, onChange, children }) {
                       className={`
                         flex items-center justify-center w-9 h-9 rounded-md transition-colors
                         ${active
-                          ? 'bg-accent-500/15 text-accent-600 dark:text-accent-400'
+                          ? 'bg-paper-300 dark:bg-pitch-600 text-paper-700 dark:text-paper-200'
                           : 'text-paper-600 dark:text-paper-500 hover:bg-paper-200 dark:hover:bg-pitch-800 hover:text-pitch-700 dark:hover:text-paper-200'
                         }
                       `}

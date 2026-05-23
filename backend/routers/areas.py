@@ -1,4 +1,3 @@
-import os
 import re
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
@@ -141,13 +140,6 @@ def suggest_area_summary(area_id: int, db: Session = Depends(get_db)):
     if not area:
         raise HTTPException(status_code=404, detail="Area not found")
 
-    api_key = os.environ.get("ANTHROPIC_API_KEY")
-    if not api_key:
-        raise HTTPException(
-            status_code=500,
-            detail="ANTHROPIC_API_KEY not configured — add it to your .env file and rebuild.",
-        )
-
     threads = (
         db.query(models.Thread)
         .filter(models.Thread.area_id == area.id)
@@ -174,9 +166,6 @@ def suggest_area_summary(area_id: int, db: Session = Depends(get_db)):
 
     context = "\n\n".join(thread_blocks) if thread_blocks else "(no threads yet)"
 
-    from anthropic import Anthropic
-    client = Anthropic(api_key=api_key)
-
     system = (
         "You write concise status summaries for an area of someone's work.\n"
         "Output exactly 2 sentences. No preamble, no formatting, no bullet points.\n"
@@ -192,21 +181,18 @@ def suggest_area_summary(area_id: int, db: Session = Depends(get_db)):
         f"Recent activity:\n{context}"
     )
 
+    # Use the configured AI provider (Claude / Groq / Gemini / Ollama / custom)
+    from ai_provider import get_provider
+    provider = get_provider(db)
     try:
-        message = client.messages.create(
-            model="claude-sonnet-4-6",
-            max_tokens=300,
+        text = provider.complete(
             system=system,
             messages=[{"role": "user", "content": user_msg}],
+            max_tokens=300,
         )
-        text = message.content[0].text.strip()
-        return schemas.SummarySuggestion(summary=text)
-    except HTTPException:
-        raise
-    except Exception as e:
-        # Translate Anthropic-specific errors into clearer messages
-        from routers.generate import _translate_anthropic_error
-        raise _translate_anthropic_error(e)
+        return schemas.SummarySuggestion(summary=text.strip())
+    except RuntimeError as e:
+        raise HTTPException(status_code=502, detail=str(e))
 
 
 @router.get("/areas/{area_id}/threads", response_model=list[schemas.ThreadSummary])

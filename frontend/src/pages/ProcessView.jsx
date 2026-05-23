@@ -3,6 +3,8 @@ import { BrainCircuit, Check, X, RotateCcw, Upload, FileText, Mail, Calendar } f
 import { areasApi, generateApi, entriesApi, ingestApi } from '../api/client'
 import { useToast } from '../components/Toast'
 import Spinner from '../components/Spinner'
+import AIRequiredCard from '../components/AIRequiredCard'
+import { useAIConfigured } from '../hooks/useAIConfigured'
 import { ENTITY, entityFor } from '../utils/entityIcons'
 
 const STATUS_MESSAGES = ['Reading…', 'Identifying tasks…', 'Structuring items…', 'Preparing review…']
@@ -53,7 +55,7 @@ function ProgressBar({ done }) {
     <div className={`transition-opacity duration-300 ${fading ? 'opacity-0' : 'opacity-100'}`}>
       <div className="w-full h-1 rounded-full bg-paper-200 dark:bg-pitch-700 overflow-hidden">
         <div
-          className="h-full bg-accent-500 rounded-full"
+          className="h-full bg-mint rounded-full"
           style={{
             width: `${width}%`,
             transition: done ? 'width 200ms ease' : 'width 4000ms ease-out',
@@ -116,7 +118,7 @@ function Step({ n, label, hint }) {
       bg-white/60 dark:bg-pitch-700/60
       border border-paper-200 dark:border-pitch-500
     ">
-      <span className="font-mono text-xs text-accent-500 dark:text-accent-400 mt-0.5 tabular-nums">
+      <span className="font-mono text-xs text-paper-700 dark:text-paper-200 mt-0.5 tabular-nums">
         {n}
       </span>
       <div className="min-w-0">
@@ -249,7 +251,7 @@ function ItemCard({ item: initialItem, areaId, areaThreads, selectedAreaName, on
         className={`
           bg-white dark:bg-pitch-700 border border-paper-300 dark:border-pitch-500 rounded-xl overflow-hidden
           border-l-[3px] ${borderLeft}
-          ${flash ? 'bg-accent-500/10 dark:bg-accent-500/10' : ''}
+          ${flash ? 'bg-paper-200 dark:bg-pitch-700 dark:bg-paper-200 dark:bg-pitch-700' : ''}
           transition-colors duration-300
         `}
       >
@@ -279,7 +281,7 @@ function ItemCard({ item: initialItem, areaId, areaThreads, selectedAreaName, on
         {/* Action row */}
         {status === 'approved' ? (
           <div className="px-4 py-3 border-t border-paper-100 dark:border-pitch-700">
-            <span className="text-xs font-display uppercase tracking-wide text-accent-600 dark:text-accent-400">
+            <span className="text-xs font-display uppercase tracking-wide text-paper-700 dark:text-paper-200">
               Added ✓
             </span>
           </div>
@@ -296,7 +298,7 @@ function ItemCard({ item: initialItem, areaId, areaThreads, selectedAreaName, on
                 rounded-lg px-3 py-2 text-sm resize-none
                 text-pitch-800 dark:text-white
                 placeholder:text-paper-400 dark:placeholder:text-paper-700
-                focus:outline-none focus:ring-2 focus:ring-accent-500
+                focus:outline-none focus:ring-2 focus:ring-mint-500
               "
             />
             <div className="flex items-center gap-2 justify-end">
@@ -315,7 +317,7 @@ function ItemCard({ item: initialItem, areaId, areaThreads, selectedAreaName, on
                 disabled={!rejectionReason.trim() || status === 'refining'}
                 className="
                   flex items-center gap-1.5 px-3 py-1.5 text-xs font-display uppercase tracking-wide rounded-md
-                  bg-accent-500/10 text-accent-600 dark:text-accent-400 hover:bg-accent-500/20
+                  bg-paper-200 dark:bg-pitch-700 text-paper-700 dark:text-paper-200 hover:bg-paper-300 dark:hover:bg-pitch-600
                   disabled:opacity-50 transition-colors
                 "
               >
@@ -333,7 +335,7 @@ function ItemCard({ item: initialItem, areaId, areaThreads, selectedAreaName, on
                 flex-1 min-w-0 px-2.5 py-1.5 text-xs rounded-lg
                 bg-white dark:bg-pitch-700 border border-paper-300 dark:border-paper-700
                 text-pitch-500 dark:text-paper-300
-                focus:outline-none focus:ring-2 focus:ring-accent-500
+                focus:outline-none focus:ring-2 focus:ring-mint-500
                 font-display uppercase tracking-wide
               "
             >
@@ -351,7 +353,7 @@ function ItemCard({ item: initialItem, areaId, areaThreads, selectedAreaName, on
                 title="Approve"
                 className="
                   flex items-center justify-center
-                  bg-accent-500/10 text-accent-600 dark:text-accent-400 hover:bg-accent-500/20
+                  bg-paper-200 dark:bg-pitch-700 text-paper-700 dark:text-paper-200 hover:bg-paper-300 dark:hover:bg-pitch-600
                   rounded-md p-2 transition-colors disabled:opacity-50
                 "
               >
@@ -383,6 +385,10 @@ function ItemCard({ item: initialItem, areaId, areaThreads, selectedAreaName, on
 // ─── ProcessView ──────────────────────────────────────────────────────────────
 
 export default function ProcessView() {
+  // AI gate — checked first so the rest of the page doesn't even mount its
+  // ingest/extract machinery when the engine isn't set up.
+  const { configured: aiConfigured, loading: aiLoading } = useAIConfigured()
+
   // Initialise from localStorage so navigation away doesn't lose work
   const [selectedAreaId, setSelectedAreaId] = useState(() => loadSaved()?.selectedAreaId ?? null)
   const [inputText, setInputText]           = useState(() => loadSaved()?.inputText ?? '')
@@ -556,13 +562,25 @@ export default function ProcessView() {
         border-b border-paper-200 dark:border-pitch-700
       ">
         <div className="max-w-3xl mx-auto flex items-center gap-3 pr-14">
-          <BrainCircuit size={28} className="text-accent-500 dark:text-accent-400 flex-shrink-0" />
+          <BrainCircuit size={28} className="text-paper-700 dark:text-paper-200 flex-shrink-0" />
           <h1 className="font-display font-bold text-2xl uppercase tracking-widest text-pitch-800 dark:text-white">
             Smart Generate
           </h1>
         </div>
       </header>
 
+      {/* AI gate — show the empty state instead of the form when no engine
+          is configured. Don't flash the form while we're still loading the
+          status — wait until we know one way or the other. */}
+      {aiLoading ? (
+        <div className="max-w-3xl mx-auto px-8 py-12 flex justify-center">
+          <Spinner />
+        </div>
+      ) : !aiConfigured ? (
+        <div className="px-8 py-6">
+          <AIRequiredCard feature="Smart Generate" />
+        </div>
+      ) : (
       <div className="max-w-3xl mx-auto px-8 py-6 space-y-6">
         {/* Intro — short tagline + three-step "how it works" */}
         <div className="space-y-4">
@@ -587,7 +605,7 @@ export default function ProcessView() {
           className={`
             relative bg-white dark:bg-pitch-700 border rounded-xl p-6 transition-colors
             ${dragActive
-              ? 'border-accent-500 ring-2 ring-accent-500/40'
+              ? 'border-mint-500 ring-2 ring-mint-500/40'
               : 'border-paper-300 dark:border-pitch-500'
             }
           `}
@@ -602,7 +620,7 @@ export default function ProcessView() {
               className="
                 flex items-center gap-1.5 text-xs font-display uppercase tracking-wide transition-colors
                 text-paper-500 dark:text-paper-600
-                hover:text-accent-500 dark:hover:text-accent-400
+                hover:text-paper-700 dark:hover:text-paper-200
                 disabled:opacity-50
               "
             >
@@ -637,7 +655,7 @@ export default function ProcessView() {
                 className={`
                   px-3 py-1.5 rounded-full text-xs font-display uppercase tracking-wide transition-colors
                   ${selectedAreaId === area.id
-                    ? 'bg-accent-500 text-white'
+                    ? 'bg-mint-700 text-white'
                     : 'text-paper-600 dark:text-paper-500 bg-paper-200 dark:bg-pitch-700 hover:bg-paper-300 dark:hover:bg-pitch-500'
                   }
                 `}
@@ -667,7 +685,7 @@ export default function ProcessView() {
               rounded-lg px-3 py-2.5 font-sans text-sm resize-y
               text-pitch-800 dark:text-white
               placeholder:text-paper-400 dark:placeholder:text-paper-700
-              focus:outline-none focus:ring-2 focus:ring-accent-500
+              focus:outline-none focus:ring-2 focus:ring-mint-500
               mb-2
             "
           />
@@ -680,11 +698,11 @@ export default function ProcessView() {
           {dragActive && (
             <div className="
               absolute inset-0 z-20 rounded-xl flex flex-col items-center justify-center gap-2
-              bg-accent-500/10 dark:bg-accent-500/15 backdrop-blur-sm pointer-events-none
-              border-2 border-dashed border-accent-500
+              bg-paper-200 dark:bg-pitch-700 dark:bg-paper-300 dark:bg-pitch-600 backdrop-blur-sm pointer-events-none
+              border-2 border-dashed border-mint-500
             ">
-              <Upload size={28} className="text-accent-500" />
-              <p className="font-display uppercase tracking-widest text-sm text-accent-600 dark:text-accent-400">
+              <Upload size={28} className="text-mint-700" />
+              <p className="font-display uppercase tracking-widest text-sm text-paper-700 dark:text-paper-200">
                 Drop to parse
               </p>
               <p className="font-mono text-xs text-paper-600 dark:text-paper-500">
@@ -699,7 +717,7 @@ export default function ProcessView() {
               absolute inset-0 z-20 rounded-xl flex flex-col items-center justify-center gap-2
               bg-white/70 dark:bg-pitch-700/80 backdrop-blur-sm pointer-events-none
             ">
-              <Spinner size={24} className="text-accent-500" />
+              <Spinner size={24} className="text-mint-700" />
               <p className="font-display uppercase tracking-widest text-xs text-paper-600 dark:text-paper-500">
                 Parsing…
               </p>
@@ -725,7 +743,7 @@ export default function ProcessView() {
                 }
                 className="
                   w-full flex items-center justify-center gap-2 py-2.5 rounded-lg
-                  bg-accent-500 hover:bg-accent-600 text-white text-sm
+                  bg-mint-700 hover:bg-mint-800 text-white text-sm
                   font-display uppercase tracking-wide
                   disabled:opacity-50 disabled:cursor-not-allowed transition-colors
                 "
@@ -757,7 +775,7 @@ export default function ProcessView() {
             px-6 py-5 flex items-center justify-between gap-4
           ">
             <div>
-              <p className="font-display uppercase tracking-widest text-xs text-accent-600 dark:text-accent-400 mb-0.5">
+              <p className="font-display uppercase tracking-widest text-xs text-paper-700 dark:text-paper-200 mb-0.5">
                 All items reviewed
               </p>
               <p className="text-xs text-paper-500 dark:text-paper-600">
@@ -826,6 +844,7 @@ export default function ProcessView() {
           </div>
         )}
       </div>
+      )}
     </div>
   )
 }

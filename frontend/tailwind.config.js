@@ -38,20 +38,9 @@ export default {
           900: '#080706',
           950: '#050402',
         },
-        // ── Primary accent ──────────────────────────────────────────────────
-        accent: {
-          DEFAULT: '#5B5BD6',
-          50:  '#F4F4FC',
-          100: '#E8E8F8',
-          200: '#C5C5EE',
-          300: '#A2A2E4',
-          400: '#7F7FDD',
-          500: '#5B5BD6',
-          600: '#4F4FC7',
-          700: '#4343B0',
-          800: '#373798',
-          900: '#2B2B80',
-        },
+        // ── Brand colour (defined below in status section) ──────────────────
+        // The `accent` namespace has been retired in favour of `mint`. See
+        // the mint extension below.
         // ── Status colours (muted) ──────────────────────────────────────────
         sage:        '#7A9579',  // stable, resolved
         'sky-muted': '#6B8AB8',  // active, open
@@ -59,6 +48,22 @@ export default {
         mustard:     '#C9A85C',  // in-progress
         terracotta:  '#B86A5C',  // blocked
         lavender:    '#8A7BB8',  // parked
+        // ── Brand signature · mint ─────────────────────────────────────────
+        // Used sparingly: the dot in "Trace.", the splash animation, and
+        // "selected/active" state indicators. Never as a hover or focus colour.
+        mint: {
+          DEFAULT: '#10B981',
+          50:  '#ECFDF5',
+          100: '#D1FAE5',
+          200: '#A7F3D0',
+          300: '#6EE7B7',
+          400: '#34D399',
+          500: '#10B981',
+          600: '#059669',
+          700: '#047857',
+          800: '#065F46',
+          900: '#064E3B',
+        },
       },
       fontFamily: {
         // Geist: brand voice and product UI

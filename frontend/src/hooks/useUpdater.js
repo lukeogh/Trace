@@ -1,29 +1,65 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { isTauri, checkForUpdate, relaunchForUpdate } from '../api/tauri'
 
 /**
- * Silent updater hook — checks for a newer version on mount (only in Tauri),
- * exposes the result so a banner can show "Update available — install now."
+ * Silent updater hook + per-version dismissal tracking.
  *
- * State shape:
- *   - status: 'idle' | 'checking' | 'available' | 'none' | 'downloading' | 'ready' | 'error'
- *   - available: the update object from `checkForUpdate()` (when status === 'available')
- *   - progress: { downloaded, contentLength } during download
- *   - error: string when status === 'error'
+ * Flow:
+ *   1. On mount (only in Tauri), silently calls the manifest endpoint.
+ *   2. If a newer version is found, exposes it via `available` + sets
+ *      status to 'available'. The App-level UpdateToast picks this up
+ *      and shows a bottom-right prompt.
+ *   3. User clicks "Install" → `install()` downloads + verifies + applies.
+ *   4. User clicks "Later" → `dismiss()` writes the version to localStorage
+ *      under `updateDismissedVersions`. The toast disappears but the
+ *      System Settings cog gets a badge dot — gentle reminder.
+ *   5. If a NEW version becomes available later (e.g. v0.1.2 after they
+ *      dismissed v0.1.1), the toast re-appears because the new version
+ *      isn't in the dismissed list. Only that specific version was
+ *      declined; later releases aren't preemptively silenced.
  *
- * The check is debounced — re-mounts won't re-fire if we've already checked
- * within the last hour (cached in module scope so it survives unmounts but
- * not full page reloads, which is the right semantics for an SPA hosted by
- * the bundled FastAPI).
+ * Status values:
+ *   - 'idle'         no check has run (e.g. browser/Docker)
+ *   - 'checking'     manifest fetch in flight
+ *   - 'available'    newer version found AND not dismissed
+ *   - 'dismissed'    newer version found BUT user clicked Later
+ *   - 'none'         current version is the latest
+ *   - 'downloading'  install in progress
+ *   - 'ready'        installer applied, awaiting relaunch
+ *   - 'error'        check or install failed
+ *
+ * The hook also debounces re-checks to 1 hour within a single session
+ * (module-scope timestamp survives unmounts but not full page reloads).
  */
+
+const DISMISSED_KEY = 'updateDismissedVersions'
 let _lastCheckedAt = 0
 const RECHECK_INTERVAL_MS = 60 * 60 * 1000   // 1 hour
+
+function loadDismissed() {
+  try {
+    const raw = localStorage.getItem(DISMISSED_KEY)
+    if (!raw) return new Set()
+    return new Set(JSON.parse(raw))
+  } catch {
+    return new Set()
+  }
+}
+
+function saveDismissed(set) {
+  try {
+    localStorage.setItem(DISMISSED_KEY, JSON.stringify([...set]))
+  } catch {
+    // localStorage might be unavailable (private mode, etc.) — fail open.
+  }
+}
 
 export function useUpdater() {
   const [status, setStatus] = useState('idle')
   const [available, setAvailable] = useState(null)
   const [progress, setProgress] = useState(null)
   const [error, setError] = useState('')
+  const [dismissed, setDismissed] = useState(() => loadDismissed())
 
   useEffect(() => {
     if (!isTauri()) return
@@ -41,7 +77,11 @@ export function useUpdater() {
         if (!result) return setStatus('idle')           // not in Tauri
         if (!result.available) return setStatus('none')
         setAvailable(result)
-        setStatus('available')
+        // If the user has already dismissed this exact version, jump
+        // straight to the 'dismissed' state — only the cog badge will
+        // show, no toast.
+        const isDismissed = dismissed.has(result.version)
+        setStatus(isDismissed ? 'dismissed' : 'available')
       })
       .catch((err) => {
         if (cancelled) return
@@ -50,18 +90,31 @@ export function useUpdater() {
       })
 
     return () => { cancelled = true }
+    // We deliberately don't depend on `dismissed` here — the initial check
+    // should only run once per session-window, and re-runs of the effect
+    // when dismissed changes would re-trigger the network call. Subsequent
+    // dismissals are handled by the dismiss() callback below.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  /** Download + install + relaunch. UI should disable buttons during this. */
-  const install = async () => {
+  /** Persist dismissal of THIS version. Toast hides; badge persists. */
+  const dismiss = useCallback(() => {
+    if (!available) return
+    setDismissed((prev) => {
+      const next = new Set(prev)
+      next.add(available.version)
+      saveDismissed(next)
+      return next
+    })
+    setStatus('dismissed')
+  }, [available])
+
+  /** Download + install + relaunch. UI disables interaction during this. */
+  const install = useCallback(async () => {
     if (!available) return
     setStatus('downloading')
     try {
       await available.downloadAndInstall((event) => {
-        // Event shape per tauri-plugin-updater:
-        //   { event: 'Started', data: { contentLength } }
-        //   { event: 'Progress', data: { chunkLength } }
-        //   { event: 'Finished' }
         if (event.event === 'Started') {
           setProgress({ downloaded: 0, contentLength: event.data?.contentLength ?? 0 })
         } else if (event.event === 'Progress') {
@@ -76,7 +129,7 @@ export function useUpdater() {
       setError(typeof err === 'string' ? err : String(err))
       setStatus('error')
     }
-  }
+  }, [available])
 
-  return { status, available, progress, error, install }
+  return { status, available, progress, error, install, dismiss }
 }

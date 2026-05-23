@@ -8,6 +8,7 @@ import ThreadCard from '../components/ThreadCard'
 import Modal from '../components/Modal'
 import IconPicker, { AreaIcon } from '../components/IconPicker'
 import { useToast } from '../components/Toast'
+import { useAIConfigured } from '../hooks/useAIConfigured'
 import { AREA_STATUSES, THREAD_STATUSES } from '../utils/status'
 import { SECTION_ICONS } from '../utils/entityIcons'
 
@@ -15,6 +16,7 @@ export default function AreaView() {
   const { areaId } = useParams()
   const navigate = useNavigate()
   const toast = useToast()
+  const { configured: aiConfigured } = useAIConfigured()
 
   const [area, setArea] = useState(null)
   const [threads, setThreads] = useState([])
@@ -227,8 +229,8 @@ export default function AreaView() {
             onClick={() => setNewThreadOpen(true)}
             className="
               flex items-center gap-2 px-4 py-2 rounded-md text-sm font-display font-medium uppercase tracking-wide
-              bg-accent-500 hover:bg-accent-600 text-white
-              shadow-sm hover:shadow-accent-500/25
+              bg-mint-700 hover:bg-mint-800 text-white
+              shadow-sm hover:shadow-mint-500/25
               transition-all duration-150
             "
           >
@@ -254,9 +256,13 @@ export default function AreaView() {
             <div className="flex items-center gap-3">
               <button
                 onClick={suggestSummary}
-                disabled={suggestingSummary}
-                title="Regenerate the Overview from recent activity"
-                className="flex items-center gap-1.5 text-xs text-paper-500 dark:text-paper-600 hover:text-accent-500 dark:hover:text-accent-400 disabled:opacity-50 transition-colors"
+                disabled={suggestingSummary || aiConfigured === false}
+                title={
+                  aiConfigured === false
+                    ? 'Set up an AI engine in Settings to use this'
+                    : 'Regenerate the Overview from recent activity'
+                }
+                className="flex items-center gap-1.5 text-xs text-paper-500 dark:text-paper-600 hover:text-paper-700 dark:hover:text-paper-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 <Sparkles size={12} />
                 {suggestingSummary ? 'Updating…' : 'Update'}
@@ -264,7 +270,7 @@ export default function AreaView() {
               {!editingSummary && (
                 <button
                   onClick={() => setEditingSummary(true)}
-                  className="flex items-center gap-1.5 text-xs text-paper-500 dark:text-paper-600 hover:text-accent-500 transition-colors"
+                  className="flex items-center gap-1.5 text-xs text-paper-500 dark:text-paper-600 hover:text-paper-700 dark:hover:text-paper-200 transition-colors"
                 >
                   <Edit3 size={12} />
                   Edit
@@ -290,7 +296,7 @@ export default function AreaView() {
                     rounded-lg px-3 py-2.5 resize-none
                     text-pitch-700 dark:text-paper-200
                     placeholder:text-paper-400 dark:placeholder:text-paper-700
-                    focus:outline-none focus:ring-2 focus:ring-accent-500
+                    focus:outline-none focus:ring-2 focus:ring-mint-500
                     transition-colors
                   "
                 />
@@ -301,7 +307,7 @@ export default function AreaView() {
                   <button
                     onClick={saveSummary}
                     disabled={savingSummary}
-                    className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-md bg-accent-500 hover:bg-accent-600 text-white disabled:opacity-60 transition-colors"
+                    className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-md bg-mint-700 hover:bg-mint-800 text-white disabled:opacity-60 transition-colors"
                   >
                     <Check size={12} />
                     {savingSummary ? 'Saving…' : 'Save'}
@@ -354,7 +360,7 @@ export default function AreaView() {
               <p className="text-sm text-paper-500 dark:text-paper-700 mb-4">No threads yet for this area.</p>
               <button
                 onClick={() => setNewThreadOpen(true)}
-                className="flex items-center gap-2 px-4 py-2 rounded-md bg-accent-500 hover:bg-accent-600 text-white text-sm mx-auto transition-colors"
+                className="flex items-center gap-2 px-4 py-2 rounded-md bg-mint-700 hover:bg-mint-800 text-white text-sm mx-auto transition-colors"
               >
                 <Plus size={14} />
                 Create first thread
@@ -397,7 +403,7 @@ export default function AreaView() {
                 border border-paper-300 dark:border-paper-700
                 text-pitch-800 dark:text-white
                 placeholder:text-paper-400 dark:placeholder:text-paper-700
-                focus:outline-none focus:ring-2 focus:ring-accent-500
+                focus:outline-none focus:ring-2 focus:ring-mint-500
               "
               onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) createThread() }}
             />
@@ -418,7 +424,7 @@ export default function AreaView() {
                 border border-paper-300 dark:border-paper-700
                 text-pitch-800 dark:text-white
                 placeholder:text-paper-400 dark:placeholder:text-paper-700
-                focus:outline-none focus:ring-2 focus:ring-accent-500
+                focus:outline-none focus:ring-2 focus:ring-mint-500
               "
             />
           </div>
@@ -457,7 +463,7 @@ export default function AreaView() {
             <button
               onClick={createThread}
               disabled={!threadForm.title.trim() || creatingThread}
-              className="px-4 py-2 text-sm rounded-md font-medium bg-accent-500 hover:bg-accent-600 text-white disabled:opacity-50 transition-colors"
+              className="px-4 py-2 text-sm rounded-md font-medium bg-mint-700 hover:bg-mint-800 text-white disabled:opacity-50 transition-colors"
             >
               {creatingThread ? 'Creating…' : 'Create Thread'}
             </button>
@@ -471,7 +477,7 @@ export default function AreaView() {
 // ─── Area audit panel ─────────────────────────────────────────────────────────
 
 const ACTION_BADGE = {
-  created:     'bg-accent-500/10 text-accent-600 dark:text-accent-400',
+  created:     'bg-paper-200 dark:bg-pitch-700 text-paper-700 dark:text-paper-200',
   updated:     'bg-amber-500/10 text-amber-600 dark:text-amber-400',
   deleted:     'bg-red-500/10 text-red-500 dark:text-red-400',
   completed:   'bg-sky-500/10 text-sky-500 dark:text-sky-400',
@@ -626,7 +632,7 @@ function TraceMarkSpinner() {
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       aria-hidden="true"
-      className="text-accent-500 dark:text-accent-400"
+      className="text-paper-700 dark:text-paper-200"
     >
       <path
         d="M 22 50 L 50 50"
@@ -671,7 +677,7 @@ function TraceMarkSpinner() {
 function ProgressIndeterminate() {
   return (
     <div className="w-40 h-1 rounded-full overflow-hidden bg-paper-200 dark:bg-pitch-700 relative">
-      <div className="absolute inset-y-0 left-0 w-1/3 rounded-full bg-accent-500 animate-[slideIn_1.4s_cubic-bezier(0.4,0,0.2,1)_infinite]" />
+      <div className="absolute inset-y-0 left-0 w-1/3 rounded-full bg-mint animate-[slideIn_1.4s_cubic-bezier(0.4,0,0.2,1)_infinite]" />
     </div>
   )
 }

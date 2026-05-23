@@ -46,7 +46,7 @@
 
   /* Focus ring — uses the accent */
   *:focus-visible {
-    @apply outline-none ring-2 ring-accent ring-offset-2 ring-offset-paper dark:ring-offset-pitch;
+    @apply outline-none ring-2 ring-mint ring-offset-2 ring-offset-paper dark:ring-offset-pitch;
   }
 
   /* Smooth theme transitions, but instant on text/border colour for content */
@@ -92,9 +92,11 @@
     background-size: 32px 32px;
   }
 
-  /* Soft glow for accent elements — sparingly used */
+  /* Soft glow for mint accents — sparingly used. Aliased as both names so
+     existing callers (`glow-accent`) keep working until they're swept. */
+  .glow-mint,
   .glow-accent {
-    box-shadow: 0 0 16px rgba(91, 91, 214, 0.25);
+    box-shadow: 0 0 16px rgba(16, 185, 129, 0.25);
   }
 }
 
@@ -148,7 +150,7 @@
 }
 
 .prose-entry a {
-  @apply text-accent-600 dark:text-accent-300 underline underline-offset-2 hover:text-accent-500;
+  @apply text-mint-700 dark:text-mint-300 underline underline-offset-2 hover:text-mint-600;
 }
 
 .prose-entry h1, .prose-entry h2, .prose-entry h3 {

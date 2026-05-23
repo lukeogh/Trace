@@ -45,7 +45,7 @@ from fastapi.responses import JSONResponse
 
 import models
 from database import engine, SessionLocal
-from routers import areas, threads, entries, attachments, generate, ingest
+from routers import areas, threads, entries, attachments, generate, ingest, settings as settings_router
 
 # Trace. launches with no seeded areas — the user creates their own from the
 # sidebar's "+ Add your first area" prompt. The previous seven-area software
@@ -74,6 +74,8 @@ def _init_db():
             "ALTER TABLE areas ADD COLUMN icon VARCHAR(64)",
             "ALTER TABLE entries ADD COLUMN meeting_at DATETIME",
             "ALTER TABLE entries ADD COLUMN notes TEXT",
+            # AI engine config + future generic app settings
+            "CREATE TABLE IF NOT EXISTS app_settings (key VARCHAR(100) PRIMARY KEY, value TEXT, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP)",
         ]:
             try:
                 conn.execute(text(sql))
@@ -183,6 +185,7 @@ app.include_router(entries.router, prefix="/api")
 app.include_router(attachments.router, prefix="/api")
 app.include_router(generate.router, prefix="/api")
 app.include_router(ingest.router, prefix="/api")
+app.include_router(settings_router.router, prefix="/api")
 
 # Serve uploaded files at /uploads/<stored_name>
 if os.path.exists(UPLOAD_DIR):

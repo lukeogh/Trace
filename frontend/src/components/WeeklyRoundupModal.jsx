@@ -71,7 +71,7 @@ export default function WeeklyRoundupModal({ isOpen, onClose }) {
                 key={i}
                 className={`w-2.5 h-2.5 rounded-full transition-colors duration-150 ${
                   i === dotStep
-                    ? 'bg-accent-500'
+                    ? 'bg-mint'
                     : 'bg-paper-300 dark:bg-pitch-500'
                 }`}
               />
@@ -103,7 +103,7 @@ export default function WeeklyRoundupModal({ isOpen, onClose }) {
                     key={a.id}
                     to={`/area/${a.id}`}
                     onClick={onClose}
-                    className="text-xs text-pitch-500 dark:text-paper-300 hover:text-accent-500 dark:hover:text-accent-400 transition-colors"
+                    className="text-xs text-pitch-500 dark:text-paper-300 hover:text-paper-700 dark:hover:text-paper-200 transition-colors"
                   >
                     <span className="font-display uppercase tracking-wide">{a.name}</span>
                     <span className="ml-1.5 font-mono text-paper-500 dark:text-paper-600">{a.days_inactive}d</span>
@@ -121,7 +121,7 @@ export default function WeeklyRoundupModal({ isOpen, onClose }) {
               bg-paper-100 dark:bg-pitch-700
               border border-paper-300 dark:border-paper-700
               text-pitch-700 dark:text-paper-200
-              focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent
+              focus:outline-none focus:ring-2 focus:ring-mint-500 focus:border-transparent
             "
           />
           <div className="flex justify-end gap-2 mt-3">

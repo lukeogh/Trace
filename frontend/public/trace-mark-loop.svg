@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="400" height="400" fill="none" role="img" aria-label="Trace">
+  <path d="M 22 50 L 50 50"
+        stroke="currentColor" stroke-width="11"
+        stroke-linecap="round" stroke-linejoin="round"
+        stroke-dasharray="30">
+    <animate attributeName="stroke-dashoffset"
+             values="30;0;0;-30;-30"
+             keyTimes="0;0.2;0.65;0.85;1"
+             keySplines="0.65 0 0.35 1; 0 0 1 1; 0.65 0 0.35 1; 0 0 1 1"
+             calcMode="spline"
+             dur="3s"
+             repeatCount="indefinite"/>
+  </path>
+  <path d="M 50 50 L 78 26"
+        stroke="currentColor" stroke-width="11"
+        stroke-linecap="round" stroke-linejoin="round"
+        stroke-dasharray="38">
+    <animate attributeName="stroke-dashoffset"
+             values="38;38;0;0;-38;-38"
+             keyTimes="0;0.2;0.4;0.65;0.8;1"
+             keySplines="0 0 1 1; 0.65 0 0.35 1; 0 0 1 1; 0.65 0 0.35 1; 0 0 1 1"
+             calcMode="spline"
+             dur="3s"
+             repeatCount="indefinite"/>
+  </path>
+  <path d="M 50 50 L 78 74"
+        stroke="currentColor" stroke-width="11"
+        stroke-linecap="round" stroke-linejoin="round"
+        stroke-dasharray="38">
+    <animate attributeName="stroke-dashoffset"
+             values="38;38;0;0;-38;-38"
+             keyTimes="0;0.35;0.55;0.65;0.75;1"
+             keySplines="0 0 1 1; 0.65 0 0.35 1; 0 0 1 1; 0.65 0 0.35 1; 0 0 1 1"
+             calcMode="spline"
+             dur="3s"
+             repeatCount="indefinite"/>
+  </path>
+</svg>

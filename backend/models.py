@@ -129,3 +129,21 @@ class ActivityEvent(Base):
     occurred_at = Column(DateTime, server_default=func.now())
 
     thread = relationship("Thread")
+
+
+class AppSettings(Base):
+    """
+    Generic key-value store for application-wide settings.
+
+    Currently holds the AI provider configuration under key "ai_config".
+    Adding new settings = pick a key, JSON-encode the payload.
+
+    Why a single key-value table rather than columns: most settings are
+    one-off + structured-but-small. Migrations stay free. New setting =
+    new key, no schema changes.
+    """
+    __tablename__ = "app_settings"
+
+    key = Column(String(100), primary_key=True, index=True)
+    value = Column(Text, nullable=True)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())

@@ -29,12 +29,12 @@ export default function ThreadCard({ thread, areaId }) {
       <div className="p-4">
         {/* Title row */}
         <div className="flex items-start justify-between gap-3 mb-2">
-          <h3 className="font-display font-semibold text-sm text-pitch-800 dark:text-white group-hover:text-accent-600 dark:group-hover:text-accent-400 transition-colors leading-snug">
+          <h3 className="font-display font-semibold text-sm text-pitch-800 dark:text-white group-hover:text-paper-700 dark:group-hover:text-paper-200 transition-colors leading-snug">
             {thread.title}
           </h3>
           <ChevronRight
             size={14}
-            className="text-paper-400 dark:text-paper-700 flex-shrink-0 mt-0.5 group-hover:text-accent-500 group-hover:translate-x-0.5 transition-all"
+            className="text-paper-400 dark:text-paper-700 flex-shrink-0 mt-0.5 group-hover:text-paper-700 group-hover:translate-x-0.5 transition-all"
           />
         </div>
 

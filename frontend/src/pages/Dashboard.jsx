@@ -7,6 +7,8 @@ import StatusBadge from '../components/StatusBadge'
 import WeeklyRoundupModal from '../components/WeeklyRoundupModal'
 import { AreaIcon } from '../components/IconPicker'
 import { getAreaStatus } from '../utils/status'
+import { useDisplayName } from '../hooks/useDisplayName'
+import { useAIConfigured } from '../hooks/useAIConfigured'
 
 const INACTIVITY_THRESHOLD_DAYS = 7
 
@@ -19,10 +21,35 @@ const VIEW_MODES = [
   { key: 'focus',    label: 'Focus' },
 ]
 
+// Time-of-day greeting boundaries. Local hour, not UTC, because the dashboard
+// is for the person sitting at the machine. Tweaked to feel natural:
+//   05–11  morning
+//   12–16  afternoon
+//   17–21  evening
+//   22–04  night (covers late-night work + pre-dawn)
+function getTimeGreeting(date = new Date()) {
+  const h = date.getHours()
+  if (h >= 5 && h < 12) return 'Good morning'
+  if (h >= 12 && h < 17) return 'Good afternoon'
+  if (h >= 17 && h < 22) return 'Good evening'
+  return 'Working late'   // 22:00–04:59 — softer than "good night"
+}
+
+// Strip a display name down to its first token so the greeting reads
+// "Good morning, Luke" rather than "Good morning, Luke Keogh".
+function firstName(displayName) {
+  if (!displayName) return ''
+  const trimmed = displayName.trim().split(/\s+/)[0]
+  return trimmed || ''
+}
+
 export default function Dashboard() {
   const [areas, setAreas]       = useState([])
   const [loading, setLoading]   = useState(true)
   const [error, setError]       = useState(null)
+
+  const { displayName } = useDisplayName()
+  const { configured: aiConfigured } = useAIConfigured()
 
   const [roundupOpen, setRoundupOpen] = useState(false)
 
@@ -81,11 +108,16 @@ export default function Dashboard() {
       ">
         <div className="max-w-6xl mx-auto flex items-start justify-between gap-6 pr-14">
           <div className="min-w-0">
-            <h1 className="font-display font-medium text-4xl tracking-tightest text-pitch-800 dark:text-white leading-tight">
-              Trace.
+            {/* Greeting + date. Personal anchor — orients the eye and the
+                hour. First-name only so the line stays short and warm. */}
+            <h1 className="font-display font-medium text-3xl tracking-tight text-pitch-800 dark:text-white leading-tight">
+              {getTimeGreeting()}
+              {firstName(displayName) && (
+                <>, <span className="text-pitch-600 dark:text-paper-300">{firstName(displayName)}</span></>
+              )}
             </h1>
-            <p className="text-sm font-mono uppercase tracking-[0.25em] text-paper-600 dark:text-paper-500 mt-2">
-              Stay across everything.
+            <p className="text-xs font-mono uppercase tracking-[0.25em] text-paper-500 dark:text-paper-600 mt-2">
+              {format(new Date(), 'EEEE, d MMMM')}
             </p>
           </div>
 
@@ -93,10 +125,13 @@ export default function Dashboard() {
             <ViewSegmentedControl viewMode={viewMode} onChange={handleViewMode} />
             <button
               onClick={() => setRoundupOpen(true)}
+              disabled={aiConfigured === false}
+              title={aiConfigured === false ? 'Set up an AI engine in Settings to use this' : undefined}
               className="
                 flex items-center gap-1.5 px-3 py-1.5 rounded-md
-                bg-accent-500/10 text-accent-600 dark:text-accent-400
-                hover:bg-accent-500/15 transition-colors
+                bg-paper-200 dark:bg-pitch-700 text-paper-700 dark:text-paper-200
+                hover:bg-paper-300 dark:hover:bg-pitch-600 transition-colors
+                disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-paper-200 dark:disabled:hover:bg-pitch-700
               "
             >
               <Sparkles size={13} />
@@ -115,7 +150,7 @@ export default function Dashboard() {
               className="
                 inline-flex items-center gap-1 text-xs font-mono
                 text-paper-500 dark:text-paper-600
-                hover:text-accent-500 dark:hover:text-accent-400
+                hover:text-paper-700 dark:hover:text-paper-200
                 transition-colors
               "
             >
@@ -245,7 +280,7 @@ function AreaCard({ area }) {
             <span className="text-xs font-mono text-paper-400 dark:text-paper-700">{relativeTime}</span>
             <ArrowRight
               size={13}
-              className="text-paper-400 dark:text-paper-700 group-hover:text-accent-500 group-hover:translate-x-0.5 transition-all"
+              className="text-paper-400 dark:text-paper-700 group-hover:text-paper-700 group-hover:translate-x-0.5 transition-all"
             />
           </div>
         </div>
@@ -284,7 +319,7 @@ function ErrorState({ message, onRetry }) {
 const EVENT_CONFIG = {
   thread_created: {
     Icon: Plus,
-    className: 'bg-accent-500/10 text-accent-500 dark:text-accent-400',
+    className: 'bg-paper-200 dark:bg-pitch-700 text-paper-700 dark:text-paper-200',
   },
   entry_added: {
     Icon: PenLine,
@@ -533,7 +568,7 @@ function RecentActivity({ viewMode }) {
                 className="
                   p-2 rounded-md text-xs font-display uppercase tracking-wide transition-colors duration-150
                   text-paper-500 dark:text-paper-600
-                  hover:text-accent-500 dark:hover:text-accent-400
+                  hover:text-paper-700 dark:hover:text-paper-200
                   hover:bg-paper-200 dark:hover:bg-pitch-700
                 "
               >

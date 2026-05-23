@@ -5,7 +5,7 @@ import { format } from 'date-fns'
 import { areasApi } from '../api/client'
 
 const ACTION_BADGE = {
-  created:     'bg-accent-500/10 text-accent-600 dark:text-accent-400',
+  created:     'bg-paper-200 dark:bg-pitch-700 text-paper-700 dark:text-paper-200',
   updated:     'bg-amber-500/10 text-amber-600 dark:text-amber-400',
   deleted:     'bg-red-500/10 text-red-500 dark:text-red-400',
   completed:   'bg-sky-500/10 text-sky-500 dark:text-sky-400',
@@ -124,7 +124,7 @@ export default function LogView() {
       ">
         <div className="max-w-5xl mx-auto flex items-center justify-between gap-4 pr-14">
           <div className="flex items-center gap-3">
-            <History size={28} className="text-accent-500 dark:text-accent-400 flex-shrink-0" />
+            <History size={28} className="text-paper-700 dark:text-paper-200 flex-shrink-0" />
             <h1 className="font-display font-bold text-2xl uppercase tracking-widest text-pitch-800 dark:text-white">
               Audit Log
             </h1>
@@ -144,7 +144,7 @@ export default function LogView() {
                 bg-white dark:bg-pitch-700
                 border border-paper-300 dark:border-paper-700
                 text-pitch-500 dark:text-paper-300
-                focus:outline-none focus:ring-2 focus:ring-accent-500
+                focus:outline-none focus:ring-2 focus:ring-mint-500
                 font-display uppercase tracking-wide
               "
             >

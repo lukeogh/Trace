@@ -102,7 +102,7 @@ export default function QuickCapture() {
               className={`
                 px-3 py-1 rounded-full text-xs font-display uppercase tracking-wide transition-colors
                 ${entryType === key
-                  ? 'bg-accent-500 text-white'
+                  ? 'bg-mint-700 text-white'
                   : 'text-paper-600 dark:text-paper-500 bg-paper-200 dark:bg-pitch-700 hover:bg-paper-300 dark:hover:bg-pitch-500'
                 }
               `}
@@ -125,7 +125,7 @@ export default function QuickCapture() {
             rounded-lg px-3 py-2.5 text-sm resize-none
             text-pitch-800 dark:text-white
             placeholder:text-paper-400 dark:placeholder:text-paper-700
-            focus:outline-none focus:ring-2 focus:ring-accent-500
+            focus:outline-none focus:ring-2 focus:ring-mint-500
           "
         />
 
@@ -146,7 +146,7 @@ export default function QuickCapture() {
                 w-full px-3 py-2 text-sm rounded-lg
                 bg-paper-100 dark:bg-pitch-700 border border-paper-300 dark:border-paper-700
                 text-pitch-800 dark:text-white
-                focus:outline-none focus:ring-2 focus:ring-accent-500
+                focus:outline-none focus:ring-2 focus:ring-mint-500
               "
             >
               <option value="">Select a thread…</option>
@@ -177,7 +177,7 @@ export default function QuickCapture() {
                   className={`
                     px-2.5 py-1 rounded-full text-xs font-display uppercase tracking-wide transition-colors
                     ${dueDateOption === opt.label
-                      ? 'bg-accent-500 text-white'
+                      ? 'bg-mint-700 text-white'
                       : 'text-paper-600 dark:text-paper-500 bg-paper-200 dark:bg-pitch-700 hover:bg-paper-300 dark:hover:bg-pitch-500'
                     }
                   `}
@@ -191,7 +191,7 @@ export default function QuickCapture() {
                 type="date"
                 value={dueDate || ''}
                 onChange={(e) => setDueDate(e.target.value)}
-                className="mt-2 w-full text-sm px-3 py-2 rounded-lg bg-paper-100 dark:bg-pitch-700 border border-paper-300 dark:border-paper-700 text-pitch-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-accent-500"
+                className="mt-2 w-full text-sm px-3 py-2 rounded-lg bg-paper-100 dark:bg-pitch-700 border border-paper-300 dark:border-paper-700 text-pitch-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-mint-500"
               />
             )}
             {dueDate && dueDateOption !== 'Pick date' && (
@@ -213,7 +213,7 @@ export default function QuickCapture() {
           <button
             onClick={submit}
             disabled={!content.trim() || !selectedThreadId || submitting}
-            className="px-4 py-2 text-sm rounded-md font-medium bg-accent-500 hover:bg-accent-600 text-white disabled:opacity-50 transition-colors"
+            className="px-4 py-2 text-sm rounded-md font-medium bg-mint-700 hover:bg-mint-800 text-white disabled:opacity-50 transition-colors"
           >
             {submitting ? 'Capturing…' : 'Capture'}
           </button>

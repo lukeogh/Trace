@@ -7,6 +7,7 @@ import { useTextSize } from './hooks/useTextSize'
 import { useAvatar } from './hooks/useAvatar'
 import { useUpdater } from './hooks/useUpdater'
 import SettingsMenu from './components/SettingsMenu'
+import UpdateToast from './components/UpdateToast'
 import { ToastProvider } from './components/Toast'
 import QuickCapture from './components/QuickCapture'
 import QuickSwitcher from './components/QuickSwitcher'
@@ -18,6 +19,7 @@ import AreaView from './pages/AreaView'
 import ThreadView from './pages/ThreadView'
 import LogView from './pages/LogView'
 import ProcessView from './pages/ProcessView'
+import SystemSettings from './pages/SystemSettings'
 import { areasApi } from './api/client'
 
 // ─── Root ─────────────────────────────────────────────────────────────────────
@@ -45,12 +47,14 @@ export default function App() {
     return () => document.removeEventListener('keydown', handler)
   }, [])
 
-  // Boot splash: hold for a minimum so the Draw animation has time to play,
-  // then dismiss as soon as the first areas fetch resolves. Hard ceiling of
-  // 4s so the user is never stuck if the backend is down.
+  // Boot splash: hold for the full splash animation length (3s) plus a beat
+  // of stillness so the slogan can be read, then fade out. The fade itself
+  // takes ~400ms (opacity transition on the splash overlay). Total: ~5s on
+  // a normal boot. Capped at 7s so a hung backend never traps the user on
+  // the splash forever.
   useEffect(() => {
-    const MIN_SPLASH_MS = 1500
-    const MAX_SPLASH_MS = 4000
+    const MIN_SPLASH_MS = 5000      // = 3s animation + ~2s stillness
+    const MAX_SPLASH_MS = 7000
     const startedAt = Date.now()
     let cancelled = false
     const finish = () => { if (!cancelled) setBooting(false) }
@@ -72,8 +76,14 @@ export default function App() {
         <Shell
           onOpenSwitcher={() => setSwitcherOpen(true)}
           onOpenNewArea={() => setNewAreaOpen(true)}
+          updater={updater}
+          // Badge lights up for both 'available' (just detected) and
+          // 'dismissed' (user clicked Later but the update is still pending).
+          systemSettingsBadge={
+            updater?.status === 'available' || updater?.status === 'dismissed'
+          }
         />
-        {/* Global top-right settings — same place on every page */}
+        {/* Personal settings — top-right avatar, on every page */}
         <SettingsMenu
           avatar={avatar}
           onChangeAvatar={setAvatar}
@@ -85,8 +95,10 @@ export default function App() {
           onChangeFont={setFont}
           textSize={textSize}
           onChangeTextSize={setTextSize}
-          updater={updater}
         />
+        {/* Update prompt — appears once per detected new version, then
+            collapses into the cog badge until installed. */}
+        <UpdateToast updater={updater} />
         <QuickCapture />
         <QuickSwitcher
           isOpen={switcherOpen}
@@ -102,7 +114,7 @@ export default function App() {
 }
 
 // Shell wraps every route so navigation is always visible
-function Shell({ onOpenSwitcher, onOpenNewArea }) {
+function Shell({ onOpenSwitcher, onOpenNewArea, updater, systemSettingsBadge }) {
   const [areas, setAreas] = useState([])
   const location = useLocation()
 
@@ -118,6 +130,7 @@ function Shell({ onOpenSwitcher, onOpenNewArea }) {
         areas={areas}
         onOpenSwitcher={onOpenSwitcher}
         onOpenNewArea={onOpenNewArea}
+        systemSettingsBadge={systemSettingsBadge}
       />
       <main className="flex-1 min-w-0">
         <Routes>
@@ -126,6 +139,7 @@ function Shell({ onOpenSwitcher, onOpenNewArea }) {
           <Route path="/thread/:threadId" element={<ThreadView />} />
           <Route path="/log" element={<LogView />} />
           <Route path="/process" element={<ProcessView />} />
+          <Route path="/settings" element={<SystemSettings updater={updater} />} />
         </Routes>
       </main>
     </div>

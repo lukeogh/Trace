@@ -309,3 +309,44 @@ class RoundupRequest(BaseModel):
 
 class RoundupResponse(BaseModel):
     text: str
+
+
+# ── AI Engine settings ───────────────────────────────────────────────────────
+
+class AIConfig(BaseModel):
+    """
+    The AI engine configuration stored in app_settings.
+
+    Fields:
+      provider:  one of {"claude", "groq", "gemini", "ollama", "custom"}
+      model:     model name (provider-specific; falls back to preset default)
+      base_url:  base URL for OpenAI-compatible providers; None for Claude
+      api_key:   raw key — stored as-is in the DB, masked on read
+    """
+    provider: str = "claude"
+    model: Optional[str] = None
+    base_url: Optional[str] = None
+    api_key: Optional[str] = None
+
+
+class AIConfigOut(BaseModel):
+    """
+    What the frontend receives. api_key never leaves the server in plaintext —
+    it's masked to bullets with the last 4 chars visible.
+
+    `is_configured` is true when the minimum required fields for the provider
+    are set (e.g. Claude requires a key; Ollama doesn't).
+    """
+    provider: str
+    model: Optional[str]
+    base_url: Optional[str]
+    api_key_masked: Optional[str]
+    is_configured: bool
+
+
+class AITestResult(BaseModel):
+    """Result of a connection test against an AI provider."""
+    ok: bool
+    message: str
+    provider: str
+    model: Optional[str]

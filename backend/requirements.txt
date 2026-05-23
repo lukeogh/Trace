@@ -5,6 +5,9 @@ python-multipart==0.0.9
 aiofiles==23.2.1
 pydantic==2.7.1
 anthropic>=0.25.0
+# OpenAI-compatible adapter — covers Groq, Gemini, Ollama, Azure, OpenRouter,
+# and any other OpenAI-compatible service via custom base_url.
+openai>=1.0.0
 # File-ingest deps (drag-drop into Auto Generate)
 pypdf==4.2.0
 icalendar==5.0.12
