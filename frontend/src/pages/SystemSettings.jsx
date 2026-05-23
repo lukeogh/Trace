@@ -11,8 +11,6 @@ import {
   pickDataDir,
   migrateAndSetDataDir,
   relaunch,
-  getUpdateChannel,
-  setUpdateChannel,
 } from '../api/tauri'
 import {
   getAIConfig, getAIPresets, saveAIConfig, testAIConfig,
@@ -635,37 +633,23 @@ function Field({ label, hint, value, onChange, placeholder, type = 'text', autoC
 // ─── Update channel ───────────────────────────────────────────────────────────
 
 function UpdateSection({ updater }) {
-  const [channel, setChannel] = useState('stable')
-  const [pending, setPending] = useState(false)
-
-  useEffect(() => {
-    if (!isTauri()) return
-    getUpdateChannel().then(setChannel)
-  }, [])
-
-  const handle = async (next) => {
-    if (next === channel) return
-    setPending(true)
-    try {
-      await setUpdateChannel(next)
-      setChannel(next)
-    } finally {
-      setPending(false)
-    }
-  }
+  const version = useAppVersion()
+  const hasUpdateBanner = (
+    updater?.status === 'available' || updater?.status === 'dismissed'
+  ) && updater.available
 
   return (
     <Card>
       <CardHeader
         icon={Download}
         title="Updates"
-        subtitle="Where Trace. looks for new versions. Restart after switching."
+        subtitle="Check for and install new versions."
       />
 
       {/* Available banner — same UX as the toast, just permanently surfaced
           on the settings page. Visible for 'available' AND 'dismissed' so
           the cog → settings path always shows the install option. */}
-      {(updater?.status === 'available' || updater?.status === 'dismissed') && updater.available && (
+      {hasUpdateBanner && (
         <div className="
           rounded-lg p-3 mb-4
           bg-mint-50 dark:bg-mint-900/20
@@ -718,24 +702,31 @@ function UpdateSection({ updater }) {
         </div>
       )}
 
-      <div className="text-[10px] font-display uppercase tracking-widest text-paper-500 dark:text-paper-600 mb-1.5">
-        Channel
-      </div>
-      <Segmented
-        value={channel}
-        options={[
-          { key: 'stable', label: 'Stable' },
-          { key: 'beta',   label: 'Beta' },
-        ]}
-        onChange={handle}
-      />
-      {pending && (
-        <p className="mt-1 text-[10px] text-paper-500 dark:text-paper-600">Saving…</p>
+      {/* Current version row. No "Check now" button yet because useUpdater
+          doesn't expose a `check()` callback or `lastCheckedAt` timestamp —
+          the hook only runs its check once per hour at mount. Extend the
+          hook in a future change if we want a manual recheck.
+          TODO(updates): wire check-now action once useUpdater exposes it. */}
+      {!hasUpdateBanner && (
+        <div className="
+          flex items-center gap-3 px-3 py-2.5 rounded-lg
+          bg-paper-100 dark:bg-pitch-800
+          border border-paper-300 dark:border-pitch-500
+        ">
+          <div className="flex-1 min-w-0">
+            <p className="text-sm text-pitch-700 dark:text-paper-300">
+              Currently on <strong className="font-medium">v{version || '—'}</strong>
+            </p>
+            <p className="text-[11px] text-paper-500 dark:text-paper-600 mt-0.5">
+              {updater?.status === 'checking'
+                ? 'Checking for updates…'
+                : updater?.status === 'none'
+                  ? 'Up to date.'
+                  : "Trace checks for updates automatically at launch."}
+            </p>
+          </div>
+        </div>
       )}
-      <p className="mt-2 text-xs text-paper-500 dark:text-paper-600 leading-snug">
-        Beta gets new builds with every merge to main. Restart Trace.
-        after switching for the change to take effect.
-      </p>
     </Card>
   )
 }
@@ -890,27 +881,3 @@ function CardHeader({ icon: Icon, title, subtitle }) {
   )
 }
 
-function Segmented({ value, options, onChange }) {
-  return (
-    <div className="inline-flex items-center gap-0.5 p-0.5 rounded-md w-full bg-paper-100 dark:bg-pitch-800 border border-paper-300 dark:border-pitch-500">
-      {options.map((opt) => {
-        const active = opt.key === value
-        return (
-          <button
-            key={opt.key}
-            onClick={() => onChange(opt.key)}
-            className={`
-              flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded text-sm transition-colors
-              ${active
-                ? 'bg-white dark:bg-pitch-700 text-pitch-800 dark:text-white shadow-sm'
-                : 'text-paper-600 dark:text-paper-500 hover:text-pitch-700 dark:hover:text-paper-200'
-              }
-            `}
-          >
-            <span className="font-display uppercase tracking-wide text-xs">{opt.label}</span>
-          </button>
-        )
-      })}
-    </div>
-  )
-}
