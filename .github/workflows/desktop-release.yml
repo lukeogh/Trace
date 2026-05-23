@@ -126,7 +126,24 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: tauri build
 
-      # ── Upload to a draft Release ───────────────────────────────────────
+      # ── Resolve tag name FIRST (needed by manifest generation) ───────────
+      - name: Resolve tag name
+        id: tag
+        shell: bash
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "name=${{ github.event.inputs.tag_name }}" >> "$GITHUB_OUTPUT"
+            echo "prerelease=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "name=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
+            if [[ "${GITHUB_REF#refs/tags/}" == *-* ]]; then
+              echo "prerelease=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "prerelease=false" >> "$GITHUB_OUTPUT"
+            fi
+          fi
+
+      # ── Collect bundles ──────────────────────────────────────────────────
       - name: Collect bundles
         id: collect
         shell: bash
@@ -191,29 +208,12 @@ jobs:
           echo "=== artifacts/latest.json ==="
           cat artifacts/latest.json
 
-      - name: Resolve tag name
-        id: tag
-        shell: bash
-        run: |
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            echo "name=${{ github.event.inputs.tag_name }}" >> "$GITHUB_OUTPUT"
-            echo "prerelease=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "name=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
-            # Anything with a hyphen (e.g. v1.0.0-beta.1) is a prerelease
-            if [[ "${GITHUB_REF#refs/tags/}" == *-* ]]; then
-              echo "prerelease=true" >> "$GITHUB_OUTPUT"
-            else
-              echo "prerelease=false" >> "$GITHUB_OUTPUT"
-            fi
-          fi
-
-      - name: Upload to GitHub Release (draft)
+      - name: Upload to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.tag.outputs.name }}
           name: Trace. ${{ steps.tag.outputs.name }}
-          draft: true
+          draft: false
           prerelease: ${{ steps.tag.outputs.prerelease }}
           generate_release_notes: true
           files: artifacts/*
