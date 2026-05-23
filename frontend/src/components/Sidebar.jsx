@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { Link, useParams, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard, History, BrainCircuit, Search, Plus,
-  PanelLeftClose, PanelLeftOpen, Settings,
+  ChevronLeft, ChevronRight, Settings,
 } from 'lucide-react'
 import { getAreaStatus } from '../utils/status'
 import { MOD_KEY } from '../utils/platform'
@@ -304,26 +304,38 @@ export default function Sidebar({
             </div>
           </>
         )}
-
-        {/* Collapse / expand toggle */}
-        <button
-          onClick={() => setCollapsed((c) => !c)}
-          title={`${collapsed ? 'Expand' : 'Collapse'} sidebar (${MOD_KEY}+B)`}
-          className={`
-            ${collapsed ? 'w-full flex justify-center' : 'w-full flex items-center justify-end'}
-            p-1.5 rounded-md
-            text-paper-500 dark:text-paper-600
-            hover:text-pitch-700 dark:hover:text-paper-200
-            hover:bg-paper-200 dark:hover:bg-pitch-700
-            transition-colors
-          `}
-        >
-          {collapsed
-            ? <PanelLeftOpen size={14} />
-            : <PanelLeftClose size={14} />
-          }
-        </button>
       </div>
+
+      {/* Collapse / expand toggle.
+          Vertically centred on the sidebar's right edge — Notion-style —
+          so it's a steady, predictable target. The chevron always points
+          in the direction the panel will move: left when expanded (to
+          collapse), right when collapsed (to expand). Sits half on the
+          sidebar, half on the canvas — discoverable on hover. */}
+      <button
+        onClick={() => setCollapsed((c) => !c)}
+        title={`${collapsed ? 'Expand' : 'Collapse'} sidebar (${MOD_KEY}+B)`}
+        aria-label={`${collapsed ? 'Expand' : 'Collapse'} sidebar`}
+        className="
+          group/toggle
+          absolute top-1/2 -translate-y-1/2 -right-3 z-20
+          flex items-center justify-center
+          w-6 h-12 rounded-md
+          bg-paper-200 dark:bg-pitch-700
+          border border-paper-300 dark:border-pitch-500
+          text-paper-500 dark:text-paper-600
+          shadow-sm
+          opacity-40 hover:opacity-100
+          hover:text-pitch-700 dark:hover:text-paper-200
+          hover:border-paper-400 dark:hover:border-paper-700
+          transition-opacity duration-150
+        "
+      >
+        {collapsed
+          ? <ChevronRight size={14} />
+          : <ChevronLeft size={14} />
+        }
+      </button>
 
       {/* Resize handle — disabled when collapsed */}
       {!collapsed && (
