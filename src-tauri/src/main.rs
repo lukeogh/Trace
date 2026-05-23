@@ -7,11 +7,7 @@ use std::net::TcpListener;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
-use tauri::{
-    menu::{Menu, MenuItem},
-    tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
-    AppHandle, Manager,
-};
+use tauri::{AppHandle, Manager};
 use tauri_plugin_dialog::DialogExt;
 use tauri_plugin_shell::{process::CommandChild, ShellExt};
 use tauri_plugin_store::StoreExt;
@@ -342,13 +338,13 @@ fn kill_orphan_backends() {
 }
 
 fn main() {
-    // Shared handle to the spawned sidecar — used so the RunEvent::Exit
-    // hook (and the tray "Quit" menu) can kill the child cleanly on app
-    // quit. Two paths to cleanup because in practice neither alone is
+    // Shared handle to the spawned sidecar — used so both the window-close
+    // handler and the RunEvent::Exit hook can kill the child cleanly on
+    // app quit. Two paths to cleanup because in practice neither alone is
     // reliable — see nuke_sidecar() docs.
     let sidecar_child: Arc<Mutex<Option<CommandChild>>> = Arc::new(Mutex::new(None));
     let sidecar_child_for_exit = sidecar_child.clone();
-    let sidecar_child_for_tray = sidecar_child.clone();
+    let sidecar_child_for_close = sidecar_child.clone();
 
     // The updater plugin's default endpoint (in tauri.conf.json) is the
     // stable URL. The frontend reads the chosen channel via
@@ -469,17 +465,19 @@ fn main() {
             window.navigate(backend_url.parse().expect("bad backend URL"))?;
             window.show()?;
 
-            setup_tray(app.handle().clone(), sidecar_child_for_tray.clone())?;
-
             Ok(())
         })
         .on_window_event(move |window, event| {
-            // Intercept close — hide to the tray instead of quitting, so the
-            // backend keeps running in the background until the user really
-            // chooses Quit from the tray menu.
-            if let tauri::WindowEvent::CloseRequested { api, .. } = event {
-                let _ = window.hide();
-                api.prevent_close();
+            // Closing the window = full quit. Kill the sidecar synchronously
+            // here BEFORE we let Tauri tear down, so the user doesn't get
+            // a lingering `trace-backend.exe` in the background after they
+            // hit X. The RunEvent::Exit hook below also runs nuke_sidecar()
+            // as a fallback in case the close path takes a different route
+            // (tauri shutdown, OS signal, etc.) — see task #67 docs.
+            if let tauri::WindowEvent::CloseRequested { .. } = event {
+                let child = sidecar_child_for_close.lock().unwrap().take();
+                nuke_sidecar(child);
+                window.app_handle().exit(0);
             }
         })
         .build(tauri::generate_context!())
@@ -493,55 +491,3 @@ fn main() {
         });
 }
 
-fn setup_tray(
-    app: AppHandle,
-    sidecar_child: Arc<Mutex<Option<CommandChild>>>,
-) -> tauri::Result<()> {
-    let show = MenuItem::with_id(&app, "show", "Show Trace.", true, None::<&str>)?;
-    let quit = MenuItem::with_id(&app, "quit", "Quit", true, None::<&str>)?;
-    let menu = Menu::with_items(&app, &[&show, &quit])?;
-
-    TrayIconBuilder::new()
-        .icon(app.default_window_icon().unwrap().clone())
-        .menu(&menu)
-        .show_menu_on_left_click(false)
-        .on_tray_icon_event(|tray, event| {
-            if let TrayIconEvent::Click {
-                button: MouseButton::Left,
-                button_state: MouseButtonState::Up,
-                ..
-            } = event
-            {
-                let app = tray.app_handle();
-                if let Some(window) = app.get_webview_window("main") {
-                    if window.is_visible().unwrap_or(false) {
-                        let _ = window.hide();
-                    } else {
-                        let _ = window.show();
-                        let _ = window.set_focus();
-                    }
-                }
-            }
-        })
-        .on_menu_event(move |app, event| match event.id.as_ref() {
-            "show" => {
-                if let Some(window) = app.get_webview_window("main") {
-                    let _ = window.show();
-                    let _ = window.set_focus();
-                }
-            }
-            "quit" => {
-                // Kill the sidecar synchronously here, BEFORE app.exit(0).
-                // The RunEvent::Exit hook also runs nuke_sidecar() as a
-                // fallback, but doing it here means we don't depend on
-                // Tauri's exit ordering — see task #67.
-                let child = sidecar_child.lock().unwrap().take();
-                nuke_sidecar(child);
-                app.exit(0);
-            }
-            _ => {}
-        })
-        .build(&app)?;
-
-    Ok(())
-}
