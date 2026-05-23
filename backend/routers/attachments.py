@@ -1,6 +1,6 @@
 import os
 import uuid
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
 
 import models
@@ -25,6 +25,7 @@ def _ensure_upload_dir():
 )
 async def upload_file(
     thread_id: int,
+    background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
 ):
@@ -68,7 +69,65 @@ async def upload_file(
               thread_id=thread_id, action='created', field='file',
               new_value=attachment.original_name or attachment.name)
 
+    # Queue background upload to the configured remote backend. The local
+    # write has already succeeded — this is best-effort sync that won't block
+    # the response. If no cloud is configured the task is a no-op.
+    background_tasks.add_task(
+        _upload_to_remote,
+        attachment_id=attachment.id,
+        local_path=dest,
+        stored_name=stored_name,
+    )
+
     return attachment
+
+
+def _upload_to_remote(attachment_id: int, local_path: str, stored_name: str) -> None:
+    """
+    Upload a locally-saved attachment to the configured cloud backend.
+
+    Runs AFTER the HTTP response has been sent — failures are logged but
+    never affect the user. Creates its own DB session because the request's
+    session was closed when FastAPI sent the response (P2 in the storage
+    prompt's pitfalls list).
+    """
+    from database import SessionLocal
+    from storage_backend import get_storage_backend
+    db = SessionLocal()
+    try:
+        backend = get_storage_backend(db)
+        if backend.provider_name == "local":
+            return  # No cloud configured — local-only is the desired state.
+        with open(local_path, "rb") as f:
+            data = f.read()
+        remote_path = backend.upload_bytes(data, f"attachments/{stored_name}")
+        att = (
+            db.query(models.Attachment)
+            .filter(models.Attachment.id == attachment_id)
+            .first()
+        )
+        if att:
+            att.remote_path = remote_path
+            att.sync_status = "synced"
+            db.commit()
+    except Exception as e:
+        import logging
+        logging.getLogger("trace.storage").warning(
+            "Remote upload failed for attachment %d: %s", attachment_id, e
+        )
+        try:
+            att = (
+                db.query(models.Attachment)
+                .filter(models.Attachment.id == attachment_id)
+                .first()
+            )
+            if att:
+                att.sync_status = "failed"
+                db.commit()
+        except Exception:
+            pass
+    finally:
+        db.close()
 
 
 @router.post(

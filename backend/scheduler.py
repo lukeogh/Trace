@@ -95,6 +95,31 @@ def _refresh_area(db, area: models.Area, provider) -> bool:
     return True
 
 
+def run_nightly_backup():
+    """Cron entry point — nightly encrypted DB backup to the configured
+    remote backend. Skips cleanly if no cloud is connected or the user has
+    disabled the backup toggle in Settings → Storage."""
+    from database import SessionLocal
+    from storage_backup import run_backup
+    from storage_backend import get_storage_config_for_api
+
+    db = SessionLocal()
+    try:
+        config = get_storage_config_for_api(db)
+        if not config.get("is_connected"):
+            log.info("Skipping backup: no remote backend connected.")
+            return
+        if not config.get("backup_enabled", True):
+            log.info("Skipping backup: disabled in settings.")
+            return
+        result = run_backup(db)
+        log.info("Nightly backup: %s", result.get("status"))
+    except Exception as e:
+        log.warning("Nightly backup failed: %s", e)
+    finally:
+        db.close()
+
+
 def refresh_all_overviews():
     """Cron entry point — iterate non-stable areas and refresh via the
     configured AI provider. Skips silently if the provider isn't ready
@@ -140,8 +165,15 @@ def start():
         replace_existing=True,
         misfire_grace_time=3600,  # 1 hour late is still OK
     )
+    _scheduler.add_job(
+        run_nightly_backup,
+        CronTrigger(hour=2, minute=0, timezone="Europe/Brussels"),
+        id="nightly-db-backup",
+        replace_existing=True,
+        misfire_grace_time=3600,
+    )
     _scheduler.start()
-    log.info("Lunchtime scheduler started: 12:00 Europe/Brussels daily.")
+    log.info("Scheduler started: 12:00 Overview refresh + 02:00 backup, Europe/Brussels.")
 
 
 def shutdown():
