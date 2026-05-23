@@ -18,6 +18,7 @@ import {
   getAIConfig, getAIPresets, saveAIConfig, testAIConfig,
 } from '../api/settings'
 import { useAppVersion } from '../hooks/useAppVersion'
+import { notifyAIConfigChanged } from '../hooks/useAIConfigured'
 
 /**
  * System Settings — a dedicated page (was a popover; promoted because
@@ -359,6 +360,10 @@ function AIWizard({ currentConfig, onCancel, onSaved }) {
     setError('')
     try {
       await saveAIConfig(buildConfig())
+      // Tell every open page that the AI engine is now (re)configured —
+      // Smart Generate flips off its empty state, Suggest Summary + Weekly
+      // Roundup buttons un-disable themselves, all without a reload.
+      notifyAIConfigChanged()
       onSaved()
     } catch (e) {
       setError(e.message)

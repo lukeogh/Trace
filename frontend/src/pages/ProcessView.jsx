@@ -3,6 +3,8 @@ import { BrainCircuit, Check, X, RotateCcw, Upload, FileText, Mail, Calendar } f
 import { areasApi, generateApi, entriesApi, ingestApi } from '../api/client'
 import { useToast } from '../components/Toast'
 import Spinner from '../components/Spinner'
+import AIRequiredCard from '../components/AIRequiredCard'
+import { useAIConfigured } from '../hooks/useAIConfigured'
 import { ENTITY, entityFor } from '../utils/entityIcons'
 
 const STATUS_MESSAGES = ['Reading…', 'Identifying tasks…', 'Structuring items…', 'Preparing review…']
@@ -383,6 +385,10 @@ function ItemCard({ item: initialItem, areaId, areaThreads, selectedAreaName, on
 // ─── ProcessView ──────────────────────────────────────────────────────────────
 
 export default function ProcessView() {
+  // AI gate — checked first so the rest of the page doesn't even mount its
+  // ingest/extract machinery when the engine isn't set up.
+  const { configured: aiConfigured, loading: aiLoading } = useAIConfigured()
+
   // Initialise from localStorage so navigation away doesn't lose work
   const [selectedAreaId, setSelectedAreaId] = useState(() => loadSaved()?.selectedAreaId ?? null)
   const [inputText, setInputText]           = useState(() => loadSaved()?.inputText ?? '')
@@ -563,6 +569,18 @@ export default function ProcessView() {
         </div>
       </header>
 
+      {/* AI gate — show the empty state instead of the form when no engine
+          is configured. Don't flash the form while we're still loading the
+          status — wait until we know one way or the other. */}
+      {aiLoading ? (
+        <div className="max-w-3xl mx-auto px-8 py-12 flex justify-center">
+          <Spinner />
+        </div>
+      ) : !aiConfigured ? (
+        <div className="px-8 py-6">
+          <AIRequiredCard feature="Smart Generate" />
+        </div>
+      ) : (
       <div className="max-w-3xl mx-auto px-8 py-6 space-y-6">
         {/* Intro — short tagline + three-step "how it works" */}
         <div className="space-y-4">
@@ -826,6 +844,7 @@ export default function ProcessView() {
           </div>
         )}
       </div>
+      )}
     </div>
   )
 }

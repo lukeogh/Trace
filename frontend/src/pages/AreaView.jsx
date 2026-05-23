@@ -8,6 +8,7 @@ import ThreadCard from '../components/ThreadCard'
 import Modal from '../components/Modal'
 import IconPicker, { AreaIcon } from '../components/IconPicker'
 import { useToast } from '../components/Toast'
+import { useAIConfigured } from '../hooks/useAIConfigured'
 import { AREA_STATUSES, THREAD_STATUSES } from '../utils/status'
 import { SECTION_ICONS } from '../utils/entityIcons'
 
@@ -15,6 +16,7 @@ export default function AreaView() {
   const { areaId } = useParams()
   const navigate = useNavigate()
   const toast = useToast()
+  const { configured: aiConfigured } = useAIConfigured()
 
   const [area, setArea] = useState(null)
   const [threads, setThreads] = useState([])
@@ -254,9 +256,13 @@ export default function AreaView() {
             <div className="flex items-center gap-3">
               <button
                 onClick={suggestSummary}
-                disabled={suggestingSummary}
-                title="Regenerate the Overview from recent activity"
-                className="flex items-center gap-1.5 text-xs text-paper-500 dark:text-paper-600 hover:text-paper-700 dark:hover:text-paper-200 disabled:opacity-50 transition-colors"
+                disabled={suggestingSummary || aiConfigured === false}
+                title={
+                  aiConfigured === false
+                    ? 'Set up an AI engine in Settings to use this'
+                    : 'Regenerate the Overview from recent activity'
+                }
+                className="flex items-center gap-1.5 text-xs text-paper-500 dark:text-paper-600 hover:text-paper-700 dark:hover:text-paper-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 <Sparkles size={12} />
                 {suggestingSummary ? 'Updating…' : 'Update'}

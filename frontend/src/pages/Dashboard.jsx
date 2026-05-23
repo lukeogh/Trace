@@ -8,6 +8,7 @@ import WeeklyRoundupModal from '../components/WeeklyRoundupModal'
 import { AreaIcon } from '../components/IconPicker'
 import { getAreaStatus } from '../utils/status'
 import { useDisplayName } from '../hooks/useDisplayName'
+import { useAIConfigured } from '../hooks/useAIConfigured'
 
 const INACTIVITY_THRESHOLD_DAYS = 7
 
@@ -48,6 +49,7 @@ export default function Dashboard() {
   const [error, setError]       = useState(null)
 
   const { displayName } = useDisplayName()
+  const { configured: aiConfigured } = useAIConfigured()
 
   const [roundupOpen, setRoundupOpen] = useState(false)
 
@@ -123,10 +125,13 @@ export default function Dashboard() {
             <ViewSegmentedControl viewMode={viewMode} onChange={handleViewMode} />
             <button
               onClick={() => setRoundupOpen(true)}
+              disabled={aiConfigured === false}
+              title={aiConfigured === false ? 'Set up an AI engine in Settings to use this' : undefined}
               className="
                 flex items-center gap-1.5 px-3 py-1.5 rounded-md
                 bg-paper-200 dark:bg-pitch-700 text-paper-700 dark:text-paper-200
                 hover:bg-paper-300 dark:hover:bg-pitch-600 transition-colors
+                disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-paper-200 dark:disabled:hover:bg-pitch-700
               "
             >
               <Sparkles size={13} />
