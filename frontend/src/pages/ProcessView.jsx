@@ -116,7 +116,7 @@ function Step({ n, label, hint }) {
       bg-white/60 dark:bg-pitch-700/60
       border border-paper-200 dark:border-pitch-500
     ">
-      <span className="font-mono text-xs text-accent-500 dark:text-accent-400 mt-0.5 tabular-nums">
+      <span className="font-mono text-xs text-paper-700 dark:text-paper-200 mt-0.5 tabular-nums">
         {n}
       </span>
       <div className="min-w-0">
@@ -249,7 +249,7 @@ function ItemCard({ item: initialItem, areaId, areaThreads, selectedAreaName, on
         className={`
           bg-white dark:bg-pitch-700 border border-paper-300 dark:border-pitch-500 rounded-xl overflow-hidden
           border-l-[3px] ${borderLeft}
-          ${flash ? 'bg-accent-500/10 dark:bg-accent-500/10' : ''}
+          ${flash ? 'bg-paper-200 dark:bg-pitch-700 dark:bg-paper-200 dark:bg-pitch-700' : ''}
           transition-colors duration-300
         `}
       >
@@ -279,7 +279,7 @@ function ItemCard({ item: initialItem, areaId, areaThreads, selectedAreaName, on
         {/* Action row */}
         {status === 'approved' ? (
           <div className="px-4 py-3 border-t border-paper-100 dark:border-pitch-700">
-            <span className="text-xs font-display uppercase tracking-wide text-accent-600 dark:text-accent-400">
+            <span className="text-xs font-display uppercase tracking-wide text-paper-700 dark:text-paper-200">
               Added ✓
             </span>
           </div>
@@ -315,7 +315,7 @@ function ItemCard({ item: initialItem, areaId, areaThreads, selectedAreaName, on
                 disabled={!rejectionReason.trim() || status === 'refining'}
                 className="
                   flex items-center gap-1.5 px-3 py-1.5 text-xs font-display uppercase tracking-wide rounded-md
-                  bg-accent-500/10 text-accent-600 dark:text-accent-400 hover:bg-accent-500/20
+                  bg-paper-200 dark:bg-pitch-700 text-paper-700 dark:text-paper-200 hover:bg-paper-300 dark:hover:bg-pitch-600
                   disabled:opacity-50 transition-colors
                 "
               >
@@ -351,7 +351,7 @@ function ItemCard({ item: initialItem, areaId, areaThreads, selectedAreaName, on
                 title="Approve"
                 className="
                   flex items-center justify-center
-                  bg-accent-500/10 text-accent-600 dark:text-accent-400 hover:bg-accent-500/20
+                  bg-paper-200 dark:bg-pitch-700 text-paper-700 dark:text-paper-200 hover:bg-paper-300 dark:hover:bg-pitch-600
                   rounded-md p-2 transition-colors disabled:opacity-50
                 "
               >
@@ -556,7 +556,7 @@ export default function ProcessView() {
         border-b border-paper-200 dark:border-pitch-700
       ">
         <div className="max-w-3xl mx-auto flex items-center gap-3 pr-14">
-          <BrainCircuit size={28} className="text-accent-500 dark:text-accent-400 flex-shrink-0" />
+          <BrainCircuit size={28} className="text-paper-700 dark:text-paper-200 flex-shrink-0" />
           <h1 className="font-display font-bold text-2xl uppercase tracking-widest text-pitch-800 dark:text-white">
             Smart Generate
           </h1>
@@ -602,7 +602,7 @@ export default function ProcessView() {
               className="
                 flex items-center gap-1.5 text-xs font-display uppercase tracking-wide transition-colors
                 text-paper-500 dark:text-paper-600
-                hover:text-accent-500 dark:hover:text-accent-400
+                hover:text-paper-700 dark:hover:text-paper-200
                 disabled:opacity-50
               "
             >
@@ -680,11 +680,11 @@ export default function ProcessView() {
           {dragActive && (
             <div className="
               absolute inset-0 z-20 rounded-xl flex flex-col items-center justify-center gap-2
-              bg-accent-500/10 dark:bg-accent-500/15 backdrop-blur-sm pointer-events-none
+              bg-paper-200 dark:bg-pitch-700 dark:bg-paper-300 dark:bg-pitch-600 backdrop-blur-sm pointer-events-none
               border-2 border-dashed border-accent-500
             ">
               <Upload size={28} className="text-accent-500" />
-              <p className="font-display uppercase tracking-widest text-sm text-accent-600 dark:text-accent-400">
+              <p className="font-display uppercase tracking-widest text-sm text-paper-700 dark:text-paper-200">
                 Drop to parse
               </p>
               <p className="font-mono text-xs text-paper-600 dark:text-paper-500">
@@ -757,7 +757,7 @@ export default function ProcessView() {
             px-6 py-5 flex items-center justify-between gap-4
           ">
             <div>
-              <p className="font-display uppercase tracking-widest text-xs text-accent-600 dark:text-accent-400 mb-0.5">
+              <p className="font-display uppercase tracking-widest text-xs text-paper-700 dark:text-paper-200 mb-0.5">
                 All items reviewed
               </p>
               <p className="text-xs text-paper-500 dark:text-paper-600">

@@ -125,8 +125,8 @@ export default function Dashboard() {
               onClick={() => setRoundupOpen(true)}
               className="
                 flex items-center gap-1.5 px-3 py-1.5 rounded-md
-                bg-accent-500/10 text-accent-600 dark:text-accent-400
-                hover:bg-accent-500/15 transition-colors
+                bg-paper-200 dark:bg-pitch-700 text-paper-700 dark:text-paper-200
+                hover:bg-paper-300 dark:hover:bg-pitch-600 transition-colors
               "
             >
               <Sparkles size={13} />
@@ -145,7 +145,7 @@ export default function Dashboard() {
               className="
                 inline-flex items-center gap-1 text-xs font-mono
                 text-paper-500 dark:text-paper-600
-                hover:text-accent-500 dark:hover:text-accent-400
+                hover:text-paper-700 dark:hover:text-paper-200
                 transition-colors
               "
             >
@@ -275,7 +275,7 @@ function AreaCard({ area }) {
             <span className="text-xs font-mono text-paper-400 dark:text-paper-700">{relativeTime}</span>
             <ArrowRight
               size={13}
-              className="text-paper-400 dark:text-paper-700 group-hover:text-accent-500 group-hover:translate-x-0.5 transition-all"
+              className="text-paper-400 dark:text-paper-700 group-hover:text-paper-700 group-hover:translate-x-0.5 transition-all"
             />
           </div>
         </div>
@@ -314,7 +314,7 @@ function ErrorState({ message, onRetry }) {
 const EVENT_CONFIG = {
   thread_created: {
     Icon: Plus,
-    className: 'bg-accent-500/10 text-accent-500 dark:text-accent-400',
+    className: 'bg-paper-200 dark:bg-pitch-700 text-paper-700 dark:text-paper-200',
   },
   entry_added: {
     Icon: PenLine,
@@ -563,7 +563,7 @@ function RecentActivity({ viewMode }) {
                 className="
                   p-2 rounded-md text-xs font-display uppercase tracking-wide transition-colors duration-150
                   text-paper-500 dark:text-paper-600
-                  hover:text-accent-500 dark:hover:text-accent-400
+                  hover:text-paper-700 dark:hover:text-paper-200
                   hover:bg-paper-200 dark:hover:bg-pitch-700
                 "
               >

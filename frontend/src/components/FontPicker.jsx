@@ -53,7 +53,7 @@ export default function FontPicker({ font, onChange }) {
                 className={`
                   w-full flex items-center gap-2 px-2 py-2 rounded-md text-left text-sm transition-colors
                   ${active
-                    ? 'bg-accent-500/10 text-accent-600 dark:text-accent-400'
+                    ? 'bg-paper-200 dark:bg-pitch-700 text-paper-700 dark:text-paper-200'
                     : 'text-pitch-500 dark:text-paper-300 hover:bg-paper-200 dark:hover:bg-pitch-700'
                   }
                 `}

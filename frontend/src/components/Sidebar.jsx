@@ -316,7 +316,7 @@ export default function Sidebar({
           title="Drag to resize · double-click to reset"
           className="
             absolute top-0 right-0 h-full w-1.5 -mr-0.5 cursor-col-resize
-            hover:bg-accent-500/40 dark:hover:bg-accent-500/40
+            hover:bg-paper-300 dark:hover:bg-pitch-600
             transition-colors
           "
         />
@@ -336,7 +336,7 @@ function NavLink({ to, icon: Icon, label, active, collapsed }) {
         className={`
           flex items-center justify-center p-2 rounded-md transition-colors
           ${active
-            ? 'bg-accent-500/10 text-accent-600 dark:text-accent-400'
+            ? 'bg-mint-50 dark:bg-mint-900/20 text-mint-700 dark:text-mint-300 ring-1 ring-mint/30'
             : 'text-paper-600 dark:text-paper-500 hover:bg-paper-200 dark:hover:bg-pitch-700 hover:text-pitch-700 dark:hover:text-paper-200'
           }
         `}
@@ -349,10 +349,11 @@ function NavLink({ to, icon: Icon, label, active, collapsed }) {
     <Link
       to={to}
       className={`
-        flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors
+        flex items-center gap-2 pr-3 py-2 rounded-md text-sm font-medium transition-colors
+        border-l-2
         ${active
-          ? 'bg-accent-500/10 text-accent-600 dark:text-accent-400'
-          : 'text-paper-600 dark:text-paper-500 hover:bg-paper-200 dark:hover:bg-pitch-700 hover:text-pitch-700 dark:hover:text-paper-200'
+          ? 'bg-mint-50 dark:bg-mint-900/20 border-mint text-mint-700 dark:text-mint-300 pl-[10px]'
+          : 'border-transparent pl-3 text-paper-600 dark:text-paper-500 hover:bg-paper-200 dark:hover:bg-pitch-700 hover:text-pitch-700 dark:hover:text-paper-200'
         }
       `}
     >
@@ -388,7 +389,7 @@ function SystemSettingsButton({ collapsed, badge, onClick }) {
         <span
           className="
             absolute -top-1 -right-1 w-2 h-2 rounded-full
-            bg-accent-500 ring-2 ring-paper-100 dark:ring-pitch-900
+            bg-mint ring-2 ring-paper-100 dark:ring-pitch-900
           "
           aria-label="Update available"
         />
@@ -429,7 +430,7 @@ function SystemSettingsButton({ collapsed, badge, onClick }) {
         <span className="font-display uppercase tracking-wide text-xs">System</span>
       </span>
       {badge && (
-        <span className="text-[9px] font-mono uppercase tracking-wide text-accent-500 dark:text-accent-400">
+        <span className="text-[9px] font-mono uppercase tracking-wide text-paper-700 dark:text-paper-200">
           Update
         </span>
       )}

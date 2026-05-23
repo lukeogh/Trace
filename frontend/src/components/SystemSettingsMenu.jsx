@@ -127,13 +127,13 @@ export default function SystemSettingsMenu({ isOpen, onClose, updater }) {
         <Section label="Update">
           <div className="
             rounded-md p-2.5
-            bg-gradient-to-br from-accent-500/10 to-accent-500/5
-            border border-accent-500/40
+            bg-mint-50 dark:bg-mint-900/20
+            border border-mint/40
           ">
             <div className="flex items-start gap-2 mb-2">
-              <Zap size={14} className="flex-shrink-0 mt-0.5 text-accent-500" />
+              <Zap size={14} className="flex-shrink-0 mt-0.5 text-mint" />
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-display uppercase tracking-wide text-accent-600 dark:text-accent-400">
+                <p className="text-xs font-display uppercase tracking-wide text-mint-700 dark:text-mint-300">
                   Update available
                 </p>
                 <p className="text-[11px] text-pitch-700 dark:text-paper-300 mt-0.5">
@@ -159,8 +159,8 @@ export default function SystemSettingsMenu({ isOpen, onClose, updater }) {
 
       {updater?.status === 'downloading' && (
         <Section label="Update">
-          <div className="rounded-md p-2.5 bg-accent-500/5 border border-accent-500/40 flex items-center gap-2">
-            <Download size={12} className="text-accent-500 animate-pulse" />
+          <div className="rounded-md p-2.5 bg-mint-50 dark:bg-mint-900/20 border border-mint/40 flex items-center gap-2">
+            <Download size={12} className="text-mint animate-pulse" />
             <p className="text-[11px] text-pitch-700 dark:text-paper-300">
               Downloading update
               {updater.progress?.contentLength

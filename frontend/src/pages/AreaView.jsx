@@ -256,7 +256,7 @@ export default function AreaView() {
                 onClick={suggestSummary}
                 disabled={suggestingSummary}
                 title="Regenerate the Overview from recent activity"
-                className="flex items-center gap-1.5 text-xs text-paper-500 dark:text-paper-600 hover:text-accent-500 dark:hover:text-accent-400 disabled:opacity-50 transition-colors"
+                className="flex items-center gap-1.5 text-xs text-paper-500 dark:text-paper-600 hover:text-paper-700 dark:hover:text-paper-200 disabled:opacity-50 transition-colors"
               >
                 <Sparkles size={12} />
                 {suggestingSummary ? 'Updating…' : 'Update'}
@@ -264,7 +264,7 @@ export default function AreaView() {
               {!editingSummary && (
                 <button
                   onClick={() => setEditingSummary(true)}
-                  className="flex items-center gap-1.5 text-xs text-paper-500 dark:text-paper-600 hover:text-accent-500 transition-colors"
+                  className="flex items-center gap-1.5 text-xs text-paper-500 dark:text-paper-600 hover:text-paper-700 dark:hover:text-paper-200 transition-colors"
                 >
                   <Edit3 size={12} />
                   Edit
@@ -471,7 +471,7 @@ export default function AreaView() {
 // ─── Area audit panel ─────────────────────────────────────────────────────────
 
 const ACTION_BADGE = {
-  created:     'bg-accent-500/10 text-accent-600 dark:text-accent-400',
+  created:     'bg-paper-200 dark:bg-pitch-700 text-paper-700 dark:text-paper-200',
   updated:     'bg-amber-500/10 text-amber-600 dark:text-amber-400',
   deleted:     'bg-red-500/10 text-red-500 dark:text-red-400',
   completed:   'bg-sky-500/10 text-sky-500 dark:text-sky-400',
@@ -626,7 +626,7 @@ function TraceMarkSpinner() {
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       aria-hidden="true"
-      className="text-accent-500 dark:text-accent-400"
+      className="text-paper-700 dark:text-paper-200"
     >
       <path
         d="M 22 50 L 50 50"

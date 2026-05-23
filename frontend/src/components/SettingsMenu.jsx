@@ -86,7 +86,7 @@ export default function SettingsMenu({
           shadow-md ring-2 transition-all
           ${avatar
             ? 'ring-paper-300/80 dark:ring-pitch-500/80'
-            : 'bg-accent-500 text-white ring-paper-300/40 dark:ring-pitch-500/60'
+            : 'bg-paper-300 dark:bg-pitch-600 text-paper-700 dark:text-paper-200 ring-paper-300/40 dark:ring-pitch-500/60'
           }
           ${open ? 'ring-accent-500/60 dark:ring-accent-500/60' : ''}
           hover:ring-accent-500/40
@@ -123,7 +123,7 @@ export default function SettingsMenu({
               <span className="
                 w-12 h-12 rounded-full overflow-hidden flex-shrink-0
                 flex items-center justify-center
-                bg-accent-500 text-white font-display font-semibold text-base
+                bg-paper-300 dark:bg-pitch-600 text-paper-700 dark:text-paper-200 font-display font-semibold text-base
               ">
                 {avatar
                   ? <img src={avatar} alt="" className="w-full h-full object-cover" />

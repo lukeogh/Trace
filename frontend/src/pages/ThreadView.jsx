@@ -496,11 +496,11 @@ export default function ThreadView() {
         <div className="max-w-5xl mx-auto pr-14">
           {/* Breadcrumb */}
           <nav className="flex items-center gap-2 text-xs font-mono text-paper-500 dark:text-paper-600 mb-3">
-            <Link to="/" className="hover:text-accent-500 transition-colors">Dashboard</Link>
+            <Link to="/" className="hover:text-paper-700 dark:hover:text-paper-200 transition-colors">Dashboard</Link>
             <span>/</span>
             {area && (
               <>
-                <Link to={`/area/${area.id}`} className="hover:text-accent-500 transition-colors uppercase">
+                <Link to={`/area/${area.id}`} className="hover:text-paper-700 dark:hover:text-paper-200 transition-colors uppercase">
                   {area.name}
                 </Link>
                 <span>/</span>
@@ -536,7 +536,7 @@ export default function ThreadView() {
                   <button
                     onClick={() => setEditingTitle(true)}
                     title="Edit title"
-                    className="p-1 opacity-40 hover:opacity-100 text-paper-500 dark:text-paper-600 hover:text-accent-500 dark:hover:text-accent-400 transition-all"
+                    className="p-1 opacity-40 hover:opacity-100 text-paper-500 dark:text-paper-600 hover:text-paper-700 dark:hover:text-paper-200 transition-all"
                   >
                     <Edit3 size={14} />
                   </button>
@@ -607,7 +607,7 @@ export default function ThreadView() {
                     <span className="italic text-paper-400 dark:text-paper-700">Add a description…</span>
                   )}
                 </p>
-                <Edit3 size={12} className="text-paper-500 dark:text-paper-600 opacity-40 group-hover:opacity-100 hover:text-accent-500 dark:hover:text-accent-400 flex-shrink-0 mt-0.5 transition-opacity" />
+                <Edit3 size={12} className="text-paper-500 dark:text-paper-600 opacity-40 group-hover:opacity-100 hover:text-paper-700 dark:hover:text-paper-200 flex-shrink-0 mt-0.5 transition-opacity" />
               </div>
             )}
           </div>
@@ -829,7 +829,7 @@ export default function ThreadView() {
                 <button
                   onClick={() => fileInputRef.current?.click()}
                   disabled={uploadingFile}
-                  className="flex items-center gap-1 text-xs text-accent-600 dark:text-accent-400 hover:text-accent-500 transition-colors disabled:opacity-50"
+                  className="flex items-center gap-1 text-xs text-paper-700 dark:text-paper-200 hover:text-paper-700 dark:hover:text-paper-200 transition-colors disabled:opacity-50"
                 >
                   <Upload size={12} />
                   {uploadingFile ? 'Uploading…' : 'Upload'}
@@ -854,7 +854,7 @@ export default function ThreadView() {
                   w-full flex flex-col items-center justify-center gap-1.5 py-4 px-3 rounded-lg
                   border border-dashed border-paper-300 dark:border-pitch-500
                   text-paper-500 dark:text-paper-600
-                  hover:border-accent-500/60 hover:text-accent-600 dark:hover:text-accent-400
+                  hover:border-paper-400 dark:hover:border-paper-700
                   transition-colors
                 "
               >
@@ -868,11 +868,11 @@ export default function ThreadView() {
               {filesDragActive && (
                 <div className="
                   absolute inset-0 z-10 rounded-xl flex flex-col items-center justify-center gap-1.5
-                  bg-accent-500/10 dark:bg-accent-500/15 backdrop-blur-sm pointer-events-none
+                  bg-paper-200 dark:bg-pitch-700 dark:bg-paper-300 dark:bg-pitch-600 backdrop-blur-sm pointer-events-none
                   border-2 border-dashed border-accent-500
                 ">
                   <Upload size={20} className="text-accent-500" />
-                  <p className="font-display uppercase tracking-widest text-[10px] text-accent-600 dark:text-accent-400">
+                  <p className="font-display uppercase tracking-widest text-[10px] text-paper-700 dark:text-paper-200">
                     Drop to upload
                   </p>
                 </div>
@@ -888,7 +888,7 @@ export default function ThreadView() {
                 </h3>
                 <button
                   onClick={() => setLinkModalOpen(true)}
-                  className="flex items-center gap-1 text-xs text-accent-600 dark:text-accent-400 hover:text-accent-500 transition-colors"
+                  className="flex items-center gap-1 text-xs text-paper-700 dark:text-paper-200 hover:text-paper-700 dark:hover:text-paper-200 transition-colors"
                 >
                   <Plus size={12} />
                   Add
@@ -963,7 +963,7 @@ export default function ThreadView() {
                 </h3>
                 <button
                   onClick={() => setLinkThreadOpen(true)}
-                  className="flex items-center gap-1 text-xs text-accent-600 dark:text-accent-400 hover:text-accent-500 transition-colors"
+                  className="flex items-center gap-1 text-xs text-paper-700 dark:text-paper-200 hover:text-paper-700 dark:hover:text-paper-200 transition-colors"
                 >
                   <Plus size={12} />
                   Add
@@ -1184,7 +1184,7 @@ function ThreadLinksList({ outgoing, incoming, onRemove }) {
               </div>
               <Link
                 to={`/thread/${row.thread_id}`}
-                className="text-pitch-500 dark:text-paper-300 hover:text-accent-500 dark:hover:text-accent-400 transition-colors block truncate"
+                className="text-pitch-500 dark:text-paper-300 hover:text-paper-700 dark:hover:text-paper-200 transition-colors block truncate"
               >
                 {row.thread_title}
               </Link>
@@ -1300,7 +1300,7 @@ function EntryBlock({ entry, editing, draft, onEditStart, onDraftChange, onSave,
                 <Ban size={10} /> Blocked
               </span>
             )}
-            <span className="text-xs font-mono font-medium text-accent-600 dark:text-accent-400">
+            <span className="text-xs font-mono font-medium text-paper-700 dark:text-paper-200">
               {format(date, 'dd MMM yyyy')}
             </span>
             <span className="text-xs font-mono text-paper-500 dark:text-paper-600">
@@ -1313,7 +1313,7 @@ function EntryBlock({ entry, editing, draft, onEditStart, onDraftChange, onSave,
           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
             <button
               onClick={isMeeting ? () => setEditingMeeting(true) : onEditStart}
-              className="p-1 rounded text-paper-400 dark:text-paper-700 hover:text-accent-500 hover:bg-accent-50 dark:hover:bg-accent-900/20 transition-colors"
+              className="p-1 rounded text-paper-400 dark:text-paper-700 hover:text-paper-700 dark:hover:text-paper-200 hover:bg-paper-200 dark:hover:bg-pitch-700 transition-colors"
             >
               <Edit3 size={12} />
             </button>
@@ -1433,7 +1433,7 @@ function FileItem({ file, onDelete }) {
           ? { target: '_blank', rel: 'noopener noreferrer' }
           : { download: file.original_name })}
         title={previewable ? 'Open in new tab' : 'Download and open in default app'}
-        className="flex items-center gap-2 min-w-0 text-xs text-pitch-500 dark:text-paper-400 hover:text-accent-500 transition-colors"
+        className="flex items-center gap-2 min-w-0 text-xs text-pitch-500 dark:text-paper-400 hover:text-paper-700 dark:hover:text-paper-200 transition-colors"
       >
         <FileText size={12} className="flex-shrink-0 text-paper-500 dark:text-paper-600" />
         <span className="truncate">{file.name}</span>
@@ -1462,7 +1462,7 @@ function LinkItem({ link, onDelete }) {
         href={link.url}
         target="_blank"
         rel="noopener noreferrer"
-        className="flex items-center gap-2 min-w-0 text-xs text-pitch-500 dark:text-paper-400 hover:text-accent-500 transition-colors"
+        className="flex items-center gap-2 min-w-0 text-xs text-pitch-500 dark:text-paper-400 hover:text-paper-700 dark:hover:text-paper-200 transition-colors"
       >
         <Link2 size={12} className="flex-shrink-0 text-paper-500 dark:text-paper-600" />
         <span className="truncate">{link.name}</span>
@@ -1642,7 +1642,7 @@ function TodoNotes({ initial, onSave }) {
         {open ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
         Notes
         {!open && hasContent && (
-          <span className="ml-1 px-1 rounded bg-accent-500/10 text-accent-600 dark:text-accent-400 font-mono text-[9px]">
+          <span className="ml-1 px-1 rounded bg-paper-200 dark:bg-pitch-700 text-paper-700 dark:text-paper-200 font-mono text-[9px]">
             {value.trim().length}
           </span>
         )}

@@ -25,21 +25,21 @@ export default function UpdateToast({ updater }) {
         pointer-events-auto
         rounded-lg shadow-2xl
         bg-white dark:bg-pitch-700
-        border border-accent-500/40
+        border border-mint/40
         animate-slide-in
       "
       role="status"
       aria-live="polite"
     >
-      {/* Subtle accent strip at the top — pulls the eye gently without
-          full-saturation alarm. */}
-      <div className="h-0.5 bg-gradient-to-r from-accent-500/40 via-accent-500 to-accent-500/40" />
+      {/* Mint strip — "live state" signature. Indigo is reserved for the
+          action button below; the chrome around it stays calm. */}
+      <div className="h-0.5 bg-gradient-to-r from-mint/40 via-mint to-mint/40" />
 
       <div className="p-3.5">
         <div className="flex items-start gap-2.5 mb-3">
-          <Zap size={15} className="flex-shrink-0 mt-0.5 text-accent-500" />
+          <Zap size={15} className="flex-shrink-0 mt-0.5 text-mint" />
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-display uppercase tracking-widest text-accent-600 dark:text-accent-400">
+            <p className="text-xs font-display uppercase tracking-widest text-mint-700 dark:text-mint-300">
               Update available
             </p>
             <p className="text-sm text-pitch-700 dark:text-paper-200 mt-1">

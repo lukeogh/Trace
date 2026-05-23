@@ -13,8 +13,8 @@ export const ENTITY = {
   entry: {
     label: 'Entry',
     Icon: PenLine,
-    tint: 'text-accent-500 dark:text-accent-400',
-    badge: 'bg-accent-500/10 text-accent-600 dark:text-accent-400',
+    tint: 'text-paper-700 dark:text-paper-200',
+    badge: 'bg-paper-200 dark:bg-pitch-700 text-paper-700 dark:text-paper-200',
     borderLeft: 'border-l-accent-500',
   },
   todo: {
