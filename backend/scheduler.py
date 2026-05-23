@@ -2,15 +2,14 @@
 Lunchtime Overview refresher.
 
 Runs daily at 12:00 Europe/Brussels. For every area that's NOT 'stable',
-calls the same LLM summary logic as the Suggest button, then writes the
-result directly to area.summary (audit-logged as a system update).
+asks the configured AI provider to rewrite area.summary, then writes the
+result (audit-logged as a system update).
 
 Skips areas marked 'stable' to avoid wasting tokens on quiet domains.
-Skips silently if ANTHROPIC_API_KEY is missing or the call fails.
+Skips silently if the AI provider isn't configured or the call fails.
 """
 
 from __future__ import annotations
-import os
 import logging
 from datetime import datetime, timezone
 
@@ -51,8 +50,8 @@ def _gather_area_context(db, area: models.Area) -> str:
     return "\n\n".join(blocks) if blocks else "(no threads yet)"
 
 
-def _refresh_area(db, area: models.Area, client) -> bool:
-    """Regenerate area.summary via the LLM. Returns True on success."""
+def _refresh_area(db, area: models.Area, provider) -> bool:
+    """Regenerate area.summary via the AI provider. Returns True on success."""
     context = _gather_area_context(db, area)
 
     system = (
@@ -70,17 +69,16 @@ def _refresh_area(db, area: models.Area, client) -> bool:
     )
 
     try:
-        message = client.messages.create(
-            model="claude-sonnet-4-6",
-            max_tokens=300,
+        text = provider.complete(
             system=system,
             messages=[{"role": "user", "content": user_msg}],
+            max_tokens=300,
         )
-        text = message.content[0].text.strip()
     except Exception as e:
         log.warning("Failed to refresh area %s: %s", area.name, e)
         return False
 
+    text = (text or "").strip()
     if not text or text == (area.summary or ""):
         return False
 
@@ -98,21 +96,22 @@ def _refresh_area(db, area: models.Area, client) -> bool:
 
 
 def refresh_all_overviews():
-    """Cron entry point — iterate non-stable areas and refresh."""
-    api_key = os.environ.get("ANTHROPIC_API_KEY")
-    if not api_key:
-        log.info("Skipping Overview refresh: ANTHROPIC_API_KEY not set.")
-        return
-    try:
-        from anthropic import Anthropic
-        client = Anthropic(api_key=api_key)
-    except Exception as e:
-        log.warning("Anthropic SDK unavailable: %s", e)
-        return
+    """Cron entry point — iterate non-stable areas and refresh via the
+    configured AI provider. Skips silently if the provider isn't ready
+    (e.g. user hasn't configured one in Settings → AI Engine)."""
+    from ai_provider import get_provider
 
     db = SessionLocal()
     refreshed = 0
     try:
+        provider = get_provider(db)
+        # Quick sanity-check before iterating areas — saves N failed calls
+        # if the provider is unconfigured or unreachable.
+        ok, msg = provider.test()
+        if not ok:
+            log.info("Skipping Overview refresh: %s", msg)
+            return
+
         areas = (
             db.query(models.Area)
             .filter(models.Area.status != "stable")
@@ -121,7 +120,7 @@ def refresh_all_overviews():
         )
         log.info("Lunchtime refresh: %d non-stable areas to consider", len(areas))
         for area in areas:
-            if _refresh_area(db, area, client):
+            if _refresh_area(db, area, provider):
                 refreshed += 1
     finally:
         db.close()
