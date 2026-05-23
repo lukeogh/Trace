@@ -111,12 +111,18 @@ jobs:
       - name: Build backend sidecar
         run: python scripts/build-backend.py
 
+      # Beta builds NSIS only — MSI's version validator rejects the
+      # `+<sha>` build metadata we append to the beta version string, and
+      # we never publish the MSI in beta releases anyway (the Collect
+      # bundles step below only picks up *setup.exe / .sig). Saves ~30s
+      # of build time too. Stable releases (desktop-release.yml) still
+      # build all targets because the tagged versions are clean SemVer.
       - name: Build Tauri desktop app (signed)
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
           TRACE_UPDATER_TOKEN: ${{ secrets.TRACE_UPDATER_TOKEN }}
-        run: tauri build
+        run: tauri build --bundles nsis
 
       # ── Collect bundles + sigs ──────────────────────────────────────────
       - name: Collect bundles
