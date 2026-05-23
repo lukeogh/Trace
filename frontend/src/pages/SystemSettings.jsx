@@ -4,6 +4,7 @@ import {
   Settings as SettingsIcon, ArrowLeft, Cpu, FolderOpen, RefreshCw,
   AlertCircle, Download, Zap, ChevronRight, ChevronLeft,
   CheckCircle2, XCircle, Loader2, ExternalLink,
+  Database, CloudOff,
 } from 'lucide-react'
 import {
   isTauri,
@@ -15,6 +16,8 @@ import {
 import {
   getAIConfig, getAIPresets, saveAIConfig, testAIConfig,
 } from '../api/settings'
+import { getStorageConfig } from '../api/storage'
+import StorageSetupModal from '../components/StorageSetupModal'
 import { useAppVersion } from '../hooks/useAppVersion'
 import { notifyAIConfigChanged } from '../hooks/useAIConfigured'
 
@@ -63,8 +66,8 @@ export default function SystemSettings({ updater }) {
 
       <main className="max-w-3xl mx-auto px-8 py-8 space-y-6">
         <AISection />
+        <StorageSection />
         {isTauri() && <UpdateSection updater={updater} />}
-        {isTauri() && <DataStorageSection />}
         <AboutSection />
       </main>
     </div>
@@ -731,20 +734,29 @@ function UpdateSection({ updater }) {
   )
 }
 
-// ─── Data storage ─────────────────────────────────────────────────────────────
+// ─── Storage ──────────────────────────────────────────────────────────────────
+// Combined card covering both the local data path (Tauri only) and the cloud
+// sync row (everyone). Replaces the older Tauri-only DataStorageSection — the
+// rows share a card so the user's mental model of "where my data lives" is
+// one place to look, not two.
 
-function DataStorageSection() {
+function StorageSection() {
+  // Local data path state
   const [dataDir, setDataDir] = useState(null)
   const [migrating, setMigrating] = useState(false)
   const [error, setError] = useState('')
   const [restartPending, setRestartPending] = useState(false)
 
+  // Cloud sync state
+  const [storageConfig, setStorageConfig] = useState(null)
+  const [showStorageModal, setShowStorageModal] = useState(false)
+
   useEffect(() => {
-    if (!isTauri()) return
-    getDataDir().then(setDataDir)
+    if (isTauri()) getDataDir().then(setDataDir)
+    getStorageConfig().then(setStorageConfig).catch(() => setStorageConfig(null))
   }, [])
 
-  const handleChange = async () => {
+  const handleChangeDataDir = async () => {
     setError('')
     try {
       const chosen = await pickDataDir()
@@ -760,69 +772,152 @@ function DataStorageSection() {
     }
   }
 
-  return (
-    <Card>
-      <CardHeader
-        icon={FolderOpen}
-        title="Data storage"
-        subtitle="Where your database and uploads live. Changing copies your data — the old folder is not deleted."
-      />
+  const reloadStorage = () => {
+    getStorageConfig().then(setStorageConfig).catch(() => setStorageConfig(null))
+  }
 
-      {restartPending ? (
-        <div className="rounded-lg p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800">
-          <p className="text-sm text-amber-700 dark:text-amber-400 mb-2 leading-snug">
-            Data moved. Trace. needs to restart to use the new location.
-          </p>
+  // Format the cloud-sync row's host hint if the server URL is available —
+  // strips the protocol so "https://cloud.example.com" reads as "cloud.example.com".
+  const displayHost = (() => {
+    if (!storageConfig?.is_connected || !storageConfig?.server_url) return null
+    try {
+      return new URL(storageConfig.server_url).host
+    } catch {
+      return storageConfig.server_url
+    }
+  })()
+
+  return (
+    <>
+      <Card>
+        <CardHeader
+          icon={Database}
+          title="Storage"
+          subtitle="Local data on disk. Encrypted backup and attachments to cloud."
+        />
+
+        {/* Local data path — Tauri only. Browser dev hides this row entirely
+            because Tauri APIs (folder picker, migration) don't work there. */}
+        {isTauri() && (
+          <>
+            <div className="
+              flex items-center gap-3 px-3 py-2.5 rounded-lg
+              bg-paper-100 dark:bg-pitch-800
+              border border-paper-300 dark:border-pitch-500
+            ">
+              <FolderOpen size={13} className="flex-shrink-0 text-paper-500 dark:text-paper-600" />
+              <div className="flex-1 min-w-0">
+                <p
+                  className="text-xs font-mono truncate text-pitch-700 dark:text-paper-300"
+                  title={dataDir || ''}
+                >
+                  {dataDir || '…'}
+                </p>
+                <p className="text-[11px] text-paper-500 dark:text-paper-600 mt-0.5">
+                  Database, settings, attachments
+                </p>
+              </div>
+              <button
+                onClick={handleChangeDataDir}
+                disabled={migrating}
+                className="
+                  flex-shrink-0 px-3 py-1.5 rounded-md text-xs
+                  text-paper-700 dark:text-paper-300
+                  hover:bg-paper-200 dark:hover:bg-pitch-700
+                  disabled:opacity-40 transition-colors
+                  font-display uppercase tracking-wide
+                "
+              >
+                {migrating ? 'Moving…' : 'Change…'}
+              </button>
+            </div>
+
+            {error && (
+              <div className="mt-2 flex items-start gap-1.5">
+                <AlertCircle size={12} className="flex-shrink-0 mt-0.5 text-red-500" />
+                <p className="text-xs text-red-500 leading-snug">{error}</p>
+              </div>
+            )}
+
+            {restartPending && (
+              <div className="mt-2 rounded-lg p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800">
+                <p className="text-sm text-amber-700 dark:text-amber-400 mb-2 leading-snug">
+                  Data moved. Trace needs to restart to use the new location.
+                </p>
+                <button
+                  onClick={relaunch}
+                  className="
+                    w-full flex items-center justify-center gap-1.5
+                    px-3 py-2 rounded-md text-xs
+                    bg-amber-500 hover:bg-amber-600 text-white
+                    font-display uppercase tracking-wide transition-colors
+                  "
+                >
+                  <RefreshCw size={11} />
+                  Restart now
+                </button>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* Cloud sync row — always rendered (browser + Tauri). Gated by
+            is_connected so the same row shows either a connect CTA or a
+            connected provider summary. */}
+        <div className={`
+          flex items-center gap-3 px-3 py-2.5 rounded-lg
+          bg-paper-100 dark:bg-pitch-800
+          border border-paper-300 dark:border-pitch-500
+          ${isTauri() ? 'mt-2' : ''}
+        `}>
+          {storageConfig?.is_connected ? (
+            <span className="w-2 h-2 rounded-full bg-mint flex-shrink-0" aria-label="Connected" />
+          ) : (
+            <CloudOff size={13} className="flex-shrink-0 text-paper-500 dark:text-paper-600" />
+          )}
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-pitch-800 dark:text-white capitalize">
+              {storageConfig?.is_connected
+                ? `${storageConfig.provider}${displayHost ? ` · ${displayHost}` : ''}`
+                : 'No cloud sync'}
+            </p>
+            {storageConfig?.is_connected && storageConfig.last_backup_at && (
+              <p className="text-[11px] text-paper-500 dark:text-paper-600 mt-0.5">
+                Backed up {new Date(storageConfig.last_backup_at).toLocaleDateString()}
+              </p>
+            )}
+            {!storageConfig?.is_connected && (
+              <p className="text-[11px] text-paper-500 dark:text-paper-600 mt-0.5">
+                Encrypted backup, attachment sync
+              </p>
+            )}
+          </div>
           <button
-            onClick={relaunch}
+            onClick={() => setShowStorageModal(true)}
             className="
-              w-full flex items-center justify-center gap-1.5
-              px-3 py-2 rounded-md text-xs
-              bg-amber-500 hover:bg-amber-600 text-white
+              flex-shrink-0 px-3 py-1.5 rounded-md text-xs
+              text-paper-700 dark:text-paper-300
+              hover:bg-paper-200 dark:hover:bg-pitch-700
               font-display uppercase tracking-wide transition-colors
             "
           >
-            <RefreshCw size={11} />
-            Restart now
+            {storageConfig?.is_connected ? 'Manage' : 'Connect'}
           </button>
         </div>
-      ) : (
-        <>
-          <div className="
-            flex items-center gap-3 px-3 py-2.5 rounded-lg
-            bg-paper-100 dark:bg-pitch-800
-            border border-paper-300 dark:border-pitch-500
-          ">
-            <FolderOpen size={13} className="flex-shrink-0 text-paper-500 dark:text-paper-600" />
-            <span
-              className="flex-1 text-xs font-mono truncate text-pitch-700 dark:text-paper-300"
-              title={dataDir || ''}
-            >
-              {dataDir || '…'}
-            </span>
-            <button
-              onClick={handleChange}
-              disabled={migrating}
-              className="
-                flex-shrink-0 px-3 py-1.5 rounded-md text-xs
-                text-paper-700 dark:text-paper-300
-                hover:bg-paper-200 dark:hover:bg-pitch-700
-                disabled:opacity-40 transition-colors
-                font-display uppercase tracking-wide
-              "
-            >
-              {migrating ? 'Moving…' : 'Change…'}
-            </button>
-          </div>
-          {error && (
-            <div className="mt-2 flex items-start gap-1.5">
-              <AlertCircle size={12} className="flex-shrink-0 mt-0.5 text-red-500" />
-              <p className="text-xs text-red-500 leading-snug">{error}</p>
-            </div>
-          )}
-        </>
+
+        <p className="mt-3 text-center text-[11px] text-paper-500 dark:text-paper-600">
+          Coming soon — Dropbox · OneDrive · SharePoint
+        </p>
+      </Card>
+
+      {showStorageModal && (
+        <StorageSetupModal
+          currentConfig={storageConfig}
+          onClose={() => setShowStorageModal(false)}
+          onSaved={() => reloadStorage()}
+        />
       )}
-    </Card>
+    </>
   )
 }
 
