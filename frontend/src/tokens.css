@@ -23,20 +23,18 @@
   --paper-soft-d: #A8A49E;  /* secondary text */
   --paper-d:      #EDEAE3;  /* primary text */
 
-  /* ── Primary accent · muted indigo ─────────────────────────────────────── */
-  --accent:        #5B5BD6;
-  --accent-hover:  #4F4FC7;
-  --accent-soft:   #8C8CE6;
-  --accent-50:     rgba(91, 91, 214, 0.08);
-  --accent-ring:   rgba(91, 91, 214, 0.30);
-
-  /* ── Brand signature · mint ────────────────────────────────────────────
-     Used sparingly: the dot in "Trace.", the splash animation, and
-     "selected/active" state indicators. Never as a hover or focus colour. */
-  --mint:        #10B981;
-  --mint-soft:   #34D399;
-  --mint-50:     rgba(16, 185, 129, 0.08);
-  --mint-ring:   rgba(16, 185, 129, 0.30);
+  /* ── Brand colour · mint ────────────────────────────────────────────────
+     One brand colour doing all the work. mint-500 is the signature shade,
+     used for the dot in "Trace.", the splash, and focus rings. mint-700
+     is the accessible darker shade used for primary action buttons (passes
+     WCAG AA contrast with white text). Same hue, different shades, same
+     family — the result reads as one brand, not two. */
+  --mint:           #10B981;   /* signature shade — dot, splash, focus */
+  --mint-button:    #047857;   /* primary action button (AA on white) */
+  --mint-hover:     #065F46;   /* primary action button, hover */
+  --mint-soft:      #34D399;   /* lighter variant for soft contexts */
+  --mint-50:        rgba(16, 185, 129, 0.08);
+  --mint-ring:      rgba(16, 185, 129, 0.45);
 
   /* ── Status palette · muted, ADHD-friendly ─────────────────────────────── */
   --sage:         #7A9579;  /* stable, resolved */

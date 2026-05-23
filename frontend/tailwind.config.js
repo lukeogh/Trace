@@ -38,20 +38,9 @@ export default {
           900: '#080706',
           950: '#050402',
         },
-        // ── Primary accent ──────────────────────────────────────────────────
-        accent: {
-          DEFAULT: '#5B5BD6',
-          50:  '#F4F4FC',
-          100: '#E8E8F8',
-          200: '#C5C5EE',
-          300: '#A2A2E4',
-          400: '#7F7FDD',
-          500: '#5B5BD6',
-          600: '#4F4FC7',
-          700: '#4343B0',
-          800: '#373798',
-          900: '#2B2B80',
-        },
+        // ── Brand colour (defined below in status section) ──────────────────
+        // The `accent` namespace has been retired in favour of `mint`. See
+        // the mint extension below.
         // ── Status colours (muted) ──────────────────────────────────────────
         sage:        '#7A9579',  // stable, resolved
         'sky-muted': '#6B8AB8',  // active, open
