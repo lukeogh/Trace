@@ -56,14 +56,9 @@ export default function SystemSettings({ updater }) {
           </Link>
           <div className="flex items-center gap-3">
             <SettingsIcon size={22} className="text-paper-500 dark:text-paper-600" />
-            <div>
-              <h1 className="font-display font-medium text-3xl tracking-tight text-pitch-800 dark:text-white leading-tight">
-                System settings
-              </h1>
-              <p className="text-xs font-mono uppercase tracking-[0.25em] text-paper-500 dark:text-paper-600 mt-1">
-                Infrastructure · how Trace. stores and updates itself
-              </p>
-            </div>
+            <h1 className="font-display font-medium text-3xl tracking-tight text-pitch-800 dark:text-white leading-tight">
+              Settings
+            </h1>
           </div>
         </div>
       </header>
