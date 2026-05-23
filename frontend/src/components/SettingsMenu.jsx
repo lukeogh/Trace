@@ -10,9 +10,9 @@ const MAX_AVATAR_BYTES = 2 * 1024 * 1024  // 2 MB
  * Personal settings — avatar button in the top-right of the screen.
  *
  * Houses *personal/visual* preferences only: profile photo, display name,
- * theme, font, text size. Anything about the app's *system state* (data
- * directory, update channel, version, etc.) lives in the SystemSettingsMenu
- * accessed via the cog in the sidebar.
+ * theme, font, text size. Anything about the app's *system state* (AI
+ * engine, data directory, update channel, version, etc.) lives on the
+ * dedicated /settings page accessed via the cog in the sidebar.
  *
  * The split is by user intent: "how do I want this app to look/feel?" vs
  * "how does the app store/update itself?". Same rationale as macOS putting

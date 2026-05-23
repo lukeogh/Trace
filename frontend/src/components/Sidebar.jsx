@@ -19,11 +19,11 @@ export default function Sidebar({
   areas,
   onOpenSwitcher,
   onOpenNewArea,
-  onOpenSystemSettings,
   systemSettingsBadge = false,
 }) {
   const { areaId } = useParams()
   const location = useLocation()
+  const settingsActive = location.pathname === '/settings'
   const version = useAppVersion()
 
   // ─── Collapse state ────────────────────────────────────────────────────────
@@ -288,11 +288,11 @@ export default function Sidebar({
         border-t border-paper-300 dark:border-pitch-700
         ${collapsed ? 'space-y-2' : 'space-y-1.5'}
       `}>
-        {/* System Settings cog — always visible (with badge dot for updates) */}
+        {/* System Settings cog — links to /settings (with badge dot for updates) */}
         <SystemSettingsButton
           collapsed={collapsed}
           badge={systemSettingsBadge}
-          onClick={onOpenSystemSettings}
+          active={settingsActive}
         />
 
         {!collapsed && (
@@ -410,7 +410,7 @@ function CollapsedIconButton({ icon: Icon, label, onClick }) {
   )
 }
 
-function SystemSettingsButton({ collapsed, badge, onClick }) {
+function SystemSettingsButton({ collapsed, badge, active }) {
   const inner = (
     <span className="relative">
       <Settings size={collapsed ? 15 : 13} />
@@ -426,33 +426,35 @@ function SystemSettingsButton({ collapsed, badge, onClick }) {
     </span>
   )
 
+  // Active styling matches the rest of the nav rail — predictable destination,
+  // not a floating popover. ADHD: one less context-switch surface.
   if (collapsed) {
     return (
-      <button
-        onClick={onClick}
+      <Link
+        to="/settings"
         title={badge ? 'System settings (update available)' : 'System settings'}
-        className="
-          w-full flex items-center justify-center p-2 rounded-md
-          text-paper-500 dark:text-paper-600
-          hover:bg-paper-200 dark:hover:bg-pitch-700
-          hover:text-pitch-700 dark:hover:text-paper-200
-          transition-colors
-        "
+        className={`
+          w-full flex items-center justify-center p-2 rounded-md transition-colors
+          ${active
+            ? 'bg-mint-50 dark:bg-mint-900/20 text-mint-700 dark:text-mint-300 ring-1 ring-mint/30'
+            : 'text-paper-500 dark:text-paper-600 hover:bg-paper-200 dark:hover:bg-pitch-700 hover:text-pitch-700 dark:hover:text-paper-200'
+          }
+        `}
       >
         {inner}
-      </button>
+      </Link>
     )
   }
   return (
-    <button
-      onClick={onClick}
-      className="
-        w-full flex items-center justify-between gap-2 px-2 py-1.5 rounded-md
-        text-paper-500 dark:text-paper-600
-        hover:bg-paper-200 dark:hover:bg-pitch-700
-        hover:text-pitch-700 dark:hover:text-paper-200
-        transition-colors
-      "
+    <Link
+      to="/settings"
+      className={`
+        w-full flex items-center justify-between gap-2 px-2 py-1.5 rounded-md transition-colors
+        ${active
+          ? 'bg-mint-50 dark:bg-mint-900/20 text-mint-700 dark:text-mint-300'
+          : 'text-paper-500 dark:text-paper-600 hover:bg-paper-200 dark:hover:bg-pitch-700 hover:text-pitch-700 dark:hover:text-paper-200'
+        }
+      `}
     >
       <span className="flex items-center gap-2">
         {inner}
@@ -463,7 +465,7 @@ function SystemSettingsButton({ collapsed, badge, onClick }) {
           Update
         </span>
       )}
-    </button>
+    </Link>
   )
 }
 

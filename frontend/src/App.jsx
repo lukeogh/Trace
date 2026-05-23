@@ -7,7 +7,6 @@ import { useTextSize } from './hooks/useTextSize'
 import { useAvatar } from './hooks/useAvatar'
 import { useUpdater } from './hooks/useUpdater'
 import SettingsMenu from './components/SettingsMenu'
-import SystemSettingsMenu from './components/SystemSettingsMenu'
 import UpdateToast from './components/UpdateToast'
 import { ToastProvider } from './components/Toast'
 import QuickCapture from './components/QuickCapture'
@@ -20,6 +19,7 @@ import AreaView from './pages/AreaView'
 import ThreadView from './pages/ThreadView'
 import LogView from './pages/LogView'
 import ProcessView from './pages/ProcessView'
+import SystemSettings from './pages/SystemSettings'
 import { areasApi } from './api/client'
 
 // ─── Root ─────────────────────────────────────────────────────────────────────
@@ -33,7 +33,6 @@ export default function App() {
   const updater = useUpdater()    // no-op outside Tauri
   const [switcherOpen, setSwitcherOpen] = useState(false)
   const [newAreaOpen, setNewAreaOpen] = useState(false)
-  const [systemSettingsOpen, setSystemSettingsOpen] = useState(false)
   const [booting, setBooting] = useState(true)
 
   // Global ⌘K / Ctrl+K toggles the QuickSwitcher from anywhere
@@ -77,7 +76,7 @@ export default function App() {
         <Shell
           onOpenSwitcher={() => setSwitcherOpen(true)}
           onOpenNewArea={() => setNewAreaOpen(true)}
-          onOpenSystemSettings={() => setSystemSettingsOpen(true)}
+          updater={updater}
           // Badge lights up for both 'available' (just detected) and
           // 'dismissed' (user clicked Later but the update is still pending).
           systemSettingsBadge={
@@ -97,12 +96,6 @@ export default function App() {
           textSize={textSize}
           onChangeTextSize={setTextSize}
         />
-        {/* System settings — sidebar cog, only shows when in Tauri */}
-        <SystemSettingsMenu
-          isOpen={systemSettingsOpen}
-          onClose={() => setSystemSettingsOpen(false)}
-          updater={updater}
-        />
         {/* Update prompt — appears once per detected new version, then
             collapses into the cog badge until installed. */}
         <UpdateToast updater={updater} />
@@ -121,7 +114,7 @@ export default function App() {
 }
 
 // Shell wraps every route so navigation is always visible
-function Shell({ onOpenSwitcher, onOpenNewArea, onOpenSystemSettings, systemSettingsBadge }) {
+function Shell({ onOpenSwitcher, onOpenNewArea, updater, systemSettingsBadge }) {
   const [areas, setAreas] = useState([])
   const location = useLocation()
 
@@ -137,7 +130,6 @@ function Shell({ onOpenSwitcher, onOpenNewArea, onOpenSystemSettings, systemSett
         areas={areas}
         onOpenSwitcher={onOpenSwitcher}
         onOpenNewArea={onOpenNewArea}
-        onOpenSystemSettings={onOpenSystemSettings}
         systemSettingsBadge={systemSettingsBadge}
       />
       <main className="flex-1 min-w-0">
@@ -147,6 +139,7 @@ function Shell({ onOpenSwitcher, onOpenNewArea, onOpenSystemSettings, systemSett
           <Route path="/thread/:threadId" element={<ThreadView />} />
           <Route path="/log" element={<LogView />} />
           <Route path="/process" element={<ProcessView />} />
+          <Route path="/settings" element={<SystemSettings updater={updater} />} />
         </Routes>
       </main>
     </div>
