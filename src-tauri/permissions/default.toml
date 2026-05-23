@@ -49,7 +49,7 @@ description = "Read the baked-in PAT for the private releases endpoint."
 commands.allow = ["get_updater_auth_header"]
 
 [[set]]
-identifier = "default"
+identifier = "allow-all"
 description = "All custom Trace. desktop commands."
 permissions = [
     "allow-get-data-dir",
