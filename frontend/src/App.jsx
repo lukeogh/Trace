@@ -7,6 +7,7 @@ import { useTextSize } from './hooks/useTextSize'
 import { useAvatar } from './hooks/useAvatar'
 import { useUpdater } from './hooks/useUpdater'
 import SettingsMenu from './components/SettingsMenu'
+import SystemSettingsMenu from './components/SystemSettingsMenu'
 import { ToastProvider } from './components/Toast'
 import QuickCapture from './components/QuickCapture'
 import QuickSwitcher from './components/QuickSwitcher'
@@ -31,6 +32,7 @@ export default function App() {
   const updater = useUpdater()    // no-op outside Tauri
   const [switcherOpen, setSwitcherOpen] = useState(false)
   const [newAreaOpen, setNewAreaOpen] = useState(false)
+  const [systemSettingsOpen, setSystemSettingsOpen] = useState(false)
   const [booting, setBooting] = useState(true)
 
   // Global ⌘K / Ctrl+K toggles the QuickSwitcher from anywhere
@@ -72,8 +74,10 @@ export default function App() {
         <Shell
           onOpenSwitcher={() => setSwitcherOpen(true)}
           onOpenNewArea={() => setNewAreaOpen(true)}
+          onOpenSystemSettings={() => setSystemSettingsOpen(true)}
+          systemSettingsBadge={updater?.status === 'available'}
         />
-        {/* Global top-right settings — same place on every page */}
+        {/* Personal settings — top-right avatar, on every page */}
         <SettingsMenu
           avatar={avatar}
           onChangeAvatar={setAvatar}
@@ -85,6 +89,11 @@ export default function App() {
           onChangeFont={setFont}
           textSize={textSize}
           onChangeTextSize={setTextSize}
+        />
+        {/* System settings — sidebar cog, only shows when in Tauri */}
+        <SystemSettingsMenu
+          isOpen={systemSettingsOpen}
+          onClose={() => setSystemSettingsOpen(false)}
           updater={updater}
         />
         <QuickCapture />
@@ -102,7 +111,7 @@ export default function App() {
 }
 
 // Shell wraps every route so navigation is always visible
-function Shell({ onOpenSwitcher, onOpenNewArea }) {
+function Shell({ onOpenSwitcher, onOpenNewArea, onOpenSystemSettings, systemSettingsBadge }) {
   const [areas, setAreas] = useState([])
   const location = useLocation()
 
@@ -118,6 +127,8 @@ function Shell({ onOpenSwitcher, onOpenNewArea }) {
         areas={areas}
         onOpenSwitcher={onOpenSwitcher}
         onOpenNewArea={onOpenNewArea}
+        onOpenSystemSettings={onOpenSystemSettings}
+        systemSettingsBadge={systemSettingsBadge}
       />
       <main className="flex-1 min-w-0">
         <Routes>
