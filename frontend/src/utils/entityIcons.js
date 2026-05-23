@@ -15,7 +15,7 @@ export const ENTITY = {
     Icon: PenLine,
     tint: 'text-paper-700 dark:text-paper-200',
     badge: 'bg-paper-200 dark:bg-pitch-700 text-paper-700 dark:text-paper-200',
-    borderLeft: 'border-l-accent-500',
+    borderLeft: 'border-l-mint-500',
   },
   todo: {
     label: 'To Do',

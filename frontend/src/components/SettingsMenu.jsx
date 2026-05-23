@@ -88,8 +88,8 @@ export default function SettingsMenu({
             ? 'ring-paper-300/80 dark:ring-pitch-500/80'
             : 'bg-paper-300 dark:bg-pitch-600 text-paper-700 dark:text-paper-200 ring-paper-300/40 dark:ring-pitch-500/60'
           }
-          ${open ? 'ring-accent-500/60 dark:ring-accent-500/60' : ''}
-          hover:ring-accent-500/40
+          ${open ? 'ring-mint-500/60 dark:ring-mint-500/60' : ''}
+          hover:ring-mint-500/40
         `}
       >
         {avatar ? (
@@ -179,7 +179,7 @@ export default function SettingsMenu({
                 border border-paper-300 dark:border-pitch-500
                 text-pitch-800 dark:text-white
                 placeholder:text-paper-400 dark:placeholder:text-paper-700
-                focus:outline-none focus:ring-2 focus:ring-accent-500
+                focus:outline-none focus:ring-2 focus:ring-mint-500
               "
             />
           </Section>

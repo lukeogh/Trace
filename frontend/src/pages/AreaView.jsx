@@ -227,8 +227,8 @@ export default function AreaView() {
             onClick={() => setNewThreadOpen(true)}
             className="
               flex items-center gap-2 px-4 py-2 rounded-md text-sm font-display font-medium uppercase tracking-wide
-              bg-accent-500 hover:bg-accent-600 text-white
-              shadow-sm hover:shadow-accent-500/25
+              bg-mint-700 hover:bg-mint-800 text-white
+              shadow-sm hover:shadow-mint-500/25
               transition-all duration-150
             "
           >
@@ -290,7 +290,7 @@ export default function AreaView() {
                     rounded-lg px-3 py-2.5 resize-none
                     text-pitch-700 dark:text-paper-200
                     placeholder:text-paper-400 dark:placeholder:text-paper-700
-                    focus:outline-none focus:ring-2 focus:ring-accent-500
+                    focus:outline-none focus:ring-2 focus:ring-mint-500
                     transition-colors
                   "
                 />
@@ -301,7 +301,7 @@ export default function AreaView() {
                   <button
                     onClick={saveSummary}
                     disabled={savingSummary}
-                    className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-md bg-accent-500 hover:bg-accent-600 text-white disabled:opacity-60 transition-colors"
+                    className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-md bg-mint-700 hover:bg-mint-800 text-white disabled:opacity-60 transition-colors"
                   >
                     <Check size={12} />
                     {savingSummary ? 'Saving…' : 'Save'}
@@ -354,7 +354,7 @@ export default function AreaView() {
               <p className="text-sm text-paper-500 dark:text-paper-700 mb-4">No threads yet for this area.</p>
               <button
                 onClick={() => setNewThreadOpen(true)}
-                className="flex items-center gap-2 px-4 py-2 rounded-md bg-accent-500 hover:bg-accent-600 text-white text-sm mx-auto transition-colors"
+                className="flex items-center gap-2 px-4 py-2 rounded-md bg-mint-700 hover:bg-mint-800 text-white text-sm mx-auto transition-colors"
               >
                 <Plus size={14} />
                 Create first thread
@@ -397,7 +397,7 @@ export default function AreaView() {
                 border border-paper-300 dark:border-paper-700
                 text-pitch-800 dark:text-white
                 placeholder:text-paper-400 dark:placeholder:text-paper-700
-                focus:outline-none focus:ring-2 focus:ring-accent-500
+                focus:outline-none focus:ring-2 focus:ring-mint-500
               "
               onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) createThread() }}
             />
@@ -418,7 +418,7 @@ export default function AreaView() {
                 border border-paper-300 dark:border-paper-700
                 text-pitch-800 dark:text-white
                 placeholder:text-paper-400 dark:placeholder:text-paper-700
-                focus:outline-none focus:ring-2 focus:ring-accent-500
+                focus:outline-none focus:ring-2 focus:ring-mint-500
               "
             />
           </div>
@@ -457,7 +457,7 @@ export default function AreaView() {
             <button
               onClick={createThread}
               disabled={!threadForm.title.trim() || creatingThread}
-              className="px-4 py-2 text-sm rounded-md font-medium bg-accent-500 hover:bg-accent-600 text-white disabled:opacity-50 transition-colors"
+              className="px-4 py-2 text-sm rounded-md font-medium bg-mint-700 hover:bg-mint-800 text-white disabled:opacity-50 transition-colors"
             >
               {creatingThread ? 'Creating…' : 'Create Thread'}
             </button>
@@ -671,7 +671,7 @@ function TraceMarkSpinner() {
 function ProgressIndeterminate() {
   return (
     <div className="w-40 h-1 rounded-full overflow-hidden bg-paper-200 dark:bg-pitch-700 relative">
-      <div className="absolute inset-y-0 left-0 w-1/3 rounded-full bg-accent-500 animate-[slideIn_1.4s_cubic-bezier(0.4,0,0.2,1)_infinite]" />
+      <div className="absolute inset-y-0 left-0 w-1/3 rounded-full bg-mint animate-[slideIn_1.4s_cubic-bezier(0.4,0,0.2,1)_infinite]" />
     </div>
   )
 }

@@ -101,7 +101,7 @@ export default function StatusChangeModal({
               bg-paper-100 dark:bg-pitch-700 border border-paper-300 dark:border-paper-700
               text-pitch-800 dark:text-white
               placeholder:text-paper-400 dark:placeholder:text-paper-700
-              focus:outline-none focus:ring-2 focus:ring-accent-500
+              focus:outline-none focus:ring-2 focus:ring-mint-500
             "
           />
         </div>
@@ -122,7 +122,7 @@ export default function StatusChangeModal({
               disabled:opacity-50 transition-colors
               ${isBlocking
                 ? 'bg-terracotta hover:bg-terracotta/90'
-                : 'bg-accent-500 hover:bg-accent-600'
+                : 'bg-mint-700 hover:bg-mint-800'
               }
             `}
           >

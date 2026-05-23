@@ -521,7 +521,7 @@ export default function ThreadView() {
                     onKeyDown={(e) => { if (e.key === 'Enter') saveTitle(); if (e.key === 'Escape') setEditingTitle(false) }}
                     className="
                       flex-1 font-display font-bold text-xl uppercase tracking-wider
-                      bg-transparent border-b-2 border-accent-500
+                      bg-transparent border-b-2 border-mint-500
                       text-pitch-800 dark:text-white outline-none px-0
                     "
                   />
@@ -642,7 +642,7 @@ export default function ThreadView() {
                   className={`
                     px-3 py-1 rounded-full text-xs font-display uppercase tracking-wide transition-colors
                     ${entryType === key
-                      ? 'bg-accent-500 text-white'
+                      ? 'bg-mint-700 text-white'
                       : 'text-paper-600 dark:text-paper-500 bg-paper-200 dark:bg-pitch-700 hover:bg-paper-300 dark:hover:bg-pitch-500'
                     }
                   `}
@@ -666,7 +666,7 @@ export default function ThreadView() {
                 rounded-lg px-3 py-2.5 text-sm resize-none
                 text-pitch-800 dark:text-white
                 placeholder:text-paper-400 dark:placeholder:text-paper-700
-                focus:outline-none focus:ring-2 focus:ring-accent-500
+                focus:outline-none focus:ring-2 focus:ring-mint-500
               "
             />
 
@@ -681,7 +681,7 @@ export default function ThreadView() {
                       className={`
                         px-2.5 py-1 rounded-full text-xs font-display uppercase tracking-wide transition-colors
                         ${dueDateOption === opt.label
-                          ? 'bg-accent-500 text-white'
+                          ? 'bg-mint-700 text-white'
                           : 'text-paper-600 dark:text-paper-500 bg-paper-200 dark:bg-pitch-700 hover:bg-paper-300 dark:hover:bg-pitch-500'
                         }
                       `}
@@ -694,7 +694,7 @@ export default function ThreadView() {
                       type="date"
                       value={dueDate || ''}
                       onChange={(e) => setDueDate(e.target.value)}
-                      className="text-xs px-2 py-1 rounded-md bg-white dark:bg-pitch-700 border border-paper-300 dark:border-paper-700 text-pitch-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-accent-500"
+                      className="text-xs px-2 py-1 rounded-md bg-white dark:bg-pitch-700 border border-paper-300 dark:border-paper-700 text-pitch-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-mint-500"
                     />
                   )}
                 </div>
@@ -727,7 +727,7 @@ export default function ThreadView() {
               <button
                 onClick={addEntry}
                 disabled={!newEntryContent.trim() || addingEntry}
-                className="flex items-center gap-2 px-4 py-2 text-sm rounded-md font-medium bg-accent-500 hover:bg-accent-600 text-white disabled:opacity-50 transition-colors"
+                className="flex items-center gap-2 px-4 py-2 text-sm rounded-md font-medium bg-mint-700 hover:bg-mint-800 text-white disabled:opacity-50 transition-colors"
               >
                 <Plus size={14} />
                 {addingEntry ? 'Adding…' : 'Add Entry'}
@@ -816,7 +816,7 @@ export default function ThreadView() {
                 relative p-4 rounded-xl bg-paper-100 dark:bg-pitch-700
                 border transition-colors
                 ${filesDragActive
-                  ? 'border-accent-500 ring-2 ring-accent-500/40'
+                  ? 'border-mint-500 ring-2 ring-mint-500/40'
                   : 'border-paper-300 dark:border-pitch-500'
                 }
               `}
@@ -869,9 +869,9 @@ export default function ThreadView() {
                 <div className="
                   absolute inset-0 z-10 rounded-xl flex flex-col items-center justify-center gap-1.5
                   bg-paper-200 dark:bg-pitch-700 dark:bg-paper-300 dark:bg-pitch-600 backdrop-blur-sm pointer-events-none
-                  border-2 border-dashed border-accent-500
+                  border-2 border-dashed border-mint-500
                 ">
-                  <Upload size={20} className="text-accent-500" />
+                  <Upload size={20} className="text-mint-700" />
                   <p className="font-display uppercase tracking-widest text-[10px] text-paper-700 dark:text-paper-200">
                     Drop to upload
                   </p>
@@ -908,7 +908,7 @@ export default function ThreadView() {
                     bg-white dark:bg-pitch-800 border border-paper-300 dark:border-pitch-500
                     text-pitch-800 dark:text-white
                     placeholder:text-paper-400 dark:placeholder:text-paper-700
-                    focus:outline-none focus:ring-2 focus:ring-accent-500
+                    focus:outline-none focus:ring-2 focus:ring-mint-500
                   "
                 />
                 {inlineLinkUrl.trim() && (
@@ -924,7 +924,7 @@ export default function ThreadView() {
                         bg-white dark:bg-pitch-800 border border-paper-300 dark:border-pitch-500
                         text-pitch-800 dark:text-white
                         placeholder:text-paper-400 dark:placeholder:text-paper-700
-                        focus:outline-none focus:ring-2 focus:ring-accent-500
+                        focus:outline-none focus:ring-2 focus:ring-mint-500
                       "
                     />
                     <button
@@ -933,7 +933,7 @@ export default function ThreadView() {
                       title="Save link (Enter)"
                       className="
                         flex items-center justify-center w-7 h-7 rounded-md
-                        bg-accent-500 hover:bg-accent-600 text-white
+                        bg-mint-700 hover:bg-mint-800 text-white
                         disabled:opacity-50 transition-colors
                       "
                     >
@@ -998,7 +998,7 @@ export default function ThreadView() {
               value={linkForm.name}
               onChange={(e) => setLinkForm((f) => ({ ...f, name: e.target.value }))}
               placeholder="e.g. GitHub Issue #142"
-              className="w-full px-3 py-2 text-sm rounded-lg bg-paper-100 dark:bg-pitch-700 border border-paper-300 dark:border-paper-700 text-pitch-800 dark:text-white placeholder:text-paper-400 dark:placeholder:text-paper-700 focus:outline-none focus:ring-2 focus:ring-accent-500"
+              className="w-full px-3 py-2 text-sm rounded-lg bg-paper-100 dark:bg-pitch-700 border border-paper-300 dark:border-paper-700 text-pitch-800 dark:text-white placeholder:text-paper-400 dark:placeholder:text-paper-700 focus:outline-none focus:ring-2 focus:ring-mint-500"
             />
           </div>
           <div>
@@ -1008,13 +1008,13 @@ export default function ThreadView() {
               value={linkForm.url}
               onChange={(e) => setLinkForm((f) => ({ ...f, url: e.target.value }))}
               placeholder="https://…"
-              className="w-full px-3 py-2 text-sm rounded-lg bg-paper-100 dark:bg-pitch-700 border border-paper-300 dark:border-paper-700 text-pitch-800 dark:text-white placeholder:text-paper-400 dark:placeholder:text-paper-700 focus:outline-none focus:ring-2 focus:ring-accent-500"
+              className="w-full px-3 py-2 text-sm rounded-lg bg-paper-100 dark:bg-pitch-700 border border-paper-300 dark:border-paper-700 text-pitch-800 dark:text-white placeholder:text-paper-400 dark:placeholder:text-paper-700 focus:outline-none focus:ring-2 focus:ring-mint-500"
               onKeyDown={(e) => { if (e.key === 'Enter') addLink() }}
             />
           </div>
           <div className="flex justify-end gap-2 pt-1">
             <button onClick={() => setLinkModalOpen(false)} className="px-4 py-2 text-sm rounded-md text-paper-700 dark:text-paper-400 hover:bg-paper-200 dark:hover:bg-pitch-500 transition-colors">Cancel</button>
-            <button onClick={addLink} disabled={!linkForm.name.trim() || !linkForm.url.trim() || addingLink} className="px-4 py-2 text-sm rounded-md font-medium bg-accent-500 hover:bg-accent-600 text-white disabled:opacity-50 transition-colors">
+            <button onClick={addLink} disabled={!linkForm.name.trim() || !linkForm.url.trim() || addingLink} className="px-4 py-2 text-sm rounded-md font-medium bg-mint-700 hover:bg-mint-800 text-white disabled:opacity-50 transition-colors">
               {addingLink ? 'Adding…' : 'Add Link'}
             </button>
           </div>
@@ -1084,7 +1084,7 @@ export default function ThreadView() {
                   className={`
                     px-3 py-1 rounded-full text-xs font-display uppercase tracking-wide transition-colors
                     ${linkThreadForm.kind === key
-                      ? 'bg-accent-500 text-white'
+                      ? 'bg-mint-700 text-white'
                       : 'text-paper-600 dark:text-paper-500 bg-paper-200 dark:bg-pitch-700 hover:bg-paper-300 dark:hover:bg-pitch-500'
                     }
                   `}
@@ -1106,7 +1106,7 @@ export default function ThreadView() {
                 w-full px-3 py-2 text-sm rounded-lg
                 bg-paper-100 dark:bg-pitch-700 border border-paper-300 dark:border-paper-700
                 text-pitch-800 dark:text-white
-                focus:outline-none focus:ring-2 focus:ring-accent-500
+                focus:outline-none focus:ring-2 focus:ring-mint-500
               "
             >
               <option value="">Select a thread…</option>
@@ -1138,7 +1138,7 @@ export default function ThreadView() {
             <button
               onClick={addThreadLink}
               disabled={!linkThreadForm.to_thread_id || addingThreadLink}
-              className="px-4 py-2 text-sm rounded-md font-medium bg-accent-500 hover:bg-accent-600 text-white disabled:opacity-50 transition-colors"
+              className="px-4 py-2 text-sm rounded-md font-medium bg-mint-700 hover:bg-mint-800 text-white disabled:opacity-50 transition-colors"
             >
               {addingThreadLink ? 'Linking…' : 'Add link'}
             </button>
@@ -1218,8 +1218,8 @@ function TaskCheckbox({ completed, onToggle }) {
         w-6 h-6 rounded-md border-2 flex items-center justify-center flex-shrink-0
         transition-all duration-150
         ${completed
-          ? 'bg-accent-500 border-accent-500'
-          : 'border-paper-400 dark:border-paper-700 bg-transparent hover:border-accent-400'
+          ? 'bg-mint-700 border-mint-700'
+          : 'border-paper-400 dark:border-paper-700 bg-transparent hover:border-mint-500'
         }
       `}
     >
@@ -1257,7 +1257,7 @@ function EntryBlock({ entry, editing, draft, onEditStart, onDraftChange, onSave,
       {/* Timeline dot */}
       <div className={`
         absolute left-3 top-1.5 w-2.5 h-2.5 rounded-full border-2 border-white dark:border-pitch-800 z-10
-        ${isDecision ? 'bg-amber-400' : 'bg-accent-500'}
+        ${isDecision ? 'bg-amber-400' : 'bg-mint'}
       `} />
 
       <div className={`
@@ -1336,14 +1336,14 @@ function EntryBlock({ entry, editing, draft, onEditStart, onDraftChange, onSave,
                   w-full bg-paper-100 dark:bg-pitch-700 border border-paper-300 dark:border-paper-700
                   rounded-lg px-3 py-2 text-sm resize-none font-mono
                   text-pitch-800 dark:text-white
-                  focus:outline-none focus:ring-2 focus:ring-accent-500
+                  focus:outline-none focus:ring-2 focus:ring-mint-500
                 "
               />
               <div className="flex justify-end gap-2 mt-2">
                 <button onClick={onCancel} className="flex items-center gap-1 px-3 py-1.5 text-xs rounded text-paper-600 hover:bg-paper-200 dark:hover:bg-pitch-500 transition-colors">
                   <X size={12} /> Cancel
                 </button>
-                <button onClick={onSave} className="flex items-center gap-1 px-3 py-1.5 text-xs rounded bg-accent-500 hover:bg-accent-600 text-white transition-colors">
+                <button onClick={onSave} className="flex items-center gap-1 px-3 py-1.5 text-xs rounded bg-mint-700 hover:bg-mint-800 text-white transition-colors">
                   <Check size={12} /> Save
                 </button>
               </div>
@@ -1554,7 +1554,7 @@ function MeetingBody({ entry, editing, onEditStart, onCancel, onSave }) {
             w-full px-3 py-2 text-sm rounded-md
             bg-paper-100 dark:bg-pitch-800 border border-paper-300 dark:border-pitch-500
             text-pitch-800 dark:text-white
-            focus:outline-none focus:ring-2 focus:ring-accent-500
+            focus:outline-none focus:ring-2 focus:ring-mint-500
           "
         />
       </div>
@@ -1570,7 +1570,7 @@ function MeetingBody({ entry, editing, onEditStart, onCancel, onSave }) {
             w-full px-3 py-2 text-sm rounded-md
             bg-paper-100 dark:bg-pitch-800 border border-paper-300 dark:border-pitch-500
             text-pitch-800 dark:text-white
-            focus:outline-none focus:ring-2 focus:ring-accent-500
+            focus:outline-none focus:ring-2 focus:ring-mint-500
           "
         />
       </div>
@@ -1584,7 +1584,7 @@ function MeetingBody({ entry, editing, onEditStart, onCancel, onSave }) {
         <button
           onClick={commit}
           disabled={!canSave}
-          className="flex items-center gap-1 px-3 py-1.5 text-xs rounded bg-accent-500 hover:bg-accent-600 text-white disabled:opacity-50 transition-colors"
+          className="flex items-center gap-1 px-3 py-1.5 text-xs rounded bg-mint-700 hover:bg-mint-800 text-white disabled:opacity-50 transition-colors"
         >
           <Check size={12} /> {saving ? 'Saving…' : 'Save'}
         </button>
@@ -1661,7 +1661,7 @@ function TodoNotes({ initial, onSave }) {
             rounded-md px-2.5 py-2 resize-y
             text-pitch-700 dark:text-paper-200
             placeholder:text-paper-400 dark:placeholder:text-paper-700
-            focus:outline-none focus:ring-2 focus:ring-accent-500
+            focus:outline-none focus:ring-2 focus:ring-mint-500
           "
         />
       )}

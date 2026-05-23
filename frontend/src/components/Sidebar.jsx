@@ -98,24 +98,41 @@ export default function Sidebar({
         transition-[width] duration-150 ease-out
       "
     >
-      {/* Brand — logo + wordmark + slogan (collapses to logo glyph only) */}
+      {/* Brand — mark + wordmark with mint dot + slogan.
+          Wrapped in `group` so the Logo's SVG paths can react on hover
+          (defined in Logo.jsx via group-hover). Mint dot replaces the
+          full stop after "Trace" — same character, brand-coloured. */}
       <div className={`
         ${collapsed ? 'px-3 py-4 flex justify-center' : 'px-4 py-5'}
         border-b border-paper-300 dark:border-pitch-700
       `}>
-        <Link to="/" className={`flex items-center ${collapsed ? '' : 'gap-3'} min-w-0`} title={collapsed ? 'Trace.' : undefined}>
-          <Logo size={collapsed ? 28 : 36} />
-          {!collapsed && (
-            <div className="min-w-0">
-              <div className="font-display font-medium text-xl tracking-tightest text-pitch-800 dark:text-white leading-none">
-                Trace.
+        <Link
+          to="/"
+          className={`group flex items-center ${collapsed ? '' : 'gap-3'} min-w-0`}
+          title={collapsed ? 'Trace.' : undefined}
+        >
+          {collapsed ? (
+            <Logo size={28} />
+          ) : (
+            <>
+              <Logo size={28} />
+              <div className="min-w-0 flex flex-col">
+                <span
+                  className="font-display font-medium text-xl tracking-tightest text-pitch-800 dark:text-white leading-none inline-flex items-baseline"
+                >
+                  Trace
+                  {/* Mint dot acting as the full stop. Same character, brand colour. */}
+                  <span
+                    aria-hidden="true"
+                    className="inline-block w-[6px] h-[6px] rounded-full bg-mint ml-[3px] flex-shrink-0"
+                  />
+                </span>
+                {/* Slogan — tight tracking + light opacity so it sits behind the brand. */}
+                <span className="mt-1 font-mono uppercase tracking-[0.12em] text-[9px] text-paper-400 dark:text-paper-700 truncate">
+                  Stay across everything.
+                </span>
               </div>
-              {/* Slogan: tighter tracking + lighter weight so it fits even at min sidebar
-                  width and reads as supporting copy rather than competing with the brand. */}
-              <div className="mt-1 font-mono uppercase tracking-[0.12em] text-[9px] text-paper-400 dark:text-paper-700 truncate">
-                Stay across everything.
-              </div>
-            </div>
+            </>
           )}
         </Link>
       </div>

@@ -61,7 +61,7 @@ export default function NewAreaModal({ isOpen, onClose, onCreated }) {
                 bg-paper-100 dark:bg-pitch-700 border border-paper-300 dark:border-paper-700
                 text-pitch-800 dark:text-white
                 placeholder:text-paper-400 dark:placeholder:text-paper-700
-                focus:outline-none focus:ring-2 focus:ring-accent-500
+                focus:outline-none focus:ring-2 focus:ring-mint-500
               "
             />
           </div>
@@ -82,7 +82,7 @@ export default function NewAreaModal({ isOpen, onClose, onCreated }) {
               bg-paper-100 dark:bg-pitch-700 border border-paper-300 dark:border-paper-700
               text-pitch-800 dark:text-white
               placeholder:text-paper-400 dark:placeholder:text-paper-700
-              focus:outline-none focus:ring-2 focus:ring-accent-500
+              focus:outline-none focus:ring-2 focus:ring-mint-500
             "
           />
         </div>
@@ -97,7 +97,7 @@ export default function NewAreaModal({ isOpen, onClose, onCreated }) {
           <button
             onClick={submit}
             disabled={!name.trim() || submitting}
-            className="px-4 py-2 text-sm rounded-md font-medium bg-accent-500 hover:bg-accent-600 text-white disabled:opacity-50 transition-colors"
+            className="px-4 py-2 text-sm rounded-md font-medium bg-mint-700 hover:bg-mint-800 text-white disabled:opacity-50 transition-colors"
           >
             {submitting ? 'Creating…' : 'Create area'}
           </button>

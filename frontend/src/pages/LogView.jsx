@@ -144,7 +144,7 @@ export default function LogView() {
                 bg-white dark:bg-pitch-700
                 border border-paper-300 dark:border-paper-700
                 text-pitch-500 dark:text-paper-300
-                focus:outline-none focus:ring-2 focus:ring-accent-500
+                focus:outline-none focus:ring-2 focus:ring-mint-500
                 font-display uppercase tracking-wide
               "
             >

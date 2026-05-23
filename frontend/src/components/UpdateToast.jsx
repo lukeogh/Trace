@@ -68,7 +68,7 @@ export default function UpdateToast({ updater }) {
             className="
               flex-1 flex items-center justify-center gap-1.5
               px-3 py-1.5 rounded-md text-xs
-              bg-accent-500 hover:bg-accent-600 text-white
+              bg-mint-700 hover:bg-mint-800 text-white
               font-display uppercase tracking-wide transition-colors
             "
           >

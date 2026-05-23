@@ -48,12 +48,14 @@ export default function App() {
     return () => document.removeEventListener('keydown', handler)
   }, [])
 
-  // Boot splash: hold for a minimum so the Draw animation has time to play,
-  // then dismiss as soon as the first areas fetch resolves. Hard ceiling of
-  // 4s so the user is never stuck if the backend is down.
+  // Boot splash: hold for the full splash animation length (3s) plus a beat
+  // of stillness so the slogan can be read, then fade out. The fade itself
+  // takes ~400ms (opacity transition on the splash overlay). Total: ~5s on
+  // a normal boot. Capped at 7s so a hung backend never traps the user on
+  // the splash forever.
   useEffect(() => {
-    const MIN_SPLASH_MS = 1500
-    const MAX_SPLASH_MS = 4000
+    const MIN_SPLASH_MS = 5000      // = 3s animation + ~2s stillness
+    const MAX_SPLASH_MS = 7000
     const startedAt = Date.now()
     let cancelled = false
     const finish = () => { if (!cancelled) setBooting(false) }

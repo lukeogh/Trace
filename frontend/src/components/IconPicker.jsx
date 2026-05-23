@@ -128,7 +128,7 @@ export default function IconPicker({ value, onChange, children }) {
                 border border-paper-300 dark:border-pitch-500
                 text-pitch-800 dark:text-white
                 placeholder:text-paper-400 dark:placeholder:text-paper-700
-                focus:outline-none focus:ring-2 focus:ring-accent-500
+                focus:outline-none focus:ring-2 focus:ring-mint-500
               "
             />
           </div>

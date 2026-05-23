@@ -53,7 +53,7 @@ function ProgressBar({ done }) {
     <div className={`transition-opacity duration-300 ${fading ? 'opacity-0' : 'opacity-100'}`}>
       <div className="w-full h-1 rounded-full bg-paper-200 dark:bg-pitch-700 overflow-hidden">
         <div
-          className="h-full bg-accent-500 rounded-full"
+          className="h-full bg-mint rounded-full"
           style={{
             width: `${width}%`,
             transition: done ? 'width 200ms ease' : 'width 4000ms ease-out',
@@ -296,7 +296,7 @@ function ItemCard({ item: initialItem, areaId, areaThreads, selectedAreaName, on
                 rounded-lg px-3 py-2 text-sm resize-none
                 text-pitch-800 dark:text-white
                 placeholder:text-paper-400 dark:placeholder:text-paper-700
-                focus:outline-none focus:ring-2 focus:ring-accent-500
+                focus:outline-none focus:ring-2 focus:ring-mint-500
               "
             />
             <div className="flex items-center gap-2 justify-end">
@@ -333,7 +333,7 @@ function ItemCard({ item: initialItem, areaId, areaThreads, selectedAreaName, on
                 flex-1 min-w-0 px-2.5 py-1.5 text-xs rounded-lg
                 bg-white dark:bg-pitch-700 border border-paper-300 dark:border-paper-700
                 text-pitch-500 dark:text-paper-300
-                focus:outline-none focus:ring-2 focus:ring-accent-500
+                focus:outline-none focus:ring-2 focus:ring-mint-500
                 font-display uppercase tracking-wide
               "
             >
@@ -587,7 +587,7 @@ export default function ProcessView() {
           className={`
             relative bg-white dark:bg-pitch-700 border rounded-xl p-6 transition-colors
             ${dragActive
-              ? 'border-accent-500 ring-2 ring-accent-500/40'
+              ? 'border-mint-500 ring-2 ring-mint-500/40'
               : 'border-paper-300 dark:border-pitch-500'
             }
           `}
@@ -637,7 +637,7 @@ export default function ProcessView() {
                 className={`
                   px-3 py-1.5 rounded-full text-xs font-display uppercase tracking-wide transition-colors
                   ${selectedAreaId === area.id
-                    ? 'bg-accent-500 text-white'
+                    ? 'bg-mint-700 text-white'
                     : 'text-paper-600 dark:text-paper-500 bg-paper-200 dark:bg-pitch-700 hover:bg-paper-300 dark:hover:bg-pitch-500'
                   }
                 `}
@@ -667,7 +667,7 @@ export default function ProcessView() {
               rounded-lg px-3 py-2.5 font-sans text-sm resize-y
               text-pitch-800 dark:text-white
               placeholder:text-paper-400 dark:placeholder:text-paper-700
-              focus:outline-none focus:ring-2 focus:ring-accent-500
+              focus:outline-none focus:ring-2 focus:ring-mint-500
               mb-2
             "
           />
@@ -681,9 +681,9 @@ export default function ProcessView() {
             <div className="
               absolute inset-0 z-20 rounded-xl flex flex-col items-center justify-center gap-2
               bg-paper-200 dark:bg-pitch-700 dark:bg-paper-300 dark:bg-pitch-600 backdrop-blur-sm pointer-events-none
-              border-2 border-dashed border-accent-500
+              border-2 border-dashed border-mint-500
             ">
-              <Upload size={28} className="text-accent-500" />
+              <Upload size={28} className="text-mint-700" />
               <p className="font-display uppercase tracking-widest text-sm text-paper-700 dark:text-paper-200">
                 Drop to parse
               </p>
@@ -699,7 +699,7 @@ export default function ProcessView() {
               absolute inset-0 z-20 rounded-xl flex flex-col items-center justify-center gap-2
               bg-white/70 dark:bg-pitch-700/80 backdrop-blur-sm pointer-events-none
             ">
-              <Spinner size={24} className="text-accent-500" />
+              <Spinner size={24} className="text-mint-700" />
               <p className="font-display uppercase tracking-widest text-xs text-paper-600 dark:text-paper-500">
                 Parsing…
               </p>
@@ -725,7 +725,7 @@ export default function ProcessView() {
                 }
                 className="
                   w-full flex items-center justify-center gap-2 py-2.5 rounded-lg
-                  bg-accent-500 hover:bg-accent-600 text-white text-sm
+                  bg-mint-700 hover:bg-mint-800 text-white text-sm
                   font-display uppercase tracking-wide
                   disabled:opacity-50 disabled:cursor-not-allowed transition-colors
                 "

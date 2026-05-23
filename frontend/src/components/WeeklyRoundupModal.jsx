@@ -71,7 +71,7 @@ export default function WeeklyRoundupModal({ isOpen, onClose }) {
                 key={i}
                 className={`w-2.5 h-2.5 rounded-full transition-colors duration-150 ${
                   i === dotStep
-                    ? 'bg-accent-500'
+                    ? 'bg-mint'
                     : 'bg-paper-300 dark:bg-pitch-500'
                 }`}
               />
@@ -121,7 +121,7 @@ export default function WeeklyRoundupModal({ isOpen, onClose }) {
               bg-paper-100 dark:bg-pitch-700
               border border-paper-300 dark:border-paper-700
               text-pitch-700 dark:text-paper-200
-              focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent
+              focus:outline-none focus:ring-2 focus:ring-mint-500 focus:border-transparent
             "
           />
           <div className="flex justify-end gap-2 mt-3">
