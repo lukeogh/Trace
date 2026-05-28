@@ -45,7 +45,11 @@ from fastapi.responses import JSONResponse
 
 import models
 from database import engine, SessionLocal
-from routers import areas, threads, entries, attachments, generate, ingest, settings as settings_router
+from routers import (
+    areas, threads, entries, attachments, generate, ingest,
+    settings as settings_router,
+    storage as storage_router,
+)
 
 # Trace. launches with no seeded areas — the user creates their own from the
 # sidebar's "+ Add your first area" prompt. The previous seven-area software
@@ -76,6 +80,10 @@ def _init_db():
             "ALTER TABLE entries ADD COLUMN notes TEXT",
             # AI engine config + future generic app settings
             "CREATE TABLE IF NOT EXISTS app_settings (key VARCHAR(100) PRIMARY KEY, value TEXT, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP)",
+            # Cloud storage / sync log + per-attachment sync state
+            "CREATE TABLE IF NOT EXISTS storage_sync_logs (id INTEGER PRIMARY KEY, event_type VARCHAR(30) DEFAULT 'backup', status VARCHAR(20) NOT NULL, provider VARCHAR(30), remote_path VARCHAR(500), size_bytes INTEGER, error_message TEXT, occurred_at DATETIME DEFAULT CURRENT_TIMESTAMP)",
+            "ALTER TABLE attachments ADD COLUMN remote_path VARCHAR(500)",
+            "ALTER TABLE attachments ADD COLUMN sync_status VARCHAR(20) DEFAULT 'local'",
         ]:
             try:
                 conn.execute(text(sql))
@@ -186,6 +194,7 @@ app.include_router(attachments.router, prefix="/api")
 app.include_router(generate.router, prefix="/api")
 app.include_router(ingest.router, prefix="/api")
 app.include_router(settings_router.router, prefix="/api")
+app.include_router(storage_router.router, prefix="/api")
 
 # Serve uploaded files at /uploads/<stored_name>
 if os.path.exists(UPLOAD_DIR):

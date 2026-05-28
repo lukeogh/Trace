@@ -4,6 +4,7 @@ import {
   Settings as SettingsIcon, ArrowLeft, Cpu, FolderOpen, RefreshCw,
   AlertCircle, Download, Zap, ChevronRight, ChevronLeft,
   CheckCircle2, XCircle, Loader2, ExternalLink,
+  Database, CloudOff,
 } from 'lucide-react'
 import {
   isTauri,
@@ -11,12 +12,12 @@ import {
   pickDataDir,
   migrateAndSetDataDir,
   relaunch,
-  getUpdateChannel,
-  setUpdateChannel,
 } from '../api/tauri'
 import {
   getAIConfig, getAIPresets, saveAIConfig, testAIConfig,
 } from '../api/settings'
+import { getStorageConfig } from '../api/storage'
+import StorageSetupModal from '../components/StorageSetupModal'
 import { useAppVersion } from '../hooks/useAppVersion'
 import { notifyAIConfigChanged } from '../hooks/useAIConfigured'
 
@@ -56,22 +57,17 @@ export default function SystemSettings({ updater }) {
           </Link>
           <div className="flex items-center gap-3">
             <SettingsIcon size={22} className="text-paper-500 dark:text-paper-600" />
-            <div>
-              <h1 className="font-display font-medium text-3xl tracking-tight text-pitch-800 dark:text-white leading-tight">
-                System settings
-              </h1>
-              <p className="text-xs font-mono uppercase tracking-[0.25em] text-paper-500 dark:text-paper-600 mt-1">
-                Infrastructure · how Trace. stores and updates itself
-              </p>
-            </div>
+            <h1 className="font-display font-medium text-3xl tracking-tight text-pitch-800 dark:text-white leading-tight">
+              Settings
+            </h1>
           </div>
         </div>
       </header>
 
       <main className="max-w-3xl mx-auto px-8 py-8 space-y-6">
         <AISection />
+        <StorageSection />
         {isTauri() && <UpdateSection updater={updater} />}
-        {isTauri() && <DataStorageSection />}
         <AboutSection />
       </main>
     </div>
@@ -197,7 +193,7 @@ const GUIDES = {
   claude: {
     badge: 'Paid',
     icon: '🟠',
-    what: "The AI built into Trace. by default. Strongest results for smart capture, area summaries, and the weekly roundup. Needs an Anthropic API key.",
+    what: "The AI built into Trace by default. Strongest results for smart capture, area summaries, and the weekly roundup. Needs an Anthropic API key.",
     time: 'About 3 minutes',
     steps: [
       { text: 'Go to', link: { label: 'console.anthropic.com', url: 'https://console.anthropic.com' } },
@@ -637,40 +633,26 @@ function Field({ label, hint, value, onChange, placeholder, type = 'text', autoC
   )
 }
 
-// ─── Update channel ───────────────────────────────────────────────────────────
+// ─── Updates ──────────────────────────────────────────────────────────────────
 
 function UpdateSection({ updater }) {
-  const [channel, setChannel] = useState('stable')
-  const [pending, setPending] = useState(false)
-
-  useEffect(() => {
-    if (!isTauri()) return
-    getUpdateChannel().then(setChannel)
-  }, [])
-
-  const handle = async (next) => {
-    if (next === channel) return
-    setPending(true)
-    try {
-      await setUpdateChannel(next)
-      setChannel(next)
-    } finally {
-      setPending(false)
-    }
-  }
+  const version = useAppVersion()
+  const hasUpdateBanner = (
+    updater?.status === 'available' || updater?.status === 'dismissed'
+  ) && updater.available
 
   return (
     <Card>
       <CardHeader
         icon={Download}
         title="Updates"
-        subtitle="Where Trace. looks for new versions. Restart after switching."
+        subtitle="Check for and install new versions."
       />
 
       {/* Available banner — same UX as the toast, just permanently surfaced
           on the settings page. Visible for 'available' AND 'dismissed' so
           the cog → settings path always shows the install option. */}
-      {(updater?.status === 'available' || updater?.status === 'dismissed') && updater.available && (
+      {hasUpdateBanner && (
         <div className="
           rounded-lg p-3 mb-4
           bg-mint-50 dark:bg-mint-900/20
@@ -723,42 +705,58 @@ function UpdateSection({ updater }) {
         </div>
       )}
 
-      <div className="text-[10px] font-display uppercase tracking-widest text-paper-500 dark:text-paper-600 mb-1.5">
-        Channel
-      </div>
-      <Segmented
-        value={channel}
-        options={[
-          { key: 'stable', label: 'Stable' },
-          { key: 'beta',   label: 'Beta' },
-        ]}
-        onChange={handle}
-      />
-      {pending && (
-        <p className="mt-1 text-[10px] text-paper-500 dark:text-paper-600">Saving…</p>
+      {/* Current version row. No "Check now" button yet because useUpdater
+          doesn't expose a `check()` callback or `lastCheckedAt` timestamp —
+          the hook only runs its check once per hour at mount. Extend the
+          hook in a future change if we want a manual recheck.
+          TODO(updates): wire check-now action once useUpdater exposes it. */}
+      {!hasUpdateBanner && (
+        <div className="
+          flex items-center gap-3 px-3 py-2.5 rounded-lg
+          bg-paper-100 dark:bg-pitch-800
+          border border-paper-300 dark:border-pitch-500
+        ">
+          <div className="flex-1 min-w-0">
+            <p className="text-sm text-pitch-700 dark:text-paper-300">
+              Currently on <strong className="font-medium">v{version || '—'}</strong>
+            </p>
+            <p className="text-[11px] text-paper-500 dark:text-paper-600 mt-0.5">
+              {updater?.status === 'checking'
+                ? 'Checking for updates…'
+                : updater?.status === 'none'
+                  ? 'Up to date.'
+                  : "Trace checks for updates automatically at launch."}
+            </p>
+          </div>
+        </div>
       )}
-      <p className="mt-2 text-xs text-paper-500 dark:text-paper-600 leading-snug">
-        Beta gets new builds with every merge to main. Restart Trace.
-        after switching for the change to take effect.
-      </p>
     </Card>
   )
 }
 
-// ─── Data storage ─────────────────────────────────────────────────────────────
+// ─── Storage ──────────────────────────────────────────────────────────────────
+// Combined card covering both the local data path (Tauri only) and the cloud
+// sync row (everyone). Replaces the older Tauri-only DataStorageSection — the
+// rows share a card so the user's mental model of "where my data lives" is
+// one place to look, not two.
 
-function DataStorageSection() {
+function StorageSection() {
+  // Local data path state
   const [dataDir, setDataDir] = useState(null)
   const [migrating, setMigrating] = useState(false)
   const [error, setError] = useState('')
   const [restartPending, setRestartPending] = useState(false)
 
+  // Cloud sync state
+  const [storageConfig, setStorageConfig] = useState(null)
+  const [showStorageModal, setShowStorageModal] = useState(false)
+
   useEffect(() => {
-    if (!isTauri()) return
-    getDataDir().then(setDataDir)
+    if (isTauri()) getDataDir().then(setDataDir)
+    getStorageConfig().then(setStorageConfig).catch(() => setStorageConfig(null))
   }, [])
 
-  const handleChange = async () => {
+  const handleChangeDataDir = async () => {
     setError('')
     try {
       const chosen = await pickDataDir()
@@ -774,69 +772,152 @@ function DataStorageSection() {
     }
   }
 
-  return (
-    <Card>
-      <CardHeader
-        icon={FolderOpen}
-        title="Data storage"
-        subtitle="Where your database and uploads live. Changing copies your data — the old folder is not deleted."
-      />
+  const reloadStorage = () => {
+    getStorageConfig().then(setStorageConfig).catch(() => setStorageConfig(null))
+  }
 
-      {restartPending ? (
-        <div className="rounded-lg p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800">
-          <p className="text-sm text-amber-700 dark:text-amber-400 mb-2 leading-snug">
-            Data moved. Trace. needs to restart to use the new location.
-          </p>
+  // Format the cloud-sync row's host hint if the server URL is available —
+  // strips the protocol so "https://cloud.example.com" reads as "cloud.example.com".
+  const displayHost = (() => {
+    if (!storageConfig?.is_connected || !storageConfig?.server_url) return null
+    try {
+      return new URL(storageConfig.server_url).host
+    } catch {
+      return storageConfig.server_url
+    }
+  })()
+
+  return (
+    <>
+      <Card>
+        <CardHeader
+          icon={Database}
+          title="Storage"
+          subtitle="Local data on disk. Encrypted backup and attachments to cloud."
+        />
+
+        {/* Local data path — Tauri only. Browser dev hides this row entirely
+            because Tauri APIs (folder picker, migration) don't work there. */}
+        {isTauri() && (
+          <>
+            <div className="
+              flex items-center gap-3 px-3 py-2.5 rounded-lg
+              bg-paper-100 dark:bg-pitch-800
+              border border-paper-300 dark:border-pitch-500
+            ">
+              <FolderOpen size={13} className="flex-shrink-0 text-paper-500 dark:text-paper-600" />
+              <div className="flex-1 min-w-0">
+                <p
+                  className="text-xs font-mono truncate text-pitch-700 dark:text-paper-300"
+                  title={dataDir || ''}
+                >
+                  {dataDir || '…'}
+                </p>
+                <p className="text-[11px] text-paper-500 dark:text-paper-600 mt-0.5">
+                  Database, settings, attachments
+                </p>
+              </div>
+              <button
+                onClick={handleChangeDataDir}
+                disabled={migrating}
+                className="
+                  flex-shrink-0 px-3 py-1.5 rounded-md text-xs
+                  text-paper-700 dark:text-paper-300
+                  hover:bg-paper-200 dark:hover:bg-pitch-700
+                  disabled:opacity-40 transition-colors
+                  font-display uppercase tracking-wide
+                "
+              >
+                {migrating ? 'Moving…' : 'Change…'}
+              </button>
+            </div>
+
+            {error && (
+              <div className="mt-2 flex items-start gap-1.5">
+                <AlertCircle size={12} className="flex-shrink-0 mt-0.5 text-red-500" />
+                <p className="text-xs text-red-500 leading-snug">{error}</p>
+              </div>
+            )}
+
+            {restartPending && (
+              <div className="mt-2 rounded-lg p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800">
+                <p className="text-sm text-amber-700 dark:text-amber-400 mb-2 leading-snug">
+                  Data moved. Trace needs to restart to use the new location.
+                </p>
+                <button
+                  onClick={relaunch}
+                  className="
+                    w-full flex items-center justify-center gap-1.5
+                    px-3 py-2 rounded-md text-xs
+                    bg-amber-500 hover:bg-amber-600 text-white
+                    font-display uppercase tracking-wide transition-colors
+                  "
+                >
+                  <RefreshCw size={11} />
+                  Restart now
+                </button>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* Cloud sync row — always rendered (browser + Tauri). Gated by
+            is_connected so the same row shows either a connect CTA or a
+            connected provider summary. */}
+        <div className={`
+          flex items-center gap-3 px-3 py-2.5 rounded-lg
+          bg-paper-100 dark:bg-pitch-800
+          border border-paper-300 dark:border-pitch-500
+          ${isTauri() ? 'mt-2' : ''}
+        `}>
+          {storageConfig?.is_connected ? (
+            <span className="w-2 h-2 rounded-full bg-mint flex-shrink-0" aria-label="Connected" />
+          ) : (
+            <CloudOff size={13} className="flex-shrink-0 text-paper-500 dark:text-paper-600" />
+          )}
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-pitch-800 dark:text-white capitalize">
+              {storageConfig?.is_connected
+                ? `${storageConfig.provider}${displayHost ? ` · ${displayHost}` : ''}`
+                : 'No cloud sync'}
+            </p>
+            {storageConfig?.is_connected && storageConfig.last_backup_at && (
+              <p className="text-[11px] text-paper-500 dark:text-paper-600 mt-0.5">
+                Backed up {new Date(storageConfig.last_backup_at).toLocaleDateString()}
+              </p>
+            )}
+            {!storageConfig?.is_connected && (
+              <p className="text-[11px] text-paper-500 dark:text-paper-600 mt-0.5">
+                Encrypted backup, attachment sync
+              </p>
+            )}
+          </div>
           <button
-            onClick={relaunch}
+            onClick={() => setShowStorageModal(true)}
             className="
-              w-full flex items-center justify-center gap-1.5
-              px-3 py-2 rounded-md text-xs
-              bg-amber-500 hover:bg-amber-600 text-white
+              flex-shrink-0 px-3 py-1.5 rounded-md text-xs
+              text-paper-700 dark:text-paper-300
+              hover:bg-paper-200 dark:hover:bg-pitch-700
               font-display uppercase tracking-wide transition-colors
             "
           >
-            <RefreshCw size={11} />
-            Restart now
+            {storageConfig?.is_connected ? 'Manage' : 'Connect'}
           </button>
         </div>
-      ) : (
-        <>
-          <div className="
-            flex items-center gap-3 px-3 py-2.5 rounded-lg
-            bg-paper-100 dark:bg-pitch-800
-            border border-paper-300 dark:border-pitch-500
-          ">
-            <FolderOpen size={13} className="flex-shrink-0 text-paper-500 dark:text-paper-600" />
-            <span
-              className="flex-1 text-xs font-mono truncate text-pitch-700 dark:text-paper-300"
-              title={dataDir || ''}
-            >
-              {dataDir || '…'}
-            </span>
-            <button
-              onClick={handleChange}
-              disabled={migrating}
-              className="
-                flex-shrink-0 px-3 py-1.5 rounded-md text-xs
-                text-paper-700 dark:text-paper-300
-                hover:bg-paper-200 dark:hover:bg-pitch-700
-                disabled:opacity-40 transition-colors
-                font-display uppercase tracking-wide
-              "
-            >
-              {migrating ? 'Moving…' : 'Change…'}
-            </button>
-          </div>
-          {error && (
-            <div className="mt-2 flex items-start gap-1.5">
-              <AlertCircle size={12} className="flex-shrink-0 mt-0.5 text-red-500" />
-              <p className="text-xs text-red-500 leading-snug">{error}</p>
-            </div>
-          )}
-        </>
+
+        <p className="mt-3 text-center text-[11px] text-paper-500 dark:text-paper-600">
+          Coming soon — Dropbox · OneDrive · SharePoint
+        </p>
+      </Card>
+
+      {showStorageModal && (
+        <StorageSetupModal
+          currentConfig={storageConfig}
+          onClose={() => setShowStorageModal(false)}
+          onSaved={() => reloadStorage()}
+        />
       )}
-    </Card>
+    </>
   )
 }
 
@@ -847,8 +928,35 @@ function AboutSection() {
   return (
     <Card>
       <CardHeader icon={SettingsIcon} title="About" />
-      <dl className="space-y-1.5 text-sm">
+      <dl className="space-y-2 text-sm">
         <Row label="Version" value={version ? `v${version}` : '—'} />
+        <Row
+          label="What's new"
+          value={
+            <a
+              href="https://github.com/lukeogh/Trace/releases"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-mint-700 dark:text-mint-300 hover:underline"
+            >
+              Release notes ↗
+            </a>
+          }
+        />
+        <Row
+          label="Source"
+          value={
+            <a
+              href="https://github.com/lukeogh/Trace"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-mint-700 dark:text-mint-300 hover:underline"
+            >
+              github.com/lukeogh/Trace ↗
+            </a>
+          }
+        />
+        <Row label="Made by" value="LKEOGH QA LTD" />
       </dl>
     </Card>
   )
@@ -895,27 +1003,3 @@ function CardHeader({ icon: Icon, title, subtitle }) {
   )
 }
 
-function Segmented({ value, options, onChange }) {
-  return (
-    <div className="inline-flex items-center gap-0.5 p-0.5 rounded-md w-full bg-paper-100 dark:bg-pitch-800 border border-paper-300 dark:border-pitch-500">
-      {options.map((opt) => {
-        const active = opt.key === value
-        return (
-          <button
-            key={opt.key}
-            onClick={() => onChange(opt.key)}
-            className={`
-              flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded text-sm transition-colors
-              ${active
-                ? 'bg-white dark:bg-pitch-700 text-pitch-800 dark:text-white shadow-sm'
-                : 'text-paper-600 dark:text-paper-500 hover:text-pitch-700 dark:hover:text-paper-200'
-              }
-            `}
-          >
-            <span className="font-display uppercase tracking-wide text-xs">{opt.label}</span>
-          </button>
-        )
-      })}
-    </div>
-  )
-}
