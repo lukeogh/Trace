@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, String, Text, ForeignKey, DateTime, Boolean, Date
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, backref
 from sqlalchemy.sql import func
 from database import Base
 
@@ -66,10 +66,33 @@ class Entry(Base):
     # Free-form notes — used mostly on investigative todos to capture
     # findings while the task is still open. Nullable across all types.
     notes = Column(Text, nullable=True)
+
+    # ── Task decomposition (subtasks) ─────────────────────────────────────────
+    # Subtasks are Entry rows of type 'todo' that point at a parent todo via
+    # parent_id. Top-level entries have parent_id = NULL.
+    parent_id = Column(Integer, ForeignKey("entries.id", ondelete="CASCADE"), nullable=True)
+    # AI-suggested time estimate for a subtask, in minutes.
+    time_estimate_minutes = Column(Integer, nullable=True)
+    # Display ordering among siblings under the same parent.
+    subtask_order = Column(Integer, nullable=True)
+    # True once the user has dismissed the breakdown drawer for this todo —
+    # enables the "Break this down" later affordance without re-triggering.
+    decomp_dismissed = Column(Boolean, default=False, nullable=False)
+
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
     thread = relationship("Thread", back_populates="entries")
+    # Self-referential: a todo's subtasks. Deleting a parent cascades to its
+    # children. remote_side ties the backref 'parent' to this row's id.
+    subtasks = relationship(
+        "Entry",
+        backref=backref("parent", remote_side="Entry.id"),
+        foreign_keys="Entry.parent_id",
+        order_by="Entry.subtask_order",
+        cascade="all, delete-orphan",
+        single_parent=True,
+    )
 
 
 class Attachment(Base):

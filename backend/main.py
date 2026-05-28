@@ -49,6 +49,8 @@ from routers import (
     areas, threads, entries, attachments, generate, ingest,
     settings as settings_router,
     storage as storage_router,
+    subtasks as subtasks_router,
+    ai_features as ai_features_router,
 )
 
 # Trace. launches with no seeded areas — the user creates their own from the
@@ -84,6 +86,11 @@ def _init_db():
             "CREATE TABLE IF NOT EXISTS storage_sync_logs (id INTEGER PRIMARY KEY, event_type VARCHAR(30) DEFAULT 'backup', status VARCHAR(20) NOT NULL, provider VARCHAR(30), remote_path VARCHAR(500), size_bytes INTEGER, error_message TEXT, occurred_at DATETIME DEFAULT CURRENT_TIMESTAMP)",
             "ALTER TABLE attachments ADD COLUMN remote_path VARCHAR(500)",
             "ALTER TABLE attachments ADD COLUMN sync_status VARCHAR(20) DEFAULT 'local'",
+            # Task decomposition — subtasks are entries with a parent_id
+            "ALTER TABLE entries ADD COLUMN parent_id INTEGER REFERENCES entries(id) ON DELETE CASCADE",
+            "ALTER TABLE entries ADD COLUMN time_estimate_minutes INTEGER",
+            "ALTER TABLE entries ADD COLUMN subtask_order INTEGER",
+            "ALTER TABLE entries ADD COLUMN decomp_dismissed BOOLEAN DEFAULT 0",
         ]:
             try:
                 conn.execute(text(sql))
@@ -195,6 +202,8 @@ app.include_router(generate.router, prefix="/api")
 app.include_router(ingest.router, prefix="/api")
 app.include_router(settings_router.router, prefix="/api")
 app.include_router(storage_router.router, prefix="/api")
+app.include_router(subtasks_router.router, prefix="/api")
+app.include_router(ai_features_router.router, prefix="/api")
 
 # Serve uploaded files at /uploads/<stored_name>
 if os.path.exists(UPLOAD_DIR):
