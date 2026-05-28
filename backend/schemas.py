@@ -14,6 +14,10 @@ class AttachmentOut(BaseModel):
     original_name: Optional[str] = None
     url: Optional[str] = None
     size: Optional[int] = None
+    # Cloud-sync fields — null on local-only installs, populated once a
+    # remote backend is configured and the background upload has run.
+    remote_path: Optional[str] = None
+    sync_status: Optional[str] = None
     created_at: datetime
 
     model_config = {"from_attributes": True}
@@ -379,3 +383,45 @@ class AITestResult(BaseModel):
     message: str
     provider: str
     model: Optional[str]
+
+
+# ── Storage / cloud sync ─────────────────────────────────────────────────────
+
+class StorageConfig(BaseModel):
+    """
+    Storage backend config — stored in app_settings under 'storage_config'.
+
+    Only fields relevant to the active provider are populated. The password
+    is encrypted at rest (Fernet symmetric encryption); see storage_backend.py.
+    """
+    provider: str = "local"               # local | nextcloud
+    server_url: Optional[str] = None
+    username: Optional[str] = None
+    password: Optional[str] = None        # Nextcloud app password, encrypted
+    remote_folder: str = "Trace"
+    backup_enabled: bool = True
+
+
+class StorageConfigOut(BaseModel):
+    """API-safe view — never returns raw passwords."""
+    provider: str
+    is_connected: bool
+    remote_folder: str
+    backup_enabled: bool
+    server_url: Optional[str]
+    username: Optional[str]
+    last_backup_at: Optional[str]
+    last_backup_status: Optional[str]
+
+
+class StorageSyncLogOut(BaseModel):
+    id: int
+    event_type: str
+    status: str
+    provider: Optional[str]
+    remote_path: Optional[str]
+    size_bytes: Optional[int]
+    error_message: Optional[str]
+    occurred_at: datetime
+
+    model_config = {"from_attributes": True}

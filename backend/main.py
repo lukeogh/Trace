@@ -48,6 +48,7 @@ from database import engine, SessionLocal
 from routers import (
     areas, threads, entries, attachments, generate, ingest,
     settings as settings_router,
+    storage as storage_router,
     subtasks as subtasks_router,
     ai_features as ai_features_router,
 )
@@ -81,6 +82,10 @@ def _init_db():
             "ALTER TABLE entries ADD COLUMN notes TEXT",
             # AI engine config + future generic app settings
             "CREATE TABLE IF NOT EXISTS app_settings (key VARCHAR(100) PRIMARY KEY, value TEXT, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP)",
+            # Cloud storage / sync log + per-attachment sync state
+            "CREATE TABLE IF NOT EXISTS storage_sync_logs (id INTEGER PRIMARY KEY, event_type VARCHAR(30) DEFAULT 'backup', status VARCHAR(20) NOT NULL, provider VARCHAR(30), remote_path VARCHAR(500), size_bytes INTEGER, error_message TEXT, occurred_at DATETIME DEFAULT CURRENT_TIMESTAMP)",
+            "ALTER TABLE attachments ADD COLUMN remote_path VARCHAR(500)",
+            "ALTER TABLE attachments ADD COLUMN sync_status VARCHAR(20) DEFAULT 'local'",
             # Task decomposition — subtasks are entries with a parent_id
             "ALTER TABLE entries ADD COLUMN parent_id INTEGER REFERENCES entries(id) ON DELETE CASCADE",
             "ALTER TABLE entries ADD COLUMN time_estimate_minutes INTEGER",
@@ -196,6 +201,7 @@ app.include_router(attachments.router, prefix="/api")
 app.include_router(generate.router, prefix="/api")
 app.include_router(ingest.router, prefix="/api")
 app.include_router(settings_router.router, prefix="/api")
+app.include_router(storage_router.router, prefix="/api")
 app.include_router(subtasks_router.router, prefix="/api")
 app.include_router(ai_features_router.router, prefix="/api")
 

@@ -111,6 +111,13 @@ class Attachment(Base):
     url = Column(String(1000))
     # bytes (files only)
     size = Column(Integer)
+    # Remote path on the configured cloud backend (null = local-only).
+    # Populated by the background upload task in routers/attachments.py
+    # after the file lands on Nextcloud / Dropbox / etc.
+    remote_path = Column(String(500), nullable=True)
+    # local | synced | pending | failed — drives the sync indicator in UI
+    # and lets future retry logic know which attachments to chase.
+    sync_status = Column(String(20), nullable=True, default="local")
     created_at = Column(DateTime, server_default=func.now())
 
     thread = relationship("Thread", back_populates="attachments")
@@ -170,3 +177,27 @@ class AppSettings(Base):
     key = Column(String(100), primary_key=True, index=True)
     value = Column(Text, nullable=True)
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+
+
+class StorageSyncLog(Base):
+    """
+    Records each backup/sync attempt and its outcome.
+
+    Two event types so far:
+      - "backup"          : nightly encrypted DB snapshot upload
+      - "attachment_sync" : (future) per-attachment remote upload audit
+
+    Surfaced in the StorageSetupModal's Manage view — the user sees the last
+    few rows as a quick "did backups actually run?" sanity check.
+    """
+    __tablename__ = "storage_sync_logs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    event_type = Column(String(30), nullable=False, default="backup")
+    # success | failed | skipped
+    status = Column(String(20), nullable=False)
+    provider = Column(String(30), nullable=True)
+    remote_path = Column(String(500), nullable=True)
+    size_bytes = Column(Integer, nullable=True)
+    error_message = Column(Text, nullable=True)
+    occurred_at = Column(DateTime, server_default=func.now())
