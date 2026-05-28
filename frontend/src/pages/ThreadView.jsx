@@ -16,6 +16,10 @@ import AddMeetingModal from '../components/AddMeetingModal'
 import StatusChangeModal from '../components/StatusChangeModal'
 import { useToast } from '../components/Toast'
 import { THREAD_STATUSES, formatBytes, DUE_DATE_OPTIONS } from '../utils/status'
+import { useEntryAI } from '../hooks/useEntryAI'
+import ActionSuggestionBanner from '../components/ActionSuggestionBanner'
+import SubtaskList from '../components/SubtaskList'
+import TaskDecompositionDrawer from '../components/TaskDecompositionDrawer'
 
 import { ENTITY, ENTITY_TYPES, entityFor, SECTION_ICONS } from '../utils/entityIcons'
 
@@ -56,6 +60,12 @@ export default function ThreadView() {
   const [dueDateOption, setDueDateOption] = useState(null)
   const [dueDate, setDueDate] = useState(null)
   const [addingEntry, setAddingEntry] = useState(false)
+
+  // AI hint flows — action detection on Updates, decomposition on to-dos
+  const {
+    actionSuggestions, drawerState,
+    onEntrySaved, clearActions, openBreakdownDrawer, closeDrawer,
+  } = useEntryAI()
 
   // Entry editing
   const [editingEntryId, setEditingEntryId] = useState(null)
@@ -220,8 +230,44 @@ export default function ThreadView() {
       setDueDateOption(null)
       setDueDate(null)
       toast('Entry added')
+      // Fire the AI hint flows in the background (action detection on
+      // Updates, decomposition assessment on to-dos). No await — the entry
+      // is already saved; suggestions surface a beat later if relevant.
+      onEntrySaved(entry)
     } catch (e) { toast(e.message, 'error') }
     finally { setAddingEntry(false) }
+  }
+
+  // Create a to-do from an ActionSuggestionBanner suggestion.
+  const createTodoFromAction = async (title, tid) => {
+    try {
+      const entry = await entriesApi.create(tid, { content: title, type: 'todo' })
+      setThread((t) => ({ ...t, entries: [...t.entries, entry] }))
+      toast('To-do added')
+    } catch (e) { toast(e.message, 'error') }
+  }
+
+  // Replace a parent to-do's subtasks array in local state (after toggle/delete).
+  const updateEntrySubtasks = (entryId, updated) => {
+    setThread((t) => ({
+      ...t,
+      entries: t.entries.map((e) =>
+        e.id === entryId ? { ...e, subtasks: updated } : e
+      ),
+    }))
+  }
+
+  // Merge freshly-created subtasks into the parent + mark it decomposed,
+  // so SubtaskList renders them immediately without a refetch.
+  const mergeSubtasksIntoEntry = (entryId, created) => {
+    setThread((t) => ({
+      ...t,
+      entries: t.entries.map((e) =>
+        e.id === entryId
+          ? { ...e, subtasks: [...(e.subtasks || []), ...created], decomp_dismissed: true }
+          : e
+      ),
+    }))
   }
 
   const addMeeting = async ({ title, meeting_at }) => {
@@ -783,20 +829,45 @@ export default function ThreadView() {
 
               <div className="space-y-1">
                 {sortedEntries.map((entry) => (
-                  <EntryBlock
-                    key={entry.id}
-                    entry={entry}
-                    editing={editingEntryId === entry.id}
-                    draft={entryDraft}
-                    onEditStart={() => { setEditingEntryId(entry.id); setEntryDraft(entry.content) }}
-                    onDraftChange={(v) => setEntryDraft(v)}
-                    onSave={() => saveEntry(entry.id)}
-                    onCancel={() => setEditingEntryId(null)}
-                    onDelete={() => setDeleteEntryId(entry.id)}
-                    onToggleComplete={(completed) => toggleEntryComplete(entry.id, completed)}
-                    onSaveNotes={(notes) => saveEntryNotes(entry.id, notes)}
-                    onSaveMeeting={(fields) => saveMeetingFields(entry.id, fields)}
-                  />
+                  <div key={entry.id}>
+                    <EntryBlock
+                      entry={entry}
+                      editing={editingEntryId === entry.id}
+                      draft={entryDraft}
+                      onEditStart={() => { setEditingEntryId(entry.id); setEntryDraft(entry.content) }}
+                      onDraftChange={(v) => setEntryDraft(v)}
+                      onSave={() => saveEntry(entry.id)}
+                      onCancel={() => setEditingEntryId(null)}
+                      onDelete={() => setDeleteEntryId(entry.id)}
+                      onToggleComplete={(completed) => toggleEntryComplete(entry.id, completed)}
+                      onSaveNotes={(notes) => saveEntryNotes(entry.id, notes)}
+                      onSaveMeeting={(fields) => saveMeetingFields(entry.id, fields)}
+                    />
+
+                    {/* AI action suggestions — appears below the Update that triggered them */}
+                    {actionSuggestions?.entryId === entry.id && (
+                      <div className="ml-10">
+                        <ActionSuggestionBanner
+                          actions={actionSuggestions.actions}
+                          threadId={entry.thread_id}
+                          onCreateTodo={createTodoFromAction}
+                          onDismiss={clearActions}
+                        />
+                      </div>
+                    )}
+
+                    {/* Subtasks — nested under to-do entries */}
+                    {entry.type === 'todo' && (
+                      <SubtaskList
+                        parentId={entry.id}
+                        subtasks={entry.subtasks || []}
+                        decomp_dismissed={entry.decomp_dismissed}
+                        taskTitle={entry.content}
+                        onBreakDown={openBreakdownDrawer}
+                        onSubtasksChange={(updated) => updateEntrySubtasks(entry.id, updated)}
+                      />
+                    )}
+                  </div>
                 ))}
               </div>
             </div>
@@ -1060,6 +1131,18 @@ export default function ThreadView() {
         onConfirm={submitStatusChange}
         submitting={changingStatus}
       />
+
+      {/* Task decomposition drawer — slides in when the AI suggests a breakdown */}
+      {drawerState && (
+        <TaskDecompositionDrawer
+          entryId={drawerState.entryId}
+          taskTitle={drawerState.taskTitle}
+          subtasks={drawerState.subtasks}
+          onApprove={(created) => { mergeSubtasksIntoEntry(drawerState.entryId, created); closeDrawer() }}
+          onDismiss={closeDrawer}
+          onClose={closeDrawer}
+        />
+      )}
 
       <Modal
         isOpen={linkThreadOpen}

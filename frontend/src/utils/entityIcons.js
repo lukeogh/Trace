@@ -11,7 +11,9 @@ import { PenLine, CheckSquare, Scale, Calendar, MessageSquare, Eye, Activity, Pa
  */
 export const ENTITY = {
   entry: {
-    label: 'Entry',
+    // Stored type value stays "entry"; the human-facing label is "Update"
+    // (a log update). Only this label changes — no data migration.
+    label: 'Update',
     Icon: PenLine,
     tint: 'text-paper-700 dark:text-paper-200',
     badge: 'bg-paper-200 dark:bg-pitch-700 text-paper-700 dark:text-paper-200',
