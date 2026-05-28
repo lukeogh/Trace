@@ -72,7 +72,14 @@ def get_thread(thread_id: int, db: Session = Depends(get_db)):
         description=thread.description or "",
         created_at=thread.created_at,
         updated_at=thread.updated_at,
-        entries=[schemas.EntryOut.model_validate(e) for e in thread.entries],
+        # Only top-level entries — subtasks (parent_id set) are nested under
+        # their parent todo's `subtasks` field, so excluding them here keeps
+        # them from rendering twice in the timeline.
+        entries=[
+            schemas.EntryOut.model_validate(e)
+            for e in thread.entries
+            if e.parent_id is None
+        ],
         attachments=[schemas.AttachmentOut.model_validate(a) for a in thread.attachments],
         outgoing_links=out_refs,
         incoming_links=in_refs,

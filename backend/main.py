@@ -45,7 +45,12 @@ from fastapi.responses import JSONResponse
 
 import models
 from database import engine, SessionLocal
-from routers import areas, threads, entries, attachments, generate, ingest, settings as settings_router
+from routers import (
+    areas, threads, entries, attachments, generate, ingest,
+    settings as settings_router,
+    subtasks as subtasks_router,
+    ai_features as ai_features_router,
+)
 
 # Trace. launches with no seeded areas — the user creates their own from the
 # sidebar's "+ Add your first area" prompt. The previous seven-area software
@@ -76,6 +81,11 @@ def _init_db():
             "ALTER TABLE entries ADD COLUMN notes TEXT",
             # AI engine config + future generic app settings
             "CREATE TABLE IF NOT EXISTS app_settings (key VARCHAR(100) PRIMARY KEY, value TEXT, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP)",
+            # Task decomposition — subtasks are entries with a parent_id
+            "ALTER TABLE entries ADD COLUMN parent_id INTEGER REFERENCES entries(id) ON DELETE CASCADE",
+            "ALTER TABLE entries ADD COLUMN time_estimate_minutes INTEGER",
+            "ALTER TABLE entries ADD COLUMN subtask_order INTEGER",
+            "ALTER TABLE entries ADD COLUMN decomp_dismissed BOOLEAN DEFAULT 0",
         ]:
             try:
                 conn.execute(text(sql))
@@ -186,6 +196,8 @@ app.include_router(attachments.router, prefix="/api")
 app.include_router(generate.router, prefix="/api")
 app.include_router(ingest.router, prefix="/api")
 app.include_router(settings_router.router, prefix="/api")
+app.include_router(subtasks_router.router, prefix="/api")
+app.include_router(ai_features_router.router, prefix="/api")
 
 # Serve uploaded files at /uploads/<stored_name>
 if os.path.exists(UPLOAD_DIR):

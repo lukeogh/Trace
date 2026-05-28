@@ -53,10 +53,39 @@ class EntryOut(BaseModel):
     due_date: Optional[date] = None
     meeting_at: Optional[datetime] = None
     notes: Optional[str] = None
+    # Task decomposition fields
+    parent_id: Optional[int] = None
+    time_estimate_minutes: Optional[int] = None
+    subtask_order: Optional[int] = None
+    decomp_dismissed: bool = False
+    # Nested subtasks (only populated for parent todos). Self-referential —
+    # children carry an empty list since they have no further nesting.
+    subtasks: List["EntryOut"] = []
     created_at: datetime
     updated_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+# ── Subtasks ──────────────────────────────────────────────────────────────────
+
+class SubtaskCreate(BaseModel):
+    title: str
+    time_estimate_minutes: Optional[int] = None
+    subtask_order: Optional[int] = None
+
+
+class SubtaskBulkCreate(BaseModel):
+    subtasks: List[SubtaskCreate]
+
+
+class ReorderItem(BaseModel):
+    subtask_id: int
+    subtask_order: int
+
+
+class ReorderRequest(BaseModel):
+    order: List[ReorderItem]
 
 
 # ── Threads ───────────────────────────────────────────────────────────────────
