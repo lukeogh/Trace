@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Check, ChevronDown, X, ListTree } from 'lucide-react'
 import { toggleSubtask, deleteSubtask } from '../api/tasks'
 
@@ -30,6 +30,14 @@ export default function SubtaskList({
 }) {
   const [collapsed, setCollapsed] = useState(false)
   const [localSubtasks, setLocalSubtasks] = useState(subtasks)
+
+  // useState only snapshots the prop on first mount — so when the parent
+  // merges freshly-approved subtasks in (or a refetch arrives), sync them
+  // down. Optimistic toggle/delete already push the same data up via
+  // onSubtasksChange, so this stays consistent and doesn't ping-pong.
+  useEffect(() => {
+    setLocalSubtasks(subtasks)
+  }, [subtasks])
 
   const completedCount = localSubtasks.filter((s) => s.completed).length
   const totalCount = localSubtasks.length
