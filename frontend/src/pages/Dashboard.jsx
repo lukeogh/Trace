@@ -112,7 +112,7 @@ export default function Dashboard() {
         bg-paper-100/90 dark:bg-pitch-800/90 backdrop-blur-md
         border-b border-paper-300 dark:border-pitch-700
       ">
-        <div className="max-w-6xl mx-auto flex items-start justify-between gap-6 pr-14">
+        <div className="max-w-[1600px] mx-auto flex items-start justify-between gap-6 pr-14">
           <div className="min-w-0">
             {/* Greeting + date. Personal anchor - orients the eye and the
                 hour. First-name only so the line stays short and warm. */}
@@ -147,7 +147,7 @@ export default function Dashboard() {
         </div>
 
         {filterNotice && (
-          <div className="max-w-6xl mx-auto mt-3 flex items-center gap-2">
+          <div className="max-w-[1600px] mx-auto mt-3 flex items-center gap-2">
             <span className="text-xs font-mono uppercase tracking-widest text-paper-500 dark:text-paper-600">
               {filterNotice}
             </span>
@@ -167,7 +167,7 @@ export default function Dashboard() {
       </header>
 
       {/* ── Area grid ── */}
-      <main className="max-w-6xl mx-auto px-8 py-8">
+      <main className="max-w-[1600px] mx-auto px-8 py-8">
         {/* Daily nudge - a calm, rotating usage reminder. Quiet by design:
             soft tint, small leaf mark, no dismiss, no call to action. */}
         {nudge && (
@@ -183,7 +183,10 @@ export default function Dashboard() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        <div
+          className="grid gap-4"
+          style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))' }}
+        >
           {displayAreas.map((area) => (
             <AreaCard key={area.id} area={area} />
           ))}
@@ -191,7 +194,7 @@ export default function Dashboard() {
       </main>
 
       {/* ── Below-fold sections ── */}
-      <div className="max-w-6xl mx-auto px-8 pb-12">
+      <div className="max-w-[1600px] mx-auto px-8 pb-12">
         <ComingUp />
         <RecentActivity viewMode={viewMode} />
       </div>
@@ -313,7 +316,10 @@ function AreaCard({ area }) {
 function DashboardSkeleton() {
   return (
     <div className="flex-1 min-h-screen bg-paper-100 dark:bg-pitch-800 bg-grid-light dark:bg-grid-dark">
-      <div className="max-w-6xl mx-auto px-8 py-8 grid grid-cols-3 gap-4">
+      <div
+        className="max-w-[1600px] mx-auto px-8 py-8 grid gap-4"
+        style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))' }}
+      >
         {Array.from({ length: 7 }).map((_, i) => (
           <div key={i} className="h-44 rounded-xl bg-paper-200 dark:bg-pitch-700 animate-pulse" />
         ))}
