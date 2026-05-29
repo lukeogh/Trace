@@ -1,6 +1,6 @@
 [package]
 name = "trace"
-version = "0.3.2"
+version = "0.3.3"
 description = "Trace. - Stay across everything."
 authors = []
 edition = "2021"
