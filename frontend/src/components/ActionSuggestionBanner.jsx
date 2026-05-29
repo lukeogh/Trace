@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { ListChecks, Check, X, Plus } from 'lucide-react'
 
 /**
- * ActionSuggestionBanner — appears below a saved Update entry when the AI
+ * ActionSuggestionBanner - appears below a saved Update entry when the AI
  * spots action-intent vocabulary ("need to email…", "follow up with…").
  * Each detected action gets a one-click "Add to-do" button.
  *

@@ -14,7 +14,7 @@ class AttachmentOut(BaseModel):
     original_name: Optional[str] = None
     url: Optional[str] = None
     size: Optional[int] = None
-    # Cloud-sync fields — null on local-only installs, populated once a
+    # Cloud-sync fields - null on local-only installs, populated once a
     # remote backend is configured and the background upload has run.
     remote_path: Optional[str] = None
     sync_status: Optional[str] = None
@@ -62,7 +62,7 @@ class EntryOut(BaseModel):
     time_estimate_minutes: Optional[int] = None
     subtask_order: Optional[int] = None
     decomp_dismissed: bool = False
-    # Nested subtasks (only populated for parent todos). Self-referential —
+    # Nested subtasks (only populated for parent todos). Self-referential -
     # children carry an empty list since they have no further nesting.
     subtasks: List["EntryOut"] = []
     created_at: datetime
@@ -275,7 +275,7 @@ class UpcomingTodo(BaseModel):
 class ProcessRequest(BaseModel):
     area_name: str
     input_text: str
-    # eml | ics | pdf | text — when supplied, the prompt is biased for that
+    # eml | ics | pdf | text - when supplied, the prompt is biased for that
     # source (e.g. ics → produce a meeting item first).
     source_kind: Optional[str] = None
     # Existing thread titles in the area, surfaced so the AI can reuse one
@@ -354,7 +354,7 @@ class AIConfig(BaseModel):
       provider:  one of {"claude", "groq", "gemini", "ollama", "custom"}
       model:     model name (provider-specific; falls back to preset default)
       base_url:  base URL for OpenAI-compatible providers; None for Claude
-      api_key:   raw key — stored as-is in the DB, masked on read
+      api_key:   raw key - stored as-is in the DB, masked on read
     """
     provider: str = "claude"
     model: Optional[str] = None
@@ -364,7 +364,7 @@ class AIConfig(BaseModel):
 
 class AIConfigOut(BaseModel):
     """
-    What the frontend receives. api_key never leaves the server in plaintext —
+    What the frontend receives. api_key never leaves the server in plaintext -
     it's masked to bullets with the last 4 chars visible.
 
     `is_configured` is true when the minimum required fields for the provider
@@ -389,7 +389,7 @@ class AITestResult(BaseModel):
 
 class StorageConfig(BaseModel):
     """
-    Storage backend config — stored in app_settings under 'storage_config'.
+    Storage backend config - stored in app_settings under 'storage_config'.
 
     Only fields relevant to the active provider are populated. The password
     is encrypted at rest (Fernet symmetric encryption); see storage_backend.py.
@@ -403,7 +403,7 @@ class StorageConfig(BaseModel):
 
 
 class StorageConfigOut(BaseModel):
-    """API-safe view — never returns raw passwords."""
+    """API-safe view - never returns raw passwords."""
     provider: str
     is_connected: bool
     remote_folder: str

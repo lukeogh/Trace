@@ -28,8 +28,8 @@
      used for the dot in "Trace.", the splash, and focus rings. mint-700
      is the accessible darker shade used for primary action buttons (passes
      WCAG AA contrast with white text). Same hue, different shades, same
-     family — the result reads as one brand, not two. */
-  --mint:           #10B981;   /* signature shade — dot, splash, focus */
+     family - the result reads as one brand, not two. */
+  --mint:           #10B981;   /* signature shade - dot, splash, focus */
   --mint-button:    #047857;   /* primary action button (AA on white) */
   --mint-hover:     #065F46;   /* primary action button, hover */
   --mint-soft:      #34D399;   /* lighter variant for soft contexts */
@@ -79,7 +79,7 @@
   --duration-slow: 400ms;
 }
 
-/* ── Dark mode overrides — applied when html.dark is present ─────────────── */
+/* ── Dark mode overrides - applied when html.dark is present ─────────────── */
 html.dark {
   --rule:        rgba(247, 244, 237, 0.10);
   --rule-strong: rgba(247, 244, 237, 0.18);

@@ -2,14 +2,14 @@ import { useState, useCallback } from 'react'
 import { detectActions, decomposeTask } from '../api/tasks'
 
 /**
- * useEntryAI — orchestrates the two post-save AI hint flows:
+ * useEntryAI - orchestrates the two post-save AI hint flows:
  *
  *   1. Update entries (type 'entry') → detect action vocabulary →
  *      ActionSuggestionBanner appears below the entry.
  *   2. To-do entries (type 'todo')  → assess decomposition need →
  *      TaskDecompositionDrawer slides in if the task warrants breaking up.
  *
- * Both are best-effort. If AI is unconfigured or a call fails, nothing shows —
+ * Both are best-effort. If AI is unconfigured or a call fails, nothing shows -
  * the entry/to-do is already saved either way.
  *
  * Usage:
@@ -27,7 +27,7 @@ export function useEntryAI() {
   const onEntrySaved = useCallback(async (entry) => {
     if (!entry?.id) return
 
-    // Path A — Update entry → action detection
+    // Path A - Update entry → action detection
     if (entry.type === 'entry' && (entry.content?.trim().length || 0) > 10) {
       try {
         const data = await detectActions(entry.content, entry.id)
@@ -35,11 +35,11 @@ export function useEntryAI() {
           setActionSuggestions({ entryId: entry.id, actions: data.actions })
         }
       } catch {
-        // hint, not a gate — stay silent
+        // hint, not a gate - stay silent
       }
     }
 
-    // Path B — to-do → decomposition assessment
+    // Path B - to-do → decomposition assessment
     if (entry.type === 'todo' && (entry.content?.trim().length || 0) > 3) {
       try {
         const data = await decomposeTask(entry.id, entry.content)

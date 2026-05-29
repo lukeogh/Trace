@@ -2,12 +2,12 @@
 Storage configuration + backup REST endpoints.
 
 Routes (all under /api/storage):
-  GET    /storage/config       — current config (no secrets)
-  PUT    /storage/config       — save (encrypts the password before persisting)
-  DELETE /storage/config       — disconnect, fall back to local
-  POST   /storage/test         — test the currently-saved config
-  POST   /storage/backup/run   — trigger an immediate backup (background)
-  GET    /storage/backup/logs  — most recent 20 sync log entries
+  GET    /storage/config       - current config (no secrets)
+  PUT    /storage/config       - save (encrypts the password before persisting)
+  DELETE /storage/config       - disconnect, fall back to local
+  POST   /storage/test         - test the currently-saved config
+  POST   /storage/backup/run   - trigger an immediate backup (background)
+  GET    /storage/backup/logs  - most recent 20 sync log entries
 """
 
 import logging
@@ -88,11 +88,11 @@ def test_connection(
     Dry-run a connection check.
 
     If `payload` is supplied, build a transient backend from those values
-    and test against them WITHOUT saving. This is the path the wizard takes —
+    and test against them WITHOUT saving. This is the path the wizard takes -
     a failed test no longer corrupts the stored config (which used to make
     `is_connected` falsely report success).
 
-    With no payload, test the currently-saved backend — used by future
+    With no payload, test the currently-saved backend - used by future
     Manage-view "re-test" affordances.
     """
     if payload is not None:
@@ -107,7 +107,7 @@ def test_connection(
 def run_backup(background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     """
     Kick off an immediate backup. Runs in the background so the HTTP request
-    returns instantly — the UI polls /storage/backup/logs to see the result.
+    returns instantly - the UI polls /storage/backup/logs to see the result.
     """
     config = get_storage_config_for_api(db)
     if not config["is_connected"]:
@@ -116,12 +116,12 @@ def run_backup(background_tasks: BackgroundTasks, db: Session = Depends(get_db))
             detail="No remote backend connected. Configure cloud storage first."
         )
     background_tasks.add_task(_do_backup)
-    return {"queued": True, "message": "Backup started — check the log in a few seconds."}
+    return {"queued": True, "message": "Backup started - check the log in a few seconds."}
 
 
 def _do_backup() -> None:
     """
-    Background task entrypoint — creates its own DB session because the
+    Background task entrypoint - creates its own DB session because the
     request session is closed before this runs (FastAPI tears it down once
     the response goes out).
     """

@@ -18,7 +18,7 @@ export function AreaIcon({ name, size = 16, className = '' }) {
 
 // Build a stable list of all icon names ONCE at module load. Lucide ships
 // every icon as a named export plus a few helpers. Icons are forwardRef
-// components (objects with $$typeof) in current versions — we identify
+// components (objects with $$typeof) in current versions - we identify
 // them by their PascalCase name and an explicit exclusion list rather
 // than typeof, which would discard them all.
 const NON_ICON_EXPORTS = new Set([
@@ -41,9 +41,9 @@ const RESULT_LIMIT = 120
  * Type to filter; click to pick. Esc / click-outside to close.
  *
  * Props:
- *   value     — current icon name (string | null)
- *   onChange  — (name | null) => void
- *   children  — render-prop receiving { open, value }; defaults to a small
+ *   value     - current icon name (string | null)
+ *   onChange  - (name | null) => void
+ *   children  - render-prop receiving { open, value }; defaults to a small
  *               clickable button. Lets callers customise the trigger.
  */
 export default function IconPicker({ value, onChange, children }) {

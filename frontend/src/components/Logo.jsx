@@ -1,21 +1,21 @@
 /**
- * Trace logo mark — the fork.
+ * Trace logo mark - the fork.
  *
  * The mark itself is always mono (ink, paper, or currentColor). The mint
  * dot only appears in full lockup contexts where the wordmark is shown
- * — never on the mark alone, never in favicons or app icons.
+ * - never on the mark alone, never in favicons or app icons.
  *
  * The mark also has an opt-in **hover redraw**: when the Logo (or any
  * `group` ancestor that's hovered) is hovered, the three fork strokes
- * redraw themselves in sequence — same motion as the splash, just
+ * redraw themselves in sequence - same motion as the splash, just
  * triggered on demand. Set `spinOnHover={false}` to disable.
  *
  * Props:
- *   size         — pixel dimensions for the mark (default 32)
- *   variant      — 'auto' (currentColor), 'ink' (#14130F), 'paper' (#F7F4ED)
- *   withText     — when true, renders the wordmark "Trace" with the mint dot
- *   spinOnHover  — animate the strokes on hover (default true)
- *   className    — optional extra classes (applied to outer wrapper if withText)
+ *   size         - pixel dimensions for the mark (default 32)
+ *   variant      - 'auto' (currentColor), 'ink' (#14130F), 'paper' (#F7F4ED)
+ *   withText     - when true, renders the wordmark "Trace" with the mint dot
+ *   spinOnHover  - animate the strokes on hover (default true)
+ *   className    - optional extra classes (applied to outer wrapper if withText)
  */
 export default function Logo({
   size = 32,
@@ -134,18 +134,18 @@ export default function Logo({
 
 /**
  * Inline keyframes for the hover redraw. Same motion family as the splash's
- * fork-draws — staggered stem → top → bot — but short (~1s) and triggered
+ * fork-draws - staggered stem → top → bot - but short (~1s) and triggered
  * by `:hover` on the SVG or any ancestor with `group`.
  *
  * Each path uses stroke-dasharray to "draw on" by animating dashoffset
  * from full-length to 0. The redraw runs once per hover (forwards), then
  * the strokes hold visible until the cursor leaves and re-enters.
  *
- * prefers-reduced-motion suppresses the animation entirely — strokes
+ * prefers-reduced-motion suppresses the animation entirely - strokes
  * just stay visible like a static logo.
  *
  * The component renders the <style> tag inline so the Logo is fully
- * self-contained — no external CSS dependency.
+ * self-contained - no external CSS dependency.
  */
 function HoverRedrawStyles() {
   return (

@@ -1,13 +1,13 @@
 # Building the Trace. desktop app
 
-This document covers the **desktop** build path — packaging Trace. as a
+This document covers the **desktop** build path - packaging Trace. as a
 self-contained Windows / macOS / Linux app via Tauri v2 + PyInstaller. The
 **Docker** deployment path is unchanged and unaffected by anything here; see
 the project root README for that.
 
 ---
 
-## TL;DR — local Windows build
+## TL;DR - local Windows build
 
 ```powershell
 # One-time setup (see "Prerequisites" if any of these fail):
@@ -36,8 +36,8 @@ src-tauri/target/release/trace.exe                                # bare exe (no
 | Rust | **1.94** (pinned) | `src-tauri/rust-toolchain.toml` auto-installs this via rustup |
 | Python | 3.11 | Earlier 3.x probably fine; we pin 3.11 in CI |
 | Node | 20 LTS | For frontend + Tauri CLI |
-| MSVC Build Tools 2022 | Latest | Windows only — provides `link.exe` and the Win SDK |
-| Tauri CLI | 2.11+ | `npm i -g @tauri-apps/cli@^2` (do **not** use `cargo install tauri-cli` — see footnote) |
+| MSVC Build Tools 2022 | Latest | Windows only - provides `link.exe` and the Win SDK |
+| Tauri CLI | 2.11+ | `npm i -g @tauri-apps/cli@^2` (do **not** use `cargo install tauri-cli` - see footnote) |
 
 ### Why not `cargo install tauri-cli`?
 
@@ -51,7 +51,7 @@ it anyway.
 ### Windows Defender exclusions
 
 Defender's real-time scanner aggressively reads `.rmeta` files that rustc is
-still writing, corrupting them and producing weird build failures —
+still writing, corrupting them and producing weird build failures -
 `STATUS_STACK_BUFFER_OVERRUN`, "only metadata stub found for `core`", random
 `Debug not implemented` errors on `#[derive(Debug)]` types. The symptom is that
 **different crates fail on each rebuild**.
@@ -67,7 +67,7 @@ Add-MpPreference -ExclusionProcess "cargo.exe"
 Add-MpPreference -ExclusionProcess "link.exe"
 ```
 
-CI runners don't have this problem — Defender isn't real-time on GitHub
+CI runners don't have this problem - Defender isn't real-time on GitHub
 Actions hosted runners.
 
 ---
@@ -100,7 +100,7 @@ At runtime:
 ```
 
 The FastAPI backend serves the React SPA from its own `StaticFiles` mount.
-There's no separate frontend devserver in the bundled app — it's the same
+There's no separate frontend devserver in the bundled app - it's the same
 single-binary surface that Docker ships.
 
 ### Why `bundle.resources`, not `externalBin`?
@@ -115,7 +115,7 @@ the resolved resource path.
 
 ## Step-by-step build
 
-The `npm run build` script chains the two steps below — these are mostly
+The `npm run build` script chains the two steps below - these are mostly
 useful for debugging.
 
 ### 1. `python scripts/build-backend.py`
@@ -124,7 +124,7 @@ What it does:
 
 1. Sanity-checks that the runtime deps (`uvicorn`, `fastapi`, `sqlalchemy`,
    `anthropic`, `apscheduler`) are importable in the current Python. Bails
-   loudly if not — saves you from shipping an empty PyInstaller bundle.
+   loudly if not - saves you from shipping an empty PyInstaller bundle.
 2. `npm run build` inside `frontend/` → static React app in `frontend/dist/`.
 3. `pyinstaller backend/trace-backend.spec --noconfirm --clean` →
    `dist/trace-backend/` (exe + `_internal/` folder, ~45 MB total).
@@ -151,14 +151,14 @@ The build produces **unsigned** binaries by default. They work fine for local
 testing but trigger SmartScreen / Gatekeeper warnings for end users. For
 public distribution, sign before uploading.
 
-### Windows — Authenticode
+### Windows - Authenticode
 
 **What you need:**
 
 - A code-signing certificate from a CA Microsoft trusts. Options ranked by
   cost / hassle:
-  - **OV (Organization Validated) certificate** — ~$200–400/yr (SSL.com, Sectigo, DigiCert). Cheaper, but SmartScreen takes a while to warm up reputation. Exportable to `.pfx`, so usable in CI.
-  - **EV (Extended Validation) certificate** — ~$300–700/yr. Bypasses SmartScreen warnings immediately, but the private key lives on a **hardware token** (USB or HSM) which makes CI signing painful (most cloud HSMs require enterprise tier; SSL.com's eSigner cloud HSM is the most common workaround).
+  - **OV (Organization Validated) certificate** - ~$200–400/yr (SSL.com, Sectigo, DigiCert). Cheaper, but SmartScreen takes a while to warm up reputation. Exportable to `.pfx`, so usable in CI.
+  - **EV (Extended Validation) certificate** - ~$300–700/yr. Bypasses SmartScreen warnings immediately, but the private key lives on a **hardware token** (USB or HSM) which makes CI signing painful (most cloud HSMs require enterprise tier; SSL.com's eSigner cloud HSM is the most common workaround).
 - A timestamp server URL (free): `http://timestamp.digicert.com` or `http://ts.ssl.com`.
 
 **Local signing** (one-off, after `tauri build`):
@@ -192,7 +192,7 @@ Add to `src-tauri/tauri.conf.json`:
 Then expose `CERT_PATH` (path to .pfx) and `CERT_PASSWORD` as env vars before
 running `tauri build`.
 
-### macOS — Developer ID + Notarization
+### macOS - Developer ID + Notarization
 
 Required for distribution outside the App Store. Without notarization the user
 gets *"Trace.app can't be opened because Apple cannot check it for malicious
@@ -211,7 +211,7 @@ export APPLE_CERTIFICATE="$(base64 -i DeveloperID.p12)"
 export APPLE_CERTIFICATE_PASSWORD="…"
 export APPLE_SIGNING_IDENTITY="Developer ID Application: Your Name (TEAMID)"
 
-# Notarization — either app-specific password:
+# Notarization - either app-specific password:
 export APPLE_ID="you@example.com"
 export APPLE_PASSWORD="xxxx-xxxx-xxxx-xxxx"
 export APPLE_TEAM_ID="ABCDE12345"
@@ -228,7 +228,7 @@ minutes to the build for Apple's notary service to round-trip.
 ### Linux
 
 Linux distributions don't have a built-in signature trust system the way
-Windows / macOS do — AppImages run unsigned. Two practices worth knowing:
+Windows / macOS do - AppImages run unsigned. Two practices worth knowing:
 
 - **AppImage GPG signing**: embeds a GPG signature in the AppImage's offset
   table. Useful for verifying the publisher; `appimagetool` does it via
@@ -302,7 +302,7 @@ first item above.
 
 ### "ERROR: script `backend\backend\run.py` not found"
 
-You're on an old version of `backend/trace-backend.spec`. Pull latest — the
+You're on an old version of `backend/trace-backend.spec`. Pull latest - the
 spec was anchored to `SPECPATH` in commit `0f6f168` so it works regardless of
 CWD.
 
@@ -329,6 +329,6 @@ The desktop app stores its SQLite database, attachments, and avatars under:
 | macOS | `~/Library/Application Support/com.trace.app/` |
 | Linux | `~/.local/share/com.trace.app/` |
 
-This is **separate from the Docker volume** — the desktop and Docker versions
+This is **separate from the Docker volume** - the desktop and Docker versions
 do not share state. (If you want to migrate from one to the other, copy
 `trace.db` and the `attachments/` and `avatars/` folders across.)

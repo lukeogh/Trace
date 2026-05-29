@@ -3,7 +3,7 @@ fn main() {
     // the private GitHub releases endpoint without the user supplying a
     // token. The value comes from the TRACE_UPDATER_TOKEN env var, set by
     // CI via the repo secret of the same name. Local dev builds without
-    // the env var simply lack the token (the updater fails open — it just
+    // the env var simply lack the token (the updater fails open - it just
     // can't reach the private endpoint, which is fine in dev).
     //
     // Rerun this build script if the env var changes, otherwise cargo

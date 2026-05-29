@@ -22,7 +22,7 @@ import { useAppVersion } from '../hooks/useAppVersion'
 import { notifyAIConfigChanged } from '../hooks/useAIConfigured'
 
 /**
- * System Settings — a dedicated page (was a popover; promoted because
+ * System Settings - a dedicated page (was a popover; promoted because
  * it now houses the AI engine wizard, data storage, updates, and About).
  *
  * Layout: one card per concern, stacked. AI Engine sits at the top
@@ -30,7 +30,7 @@ import { notifyAIConfigChanged } from '../hooks/useAIConfigured'
  * features working at all.
  *
  * The AI Engine card stays collapsed (summary view) until the user clicks
- * "Set up" / "Change" — only then does the three-step wizard appear,
+ * "Set up" / "Change" - only then does the three-step wizard appear,
  * inline on the page. Keeping the wizard inline (not in a sub-modal)
  * avoids the "modal-on-popover" stacking that the popover version had,
  * which fights with the way ADHD brains track state.
@@ -114,9 +114,9 @@ function AISection() {
 
 function AISummaryCard({ config, onEdit }) {
   // Three visual states:
-  //   1. Loading — config is null + we haven't decided yet (skip dot)
-  //   2. Unconfigured — show prompt + "Set up" CTA
-  //   3. Configured — show provider/model/masked key + "Change" button
+  //   1. Loading - config is null + we haven't decided yet (skip dot)
+  //   2. Unconfigured - show prompt + "Set up" CTA
+  //   3. Configured - show provider/model/masked key + "Change" button
   if (config === null) {
     return (
       <div className="text-xs text-paper-500 dark:text-paper-600 italic">
@@ -198,7 +198,7 @@ const GUIDES = {
     steps: [
       { text: 'Go to', link: { label: 'console.anthropic.com', url: 'https://console.anthropic.com' } },
       { text: 'Click API Keys in the left sidebar' },
-      { text: 'Click Create Key — copy it and paste below' },
+      { text: 'Click Create Key - copy it and paste below' },
     ],
     keyLabel: 'Anthropic API key',
     keyHint: 'Starts with "sk-ant-"',
@@ -211,12 +211,12 @@ const GUIDES = {
   groq: {
     badge: 'Free tier',
     icon: '⚡',
-    what: "Fast, free AI service. The free tier gives you 14,400 requests per day — more than enough for personal use. No credit card required.",
+    what: "Fast, free AI service. The free tier gives you 14,400 requests per day - more than enough for personal use. No credit card required.",
     time: 'About 2 minutes',
     steps: [
       { text: 'Go to', link: { label: 'console.groq.com', url: 'https://console.groq.com' }, suffix: 'and sign up (free)' },
       { text: 'Click API Keys in the left menu' },
-      { text: 'Click Create API Key — copy it and paste below' },
+      { text: 'Click Create API Key - copy it and paste below' },
     ],
     keyLabel: 'Groq API key',
     keyHint: 'Starts with "gsk_"',
@@ -234,7 +234,7 @@ const GUIDES = {
     steps: [
       { text: 'Go to', link: { label: 'aistudio.google.com', url: 'https://aistudio.google.com' } },
       { text: 'Click Get API key (top left of the page)' },
-      { text: 'Click Create API key — copy it and paste below' },
+      { text: 'Click Create API key - copy it and paste below' },
     ],
     keyLabel: 'Gemini API key',
     keyHint: 'Starts with "AIza"',
@@ -252,7 +252,7 @@ const GUIDES = {
     steps: [
       { text: 'Go to', link: { label: 'ollama.com/download', url: 'https://ollama.com/download' }, suffix: 'and install Ollama' },
       { text: 'Open a terminal and run:', code: 'ollama pull llama3' },
-      { text: 'Click Test below — no key needed' },
+      { text: 'Click Test below - no key needed' },
     ],
     keyLabel: null,
     urlNeeded: false,
@@ -303,7 +303,7 @@ function AIWizard({ currentConfig, onCancel, onSaved }) {
   }, [])
 
   // When the user picks a provider, reset all the form fields to defaults
-  // — model defaults to the preset's default, URL defaults to preset's URL,
+  // - model defaults to the preset's default, URL defaults to preset's URL,
   // API key is blank (user must enter or echo the existing masked one).
   useEffect(() => {
     const guide = GUIDES[selected] || GUIDES.custom
@@ -356,7 +356,7 @@ function AIWizard({ currentConfig, onCancel, onSaved }) {
     setError('')
     try {
       await saveAIConfig(buildConfig())
-      // Tell every open page that the AI engine is now (re)configured —
+      // Tell every open page that the AI engine is now (re)configured -
       // Smart Generate flips off its empty state, Suggest Summary + Weekly
       // Roundup buttons un-disable themselves, all without a reload.
       notifyAIConfigChanged()
@@ -649,7 +649,7 @@ function UpdateSection({ updater }) {
         subtitle="Check for and install new versions."
       />
 
-      {/* Available banner — same UX as the toast, just permanently surfaced
+      {/* Available banner - same UX as the toast, just permanently surfaced
           on the settings page. Visible for 'available' AND 'dismissed' so
           the cog → settings path always shows the install option. */}
       {hasUpdateBanner && (
@@ -706,7 +706,7 @@ function UpdateSection({ updater }) {
       )}
 
       {/* Current version row. No "Check now" button yet because useUpdater
-          doesn't expose a `check()` callback or `lastCheckedAt` timestamp —
+          doesn't expose a `check()` callback or `lastCheckedAt` timestamp -
           the hook only runs its check once per hour at mount. Extend the
           hook in a future change if we want a manual recheck.
           TODO(updates): wire check-now action once useUpdater exposes it. */}
@@ -718,7 +718,7 @@ function UpdateSection({ updater }) {
         ">
           <div className="flex-1 min-w-0">
             <p className="text-sm text-pitch-700 dark:text-paper-300">
-              Currently on <strong className="font-medium">v{version || '—'}</strong>
+              Currently on <strong className="font-medium">v{version || '-'}</strong>
             </p>
             <p className="text-[11px] text-paper-500 dark:text-paper-600 mt-0.5">
               {updater?.status === 'checking'
@@ -736,7 +736,7 @@ function UpdateSection({ updater }) {
 
 // ─── Storage ──────────────────────────────────────────────────────────────────
 // Combined card covering both the local data path (Tauri only) and the cloud
-// sync row (everyone). Replaces the older Tauri-only DataStorageSection — the
+// sync row (everyone). Replaces the older Tauri-only DataStorageSection - the
 // rows share a card so the user's mental model of "where my data lives" is
 // one place to look, not two.
 
@@ -776,7 +776,7 @@ function StorageSection() {
     getStorageConfig().then(setStorageConfig).catch(() => setStorageConfig(null))
   }
 
-  // Format the cloud-sync row's host hint if the server URL is available —
+  // Format the cloud-sync row's host hint if the server URL is available -
   // strips the protocol so "https://cloud.example.com" reads as "cloud.example.com".
   const displayHost = (() => {
     if (!storageConfig?.is_connected || !storageConfig?.server_url) return null
@@ -796,7 +796,7 @@ function StorageSection() {
           subtitle="Local data on disk. Encrypted backup and attachments to cloud."
         />
 
-        {/* Local data path — Tauri only. Browser dev hides this row entirely
+        {/* Local data path - Tauri only. Browser dev hides this row entirely
             because Tauri APIs (folder picker, migration) don't work there. */}
         {isTauri() && (
           <>
@@ -861,7 +861,7 @@ function StorageSection() {
           </>
         )}
 
-        {/* Cloud sync row — always rendered (browser + Tauri). Gated by
+        {/* Cloud sync row - always rendered (browser + Tauri). Gated by
             is_connected so the same row shows either a connect CTA or a
             connected provider summary. */}
         <div className={`
@@ -906,7 +906,7 @@ function StorageSection() {
         </div>
 
         <p className="mt-3 text-center text-[11px] text-paper-500 dark:text-paper-600">
-          Coming soon — Dropbox · OneDrive · SharePoint
+          Coming soon - Dropbox · OneDrive · SharePoint
         </p>
       </Card>
 
@@ -929,7 +929,7 @@ function AboutSection() {
     <Card>
       <CardHeader icon={SettingsIcon} title="About" />
       <dl className="space-y-2 text-sm">
-        <Row label="Version" value={version ? `v${version}` : '—'} />
+        <Row label="Version" value={version ? `v${version}` : '-'} />
         <Row
           label="What's new"
           value={

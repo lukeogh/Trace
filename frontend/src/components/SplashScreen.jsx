@@ -1,5 +1,5 @@
 /**
- * SplashScreen — full-bleed launch overlay with "The Draw" animation.
+ * SplashScreen - full-bleed launch overlay with "The Draw" animation.
  *
  * Four-beat sequence:
  *   1. Fork draws (stem → top branch → bottom branch)
@@ -13,8 +13,8 @@
  * mount in App.jsx, control with a `visible` prop.
  *
  * Props:
- *   visible — when true, splash is shown. Set false once the app is ready.
- *   tagline — optional override for the default "Stay across everything".
+ *   visible - when true, splash is shown. Set false once the app is ready.
+ *   tagline - optional override for the default "Stay across everything".
  */
 export default function SplashScreen({ visible = true, tagline = 'Stay across everything' }) {
   return (

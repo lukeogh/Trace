@@ -5,7 +5,7 @@ import ingest as ingest_module
 
 router = APIRouter(tags=["ingest"])
 
-# 25 MB ceiling — generous for PDFs/emails, small enough to avoid runaway uploads.
+# 25 MB ceiling - generous for PDFs/emails, small enough to avoid runaway uploads.
 MAX_UPLOAD_BYTES = 25 * 1024 * 1024
 
 

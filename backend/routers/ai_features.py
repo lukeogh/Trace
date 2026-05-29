@@ -1,18 +1,18 @@
 """
-AI features — action detection & task decomposition.
+AI features - action detection & task decomposition.
 
 Both flows are *hints*, not gates. If the AI engine isn't configured or a
 call fails, they degrade silently (empty actions / needed:false) rather than
-surfacing an error — the underlying entry/to-do is always created regardless.
+surfacing an error - the underlying entry/to-do is always created regardless.
 
 All AI calls route through the pluggable provider (ai_provider.get_provider),
 so whatever the user picked in Settings → AI Engine (Claude / Groq / Gemini /
 Ollama / custom) is what runs here.
 
 Routes (mounted under /api in main.py → /api/ai/...):
-  POST  /ai/detect-actions          — scan an Update entry for action vocabulary
-  POST  /ai/decompose-task          — assess a to-do, suggest a breakdown
-  PATCH /ai/dismiss-decomp/{id}     — mark a to-do's decomposition dismissed
+  POST  /ai/detect-actions          - scan an Update entry for action vocabulary
+  POST  /ai/decompose-task          - assess a to-do, suggest a breakdown
+  PATCH /ai/dismiss-decomp/{id}     - mark a to-do's decomposition dismissed
 """
 
 import json
@@ -76,10 +76,10 @@ Look for phrases that clearly indicate something needs to be done:
 - Pending work: "review", "look into", "investigate", "draft", "prepare", "update"
 
 Rules:
-- Only flag genuine action items — not observations, facts, or completed work
+- Only flag genuine action items - not observations, facts, or completed work
 - Extract the minimal phrase from the text that captures the action intent
 - Suggest a clean, actionable to-do title that starts with a verb
-- Be conservative — it is better to return 0 results than to invent false positives
+- Be conservative - it is better to return 0 results than to invent false positives
 - Maximum 3 suggestions per entry
 - If the entry is already a to-do or the text has no clear actions, return an empty list
 
@@ -108,7 +108,7 @@ def detect_actions(req: DetectActionsRequest, db: Session = Depends(get_db)):
         actions = [ActionItem(**a) for a in data.get("actions", [])][:3]
         return DetectActionsResponse(actions=actions)
     except Exception as e:
-        # Hint feature — never surface an error to the user.
+        # Hint feature - never surface an error to the user.
         log.info("detect-actions skipped: %s", e)
         return DetectActionsResponse(actions=[])
 
@@ -128,7 +128,7 @@ WHEN TO DECOMPOSE:
 WHEN NOT TO DECOMPOSE (return needed: false):
 - The task is already a single clear action: "Email Sarah the contract", "Call James"
 - The task is a simple lookup or check: "Check if X is done"
-- The task is too vague to decompose meaningfully — flag as too_vague instead
+- The task is too vague to decompose meaningfully - flag as too_vague instead
 
 SUBTASK RULES:
 - Each subtask must start with an action verb (Write, Find, Send, Book, Review...)
@@ -136,7 +136,7 @@ SUBTASK RULES:
 - Minimum 2 subtasks, maximum 5 subtasks
 - Time estimates: 15, 20, 30, 45, 60, 90, or 120 minutes only
 - Keep titles short: under 8 words
-- Order subtasks logically — prerequisites first
+- Order subtasks logically - prerequisites first
 
 Return valid JSON only, no preamble, no markdown fences:
 {
@@ -192,7 +192,7 @@ def decompose_task(req: DecomposeTaskRequest, db: Session = Depends(get_db)):
 @router.patch("/ai/dismiss-decomp/{entry_id}")
 def dismiss_decomp(entry_id: int, db: Session = Depends(get_db)):
     """
-    Mark a to-do's decomposition as dismissed — switches the card from the
+    Mark a to-do's decomposition as dismissed - switches the card from the
     auto-drawer flow to the persistent "Break this down" affordance.
     """
     entry = db.query(models.Entry).filter(models.Entry.id == entry_id).first()

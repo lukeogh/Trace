@@ -83,7 +83,7 @@ export default function App() {
             updater?.status === 'available' || updater?.status === 'dismissed'
           }
         />
-        {/* Personal settings — top-right avatar, on every page */}
+        {/* Personal settings - top-right avatar, on every page */}
         <SettingsMenu
           avatar={avatar}
           onChangeAvatar={setAvatar}
@@ -96,7 +96,7 @@ export default function App() {
           textSize={textSize}
           onChangeTextSize={setTextSize}
         />
-        {/* Update prompt — appears once per detected new version, then
+        {/* Update prompt - appears once per detected new version, then
             collapses into the cog badge until installed. */}
         <UpdateToast updater={updater} />
         <QuickCapture />

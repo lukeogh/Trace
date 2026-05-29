@@ -4,13 +4,13 @@ import { Zap, X, Download } from 'lucide-react'
  * Bottom-right toast that appears once per detected new version.
  *
  * Differs from the existing <Toast> in that it persists until the user
- * acts (Install or Later) — it doesn't auto-dismiss after a few seconds.
+ * acts (Install or Later) - it doesn't auto-dismiss after a few seconds.
  * Install kicks off the update flow; Later marks this specific version
  * as dismissed (persisted in localStorage by useUpdater), at which point
  * a badge dot lights up on the System Settings cog as the ongoing
  * reminder.
  *
- * Renders nothing unless `updater.status === 'available'` — i.e., a
+ * Renders nothing unless `updater.status === 'available'` - i.e., a
  * version is genuinely newer AND has not yet been dismissed.
  */
 export default function UpdateToast({ updater }) {
@@ -31,7 +31,7 @@ export default function UpdateToast({ updater }) {
       role="status"
       aria-live="polite"
     >
-      {/* Mint strip — "live state" signature. Indigo is reserved for the
+      {/* Mint strip - "live state" signature. Indigo is reserved for the
           action button below; the chrome around it stays calm. */}
       <div className="h-0.5 bg-gradient-to-r from-mint/40 via-mint to-mint/40" />
 

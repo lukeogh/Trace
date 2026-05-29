@@ -12,13 +12,13 @@ import {
  * Storage setup / management modal.
  *
  * Three views chained by `view` state:
- *   pick    — provider grid (Nextcloud live; Dropbox/OneDrive/SharePoint soon)
- *   setup   — Nextcloud guide + form + Test + Save
- *   manage  — for already-connected installs: backup history, Back up now,
+ *   pick    - provider grid (Nextcloud live; Dropbox/OneDrive/SharePoint soon)
+ *   setup   - Nextcloud guide + form + Test + Save
+ *   manage  - for already-connected installs: backup history, Back up now,
  *             Switch provider, Disconnect
  *
- * Colour palette matches the rest of Trace — mint signature, no accent/indigo.
- * Per-provider chips keep their natural branding (sky for Nextcloud, etc.) —
+ * Colour palette matches the rest of Trace - mint signature, no accent/indigo.
+ * Per-provider chips keep their natural branding (sky for Nextcloud, etc.) -
  * those are functional category badges, not brand elements.
  */
 
@@ -43,7 +43,7 @@ const PROVIDERS = [
     icon: '📦',
     iconBg: 'bg-indigo-50 dark:bg-indigo-950/30',
     live: false,
-    comingSoonNote: 'Click Dropbox, log in, done — coming in the next update.',
+    comingSoonNote: 'Click Dropbox, log in, done - coming in the next update.',
   },
   {
     key: 'onedrive',
@@ -53,7 +53,7 @@ const PROVIDERS = [
     icon: '🔷',
     iconBg: 'bg-blue-50 dark:bg-blue-950/30',
     live: false,
-    comingSoonNote: 'Personal Microsoft account sync — coming soon.',
+    comingSoonNote: 'Personal Microsoft account sync - coming soon.',
   },
   {
     key: 'sharepoint',
@@ -63,7 +63,7 @@ const PROVIDERS = [
     icon: '🏢',
     iconBg: 'bg-amber-50 dark:bg-amber-950/30',
     live: false,
-    comingSoonNote: "For work deployments — files stay inside your company's Microsoft tenancy.",
+    comingSoonNote: "For work deployments - files stay inside your company's Microsoft tenancy.",
   },
 ]
 
@@ -73,7 +73,7 @@ export default function StorageSetupModal({ onClose, onSaved, currentConfig }) {
   const isConnected = currentConfig?.is_connected
   const [view, setView] = useState(isConnected ? 'manage' : 'pick')
 
-  // Nextcloud form state — prefilled from currentConfig if the user is editing
+  // Nextcloud form state - prefilled from currentConfig if the user is editing
   const [serverUrl, setServerUrl] = useState(currentConfig?.server_url || '')
   const [username, setUsername] = useState(currentConfig?.username || '')
   const [password, setPassword] = useState('')
@@ -107,7 +107,7 @@ export default function StorageSetupModal({ onClose, onSaved, currentConfig }) {
     setTestResult(null)
     setError('')
     try {
-      // Test against the form values directly — do NOT save first. A failed
+      // Test against the form values directly - do NOT save first. A failed
       // test used to corrupt the saved config (provider='nextcloud' with bad
       // creds) which then made is_connected falsely report a working link.
       const result = await testStorageConnection({
@@ -249,7 +249,7 @@ export default function StorageSetupModal({ onClose, onSaved, currentConfig }) {
                     </div>
                   </button>
                 ) : (
-                  // "Coming soon" — visible so the user knows what's planned,
+                  // "Coming soon" - visible so the user knows what's planned,
                   // dashed border + opacity to make the non-interactive state obvious.
                   <div className="
                     rounded-lg border-2 border-dashed
@@ -299,7 +299,7 @@ export default function StorageSetupModal({ onClose, onSaved, currentConfig }) {
               <ChevronLeft size={13} /> All providers
             </button>
 
-            {/* "What is this?" — same idiom as the AI Engine setup card */}
+            {/* "What is this?" - same idiom as the AI Engine setup card */}
             <div className="rounded-lg p-3 bg-paper-100 dark:bg-pitch-800 border-l-4 border-mint">
               <div className="text-[10px] font-display uppercase tracking-widest text-mint-700 dark:text-mint-300 mb-1">
                 What is this?
@@ -317,7 +317,7 @@ export default function StorageSetupModal({ onClose, onSaved, currentConfig }) {
                 {[
                   { text: 'Log into your Nextcloud and go to ', bold: 'Settings → Security' },
                   { text: 'Scroll to App passwords. Type a name like "Trace" and click ', bold: 'Create new app password' },
-                  { text: 'Copy the password — it only shows once, then paste it below' },
+                  { text: 'Copy the password - it only shows once, then paste it below' },
                 ].map((s, i) => (
                   <div key={i} className="flex gap-3 items-start">
                     <div className="w-5 h-5 rounded-full bg-mint-700 text-white text-[10px] font-bold flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -356,7 +356,7 @@ export default function StorageSetupModal({ onClose, onSaved, currentConfig }) {
                 set: v => { setPassword(v); setTestResult(null) },
                 type: 'password',
                 placeholder: 'xxxx-xxxx-xxxx-xxxx-xxxx',
-                hint: 'Not your login password — create a dedicated app password in Nextcloud Security settings',
+                hint: 'Not your login password - create a dedicated app password in Nextcloud Security settings',
               },
               {
                 label: 'Folder name on Nextcloud',
@@ -398,7 +398,7 @@ export default function StorageSetupModal({ onClose, onSaved, currentConfig }) {
             <div className="flex items-center justify-between px-3 py-2.5 rounded-lg bg-paper-100 dark:bg-pitch-800 border border-paper-200 dark:border-pitch-500">
               <div>
                 <div className="text-xs font-medium text-pitch-700 dark:text-paper-200">Daily encrypted backup</div>
-                <div className="text-[10px] text-paper-500 dark:text-paper-600 mt-0.5">Runs at 02:00 — keeps last 7 backups</div>
+                <div className="text-[10px] text-paper-500 dark:text-paper-600 mt-0.5">Runs at 02:00 - keeps last 7 backups</div>
               </div>
               <button
                 onClick={() => setBackupEnabled(v => !v)}
@@ -485,7 +485,7 @@ export default function StorageSetupModal({ onClose, onSaved, currentConfig }) {
               <div className="text-xs text-mint-700 dark:text-mint-300 leading-snug">
                 <strong>Nextcloud connected</strong>
                 {currentConfig?.server_url && (
-                  <span className="opacity-80"> — {currentConfig.server_url}</span>
+                  <span className="opacity-80"> - {currentConfig.server_url}</span>
                 )}
               </div>
             </div>
@@ -536,14 +536,14 @@ export default function StorageSetupModal({ onClose, onSaved, currentConfig }) {
                 </div>
               ) : (
                 <div className="text-xs text-paper-400 dark:text-paper-600 mb-3">
-                  No backups yet — first backup runs tonight at 02:00, or trigger one now.
+                  No backups yet - first backup runs tonight at 02:00, or trigger one now.
                 </div>
               )}
 
               {backupQueued && (
                 <div className="mb-2 flex items-center gap-2 p-2.5 rounded-lg bg-mint-50 dark:bg-mint-900/20 border border-mint/40 text-xs text-mint-700 dark:text-mint-300">
                   <CheckCircle2 size={12} />
-                  Backup queued — log will update in a few seconds
+                  Backup queued - log will update in a few seconds
                 </div>
               )}
 

@@ -5,7 +5,7 @@ import { Cpu, ArrowRight } from 'lucide-react'
  * Full-bleed empty state shown in place of an AI-dependent feature when
  * no engine is configured.
  *
- * Used by Smart Generate. Avoids the worst UX — letting the user paste
+ * Used by Smart Generate. Avoids the worst UX - letting the user paste
  * text or drop a file before discovering AI isn't set up.
  *
  * Tone matches the rest of the app: direct, no surprises, predictable
@@ -31,7 +31,7 @@ export default function AIRequiredCard({ feature = 'This feature' }) {
         {feature} needs an AI engine
       </h2>
       <p className="text-sm text-paper-600 dark:text-paper-500 mb-6 leading-relaxed">
-        Pick a provider and paste a key — takes about 2 minutes.
+        Pick a provider and paste a key - takes about 2 minutes.
         Free options available (Groq, Gemini, Ollama).
       </p>
       <Link

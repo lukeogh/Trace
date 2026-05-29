@@ -2,7 +2,7 @@
  * Task-decomposition + action-detection API helpers.
  *
  * Talks to /api/ai/* and /api/(entries|subtasks)/*. The two AI endpoints are
- * hint features — callers treat failures as "no suggestion" rather than errors.
+ * hint features - callers treat failures as "no suggestion" rather than errors.
  */
 
 const BASE = '/api'

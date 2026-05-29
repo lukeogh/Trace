@@ -1,5 +1,5 @@
 /**
- * Settings API helpers — talks to the Trace. backend's /settings/* routes.
+ * Settings API helpers - talks to the Trace. backend's /settings/* routes.
  *
  * All functions throw on non-2xx with the server's `detail` message (falling
  * back to a generic message), so callers can render errors directly without
@@ -16,7 +16,7 @@ async function _handle(res, fallback = 'Request failed') {
   return res.json()
 }
 
-/** Current AI engine config — api_key is masked to its last 4 chars. */
+/** Current AI engine config - api_key is masked to its last 4 chars. */
 export async function getAIConfig() {
   const res = await fetch(`${BASE}/settings/ai`)
   return _handle(res, 'Failed to load AI config')
@@ -43,7 +43,7 @@ export async function saveAIConfig(config) {
 
 /**
  * Dry-run a config against the provider. Returns
- * `{ ok, message, provider, model }` — UI uses this to gate the Save button.
+ * `{ ok, message, provider, model }` - UI uses this to gate the Save button.
  */
 export async function testAIConfig(config) {
   const res = await fetch(`${BASE}/settings/ai/test`, {

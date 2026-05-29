@@ -1,5 +1,5 @@
 """
-File ingest helpers — parse dropped files into plain text suitable for
+File ingest helpers - parse dropped files into plain text suitable for
 Auto Generate's LLM pipeline. Each parser is best-effort: malformed input
 falls back to a best-attempt decode rather than raising.
 """
@@ -71,7 +71,7 @@ def _parse_eml(content: bytes) -> str:
                 except Exception:
                     pass
         if not body_parts:
-            # No plaintext part — strip tags from the first html part as a fallback
+            # No plaintext part - strip tags from the first html part as a fallback
             for part in msg.walk():
                 if part.get_content_type() == "text/html":
                     try:

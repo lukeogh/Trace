@@ -67,12 +67,12 @@ export default function StatusChangeModal({
             {isBlocking ? (
               <>
                 You're moving this thread from <strong className="text-pitch-800 dark:text-white">{currentLabel}</strong> to <strong className="text-terracotta">Blocked</strong>.
-                Every blockage needs a reason — it'll be logged on the timeline so you (and anyone reviewing the area) know why.
+                Every blockage needs a reason - it'll be logged on the timeline so you (and anyone reviewing the area) know why.
               </>
             ) : (
               <>
                 Moving from <strong className="text-pitch-800 dark:text-white">{currentLabel}</strong> to <strong className="text-pitch-800 dark:text-white">{targetLabel}</strong>.
-                Add a note if helpful — it'll appear on the timeline. Optional.
+                Add a note if helpful - it'll appear on the timeline. Optional.
               </>
             )}
           </p>
@@ -83,7 +83,7 @@ export default function StatusChangeModal({
             {isBlocking ? (
               <>Reason <span className="text-red-500">*</span></>
             ) : (
-              <>Note <span className="text-paper-400 dark:text-paper-700 normal-case font-mono">— optional</span></>
+              <>Note <span className="text-paper-400 dark:text-paper-700 normal-case font-mono">- optional</span></>
             )}
           </label>
           <textarea

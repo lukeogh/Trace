@@ -1,16 +1,16 @@
 """
-Subtask router — nested to-dos under a parent to-do.
+Subtask router - nested to-dos under a parent to-do.
 
 Subtasks are stored as Entry rows of type 'todo' with parent_id pointing at
 the parent to-do. Completion reuses the existing `completed` boolean +
 `completed_at` timestamp (no separate status string).
 
 Routes (mounted under /api in main.py):
-  POST   /entries/{entry_id}/subtasks         — bulk-create from approved breakdown
-  GET    /entries/{entry_id}/subtasks         — list a to-do's subtasks
-  PATCH  /entries/{entry_id}/subtasks/reorder — update sibling ordering
-  PATCH  /subtasks/{subtask_id}/complete      — toggle completion
-  DELETE /subtasks/{subtask_id}               — remove a subtask
+  POST   /entries/{entry_id}/subtasks         - bulk-create from approved breakdown
+  GET    /entries/{entry_id}/subtasks         - list a to-do's subtasks
+  PATCH  /entries/{entry_id}/subtasks/reorder - update sibling ordering
+  PATCH  /subtasks/{subtask_id}/complete      - toggle completion
+  DELETE /subtasks/{subtask_id}               - remove a subtask
 """
 
 import logging
@@ -54,7 +54,7 @@ def create_subtasks(
         db.add(subtask)
         created.append(subtask)
 
-    # Approving a breakdown counts as resolving the decomposition prompt —
+    # Approving a breakdown counts as resolving the decomposition prompt -
     # mark dismissed so the "Break this down" affordance doesn't reappear.
     parent.decomp_dismissed = True
     db.commit()

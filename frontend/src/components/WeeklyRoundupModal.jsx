@@ -39,7 +39,7 @@ export default function WeeklyRoundupModal({ isOpen, onClose }) {
       const msg = e.message || 'Unknown error'
       setError(
         msg.includes('ANTHROPIC_API_KEY')
-          ? 'API key not configured — add ANTHROPIC_API_KEY to your .env file and rebuild.'
+          ? 'API key not configured - add ANTHROPIC_API_KEY to your .env file and rebuild.'
           : msg
       )
       setPhase('error')
@@ -86,7 +86,7 @@ export default function WeeklyRoundupModal({ isOpen, onClose }) {
       {phase === 'review' && (
         <div>
           <p className="font-display uppercase tracking-widest text-xs text-paper-500 dark:text-paper-600 mb-3">
-            Weekly Roundup — W/E {formattedDate}
+            Weekly Roundup - W/E {formattedDate}
           </p>
 
           {staleAreas.length > 0 && (

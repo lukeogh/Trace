@@ -3,7 +3,7 @@ import { Calendar } from 'lucide-react'
 import Modal from './Modal'
 
 /**
- * Quick meeting capture — designed for ADHD-friendly low-friction entry.
+ * Quick meeting capture - designed for ADHD-friendly low-friction entry.
  * Only two required fields: title and start time. Both stay in view so the
  * user can fill them in without scrolling or hunting.
  *

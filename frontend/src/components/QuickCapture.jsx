@@ -23,7 +23,7 @@ export default function QuickCapture() {
   const toast = useToast()
   const textareaRef = useRef(null)
 
-  // Global 'n' shortcut — fires only when no input is focused
+  // Global 'n' shortcut - fires only when no input is focused
   useEffect(() => {
     const handler = (e) => {
       if (open) return
@@ -163,7 +163,7 @@ export default function QuickCapture() {
           )}
         </div>
 
-        {/* Due date row — To Do only */}
+        {/* Due date row - To Do only */}
         {entryType === 'todo' && (
           <div>
             <label className="block text-xs font-display uppercase tracking-wide text-paper-600 dark:text-paper-500 mb-1.5">

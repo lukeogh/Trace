@@ -25,7 +25,7 @@ jobs:
         include:
           - platform: windows-latest
             rust_triple: x86_64-pc-windows-msvc
-          # Uncomment to enable additional platforms — leave commented for
+          # Uncomment to enable additional platforms - leave commented for
           # now since we've only smoke-tested Windows. To enable Mac/Linux:
           #   1. Verify PyInstaller bundles all hidden imports on that OS
           #   2. Add the OS to the bundle.targets list in tauri.conf.json
@@ -43,7 +43,7 @@ jobs:
 
       # ── Toolchains ──────────────────────────────────────────────────────
       # rust-toolchain.toml in src-tauri/ pins the channel to 1.94, so we
-      # don't pass `toolchain:` here — rustup will read the file and DTRT.
+      # don't pass `toolchain:` here - rustup will read the file and DTRT.
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -104,7 +104,7 @@ jobs:
 
       - name: Build Tauri desktop app
         env:
-          # Tauri updater signing — generates .sig sidecar files next to
+          # Tauri updater signing - generates .sig sidecar files next to
           # each bundle. Without these, end-user updates fail signature
           # verification and refuse to install.
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
@@ -113,11 +113,11 @@ jobs:
           # build.rs picks this up and bakes it into the binary as a
           # compile-time const. End users never touch this directly.
           TRACE_UPDATER_TOKEN: ${{ secrets.TRACE_UPDATER_TOKEN }}
-          # Windows signing — picked up by tauri.conf.json's signCommand if
+          # Windows signing - picked up by tauri.conf.json's signCommand if
           # configured. Empty values are tolerated (build proceeds unsigned).
           WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
           WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
-          # macOS signing + notarization — Tauri picks these up natively.
+          # macOS signing + notarization - Tauri picks these up natively.
           APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
           APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
           APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
@@ -179,7 +179,7 @@ jobs:
         shell: bash
         env:
           TAG: ${{ steps.tag.outputs.name }}
-          # Drop the leading "v" — Tauri version strings don't include it.
+          # Drop the leading "v" - Tauri version strings don't include it.
           VERSION: ${{ steps.tag.outputs.name }}
         run: |
           set -euo pipefail
@@ -187,7 +187,7 @@ jobs:
           NSIS_EXE=$(ls artifacts/*setup.exe 2>/dev/null | head -1)
           NSIS_SIG=$(ls artifacts/*setup.exe.sig 2>/dev/null | head -1)
           if [[ -z "$NSIS_EXE" || -z "$NSIS_SIG" ]]; then
-            echo "Missing NSIS bundle or its .sig — can't build manifest" >&2
+            echo "Missing NSIS bundle or its .sig - can't build manifest" >&2
             exit 1
           fi
           SIG=$(cat "$NSIS_SIG")

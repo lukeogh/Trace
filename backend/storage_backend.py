@@ -3,7 +3,7 @@ Storage abstraction for Trace.
 
 The user picks a cloud backend in Settings → Storage (currently Nextcloud,
 others coming). Attachments are written locally first, then a background
-task uploads them to the remote. The SQLite DB itself never syncs — only
+task uploads them to the remote. The SQLite DB itself never syncs - only
 encrypted snapshots produced by storage_backup.py go remote.
 
 Design:
@@ -12,7 +12,7 @@ Design:
   - `get_storage_backend(db)` is the factory called by routers.
   - Secrets (Nextcloud passwords) are Fernet-encrypted on write,
     decrypted on read. The key lives in the same `app_settings` table
-    as the ciphertext — this protects against a backup file leaking,
+    as the ciphertext - this protects against a backup file leaking,
     not against full DB compromise. (Documented trade-off.)
 """
 
@@ -36,7 +36,7 @@ _ENCRYPTION_KEY_SETTING = "storage_encryption_key"
 # ── Interface ─────────────────────────────────────────────────────────────────
 
 class StorageBackend(ABC):
-    """Abstract base — every cloud adapter implements these five methods."""
+    """Abstract base - every cloud adapter implements these five methods."""
 
     @abstractmethod
     def upload_bytes(self, data: bytes, remote_path: str) -> str:
@@ -78,7 +78,7 @@ class StorageBackend(ABC):
 
 class LocalBackend(StorageBackend):
     """
-    Default backend — writes attachments to the UPLOAD_DIR on disk.
+    Default backend - writes attachments to the UPLOAD_DIR on disk.
     Used when no cloud sync is configured.
     """
 
@@ -134,7 +134,7 @@ class LocalBackend(StorageBackend):
 def get_storage_backend(db: Session) -> StorageBackend:
     """
     Resolve the active backend for the current SAVED config.
-    Routers call this on every request — cheap because config is just a JSON
+    Routers call this on every request - cheap because config is just a JSON
     row in app_settings.
     """
     return build_storage_backend(_read_storage_config(db))
@@ -142,7 +142,7 @@ def get_storage_backend(db: Session) -> StorageBackend:
 
 def build_storage_backend(config: dict) -> StorageBackend:
     """
-    Build a backend from any config dict — no DB read.
+    Build a backend from any config dict - no DB read.
 
     Used by the test endpoint so we can dry-run a user's input without
     saving it to the DB first. Critical: without this split, a failed
@@ -150,13 +150,13 @@ def build_storage_backend(config: dict) -> StorageBackend:
     would falsely report a working connection on the next page load.
 
     Password handling: if the supplied password starts with "gAAAAA" it's
-    a Fernet token we wrote ourselves (already in app_settings) — decrypt.
+    a Fernet token we wrote ourselves (already in app_settings) - decrypt.
     Otherwise treat as plaintext from a form field.
     """
     provider = config.get("provider", "local")
 
     if provider == "nextcloud":
-        # Lazy import — webdavclient3 isn't loaded unless Nextcloud is in use,
+        # Lazy import - webdavclient3 isn't loaded unless Nextcloud is in use,
         # which keeps cold-start time tighter for local-only installs.
         from storage_nextcloud import NextcloudBackend
         raw_password = config.get("password", "") or ""
@@ -174,7 +174,7 @@ def build_storage_backend(config: dict) -> StorageBackend:
 # ── Config helpers ────────────────────────────────────────────────────────────
 
 def _read_storage_config(db: Session) -> dict:
-    """Internal — returns the raw config dict (with encrypted password)."""
+    """Internal - returns the raw config dict (with encrypted password)."""
     from models import AppSettings
     row = db.query(AppSettings).filter(AppSettings.key == _STORAGE_CONFIG_KEY).first()
     if not row or not row.value:
@@ -198,7 +198,7 @@ def write_storage_config(db: Session, config: dict) -> None:
 
 def get_storage_config_for_api(db: Session) -> dict:
     """
-    API-safe view of the storage config — no raw passwords, plus the
+    API-safe view of the storage config - no raw passwords, plus the
     timestamp + status of the most recent backup so the UI can render
     a "Backed up <date>" hint without a second round-trip.
     """
@@ -228,7 +228,7 @@ def get_storage_config_for_api(db: Session) -> dict:
 #
 # Trust model: key and ciphertext live in the same SQLite file, so this
 # protects against casual inspection of a backup file sitting in a Nextcloud
-# folder — NOT against an attacker with full DB access. Documented so we
+# folder - NOT against an attacker with full DB access. Documented so we
 # don't accidentally trust it for more than it gives us.
 
 def get_or_create_fernet_key(db: Session) -> bytes:
@@ -261,7 +261,7 @@ def decrypt_secret(value: str) -> str:
     """
     Decrypt a Fernet token, or pass through if it doesn't look encrypted.
 
-    All Fernet tokens begin with 'gAAAAA' (version byte + base64 padding) —
+    All Fernet tokens begin with 'gAAAAA' (version byte + base64 padding) -
     we use that as the detection heuristic so values stored before encryption
     was added still round-trip cleanly.
     """
