@@ -195,8 +195,7 @@ export default function Dashboard() {
 
       {/* ── Below-fold sections ── */}
       <div className="max-w-[1600px] mx-auto px-8 pb-12">
-        <ComingUp />
-        <RecentActivity viewMode={viewMode} />
+        <ComingUpStrip />
       </div>
 
       <WeeklyRoundupModal isOpen={roundupOpen} onClose={() => setRoundupOpen(false)} />
@@ -436,81 +435,49 @@ function getDueGroup(dueDateStr) {
   return 'later'
 }
 
-const GROUP_CONFIG = {
-  overdue: { label: 'Overdue', labelClass: 'text-red-500 dark:text-red-400' },
-  today:   { label: 'Today',   labelClass: 'text-amber-500 dark:text-amber-400' },
-  week:    { label: 'This Week', labelClass: 'text-paper-600 dark:text-paper-500' },
-  later:   { label: 'Later',   labelClass: 'text-paper-500 dark:text-paper-600' },
-}
-
-function ComingUp() {
-  const [todos, setTodos] = useState([])
+// One calm line that counts what's due, bucketed overdue / today / this week.
+// The detail still lives in each thread, one click away. Disappears entirely
+// when nothing is due. Counts use the functional status palette (terracotta,
+// amber-muted), never brand mint.
+function ComingUpStrip() {
+  const [counts, setCounts] = useState({ overdue: 0, today: 0, week: 0 })
 
   useEffect(() => {
-    entriesApi.getUpcoming(20).then(setTodos).catch(() => {})
+    entriesApi.getUpcoming(50)
+      .then((todos) => {
+        const c = { overdue: 0, today: 0, week: 0 }
+        todos.forEach((t) => {
+          const g = getDueGroup(t.due_date)
+          if (g === 'overdue') c.overdue += 1
+          else if (g === 'today') c.today += 1
+          else if (g === 'week') c.week += 1
+        })
+        setCounts(c)
+      })
+      .catch(() => {})
   }, [])
 
-  if (todos.length === 0) {
-    return (
-      <div className="mb-10 flex flex-col items-center justify-center min-h-[80px]">
-        <CheckSquare size={20} className="text-paper-400 dark:text-paper-700 mb-1.5" />
-        <p className="text-xs text-paper-500 dark:text-paper-700 italic">No open to-dos</p>
-      </div>
-    )
-  }
-
-  const groups = { overdue: [], today: [], week: [], later: [] }
-  todos.forEach((t) => groups[getDueGroup(t.due_date)].push(t))
+  const nothing = counts.overdue + counts.today + counts.week === 0
+  if (nothing) return null
 
   return (
-    <div className="mb-10">
-      <div className="flex items-center gap-2 mb-3">
-        <span className="font-display uppercase tracking-widest text-xs text-paper-500 dark:text-paper-600">
-          Coming Up
-        </span>
-      </div>
-
-      <div className="bg-white dark:bg-pitch-700 border border-paper-300 dark:border-pitch-500 rounded-xl divide-y divide-paper-200 dark:divide-pitch-700 overflow-hidden">
-        {Object.entries(groups).map(([groupKey, items]) => {
-          if (items.length === 0) return null
-          const { label, labelClass } = GROUP_CONFIG[groupKey]
-          return items.map((todo, i) => (
-            <Link
-              key={todo.id}
-              to={`/thread/${todo.thread_id}`}
-              className="
-                px-4 py-3 flex items-center gap-3 transition-colors duration-150
-                hover:bg-paper-200/50 dark:hover:bg-pitch-700/40
-                first:rounded-t-xl last:rounded-b-xl
-              "
-            >
-              <span className="p-1.5 rounded-md flex-shrink-0 bg-emerald-500/10 text-emerald-500 dark:text-emerald-400">
-                <CheckSquare size={13} />
-              </span>
-              <span className="font-display font-semibold uppercase tracking-wide text-xs text-pitch-700 dark:text-paper-200 flex-shrink-0">
-                {todo.area_name}
-              </span>
-              <span className="text-paper-400 dark:text-paper-700 text-xs flex-shrink-0">/</span>
-              <div className="flex flex-col flex-1 min-w-0">
-                <span className="text-xs text-pitch-500 dark:text-paper-300 truncate">
-                  {todo.content}
-                </span>
-                <span className="text-xs text-paper-500 dark:text-paper-700 truncate">
-                  {todo.thread_title}
-                </span>
-              </div>
-              {i === 0 && (
-                <span className={`font-mono text-xs flex-shrink-0 ${labelClass}`}>
-                  {label}
-                </span>
-              )}
-              <span className="font-mono text-xs text-paper-400 dark:text-paper-700 flex-shrink-0">
-                {todo.due_date ? format(parseISO(todo.due_date), 'EEE d MMM') : '-'}
-              </span>
-            </Link>
-          ))
-        })}
-      </div>
+    <div className="
+      flex items-center gap-4 px-4 py-3 rounded-xl
+      bg-paper-200 dark:bg-pitch-700
+      text-sm
+    ">
+      <span className="font-mono uppercase tracking-widest text-xs text-paper-500 dark:text-paper-600">
+        Coming Up
+      </span>
+      {counts.overdue > 0 && (
+        <span className="font-medium text-terracotta">{counts.overdue} overdue</span>
+      )}
+      {counts.today > 0 && (
+        <span className="font-medium text-amber-muted">{counts.today} today</span>
+      )}
+      {counts.week > 0 && (
+        <span className="text-paper-600 dark:text-paper-500">{counts.week} this week</span>
+      )}
     </div>
   )
 }
