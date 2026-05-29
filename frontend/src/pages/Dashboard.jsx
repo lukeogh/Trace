@@ -215,7 +215,7 @@ function ViewSegmentedControl({ viewMode, onChange }) {
           className={`
             px-3 py-1 rounded text-xs font-display uppercase tracking-wide transition-colors
             ${viewMode === key
-              ? 'bg-white dark:bg-pitch-800 text-pitch-800 dark:text-white shadow-sm'
+              ? 'bg-mint-50 dark:bg-mint-900/20 text-mint-700 dark:text-mint-300 shadow-sm'
               : 'text-paper-600 dark:text-paper-500 hover:text-pitch-700 dark:hover:text-paper-300'
             }
           `}
@@ -233,11 +233,14 @@ function AreaCard({ area }) {
   const config         = getAreaStatus(area.status)
   const relativeTime   = formatDistanceToNow(new Date(area.updated_at), { addSuffix: true })
   const daysSinceUpdate = differenceInDays(new Date(), new Date(area.updated_at))
+  // Stable areas recede so the urgent ones carry the eye. Present but quiet;
+  // full weight returns on hover.
+  const isStable = area.status === 'stable'
 
   return (
     <Link
       to={`/area/${area.id}`}
-      className="
+      className={`
         group relative flex flex-col rounded-xl border overflow-hidden
         bg-white dark:bg-pitch-700
         border-paper-300 dark:border-pitch-500
@@ -246,7 +249,8 @@ function AreaCard({ area }) {
         hover:-translate-y-0.5
         transition-all duration-200
         animate-fade-in
-      "
+        ${isStable ? 'opacity-60 hover:opacity-100' : ''}
+      `}
     >
       {/* Status accent stripe */}
       <div
