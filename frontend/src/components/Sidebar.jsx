@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { Link, useParams, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard, History, BrainCircuit, Search, Plus,
-  ChevronLeft, ChevronRight, Settings,
+  ChevronLeft, ChevronRight, Settings, Keyboard,
 } from 'lucide-react'
 import { getAreaStatus } from '../utils/status'
 import { MOD_KEY } from '../utils/platform'
@@ -289,21 +289,20 @@ export default function Sidebar({
         border-t border-paper-300 dark:border-pitch-700
         ${collapsed ? 'space-y-2' : 'space-y-2.5'}
       `}>
-        {/* Utility row - icon-only Audit Log + System, names shown as tooltips.
-            Stacked when collapsed, side-by-side when expanded. */}
+        {/* Utility row - icon-only Audit Log + System + keyboard shortcuts.
+            Names/shortcuts shown on hover. Stacked when collapsed, side-by-side
+            when expanded. The shortcuts moved from two always-on rows into a
+            single hover popover here, reclaiming the bottom of the panel. */}
         <div className={`flex ${collapsed ? 'flex-col items-center gap-2' : 'items-center gap-1'}`}>
           <FooterIconLink to="/log" icon={History} label="Audit Log" active={logActive} />
           <FooterIconLink to="/settings" icon={Settings} label="System" active={settingsActive} badge={systemSettingsBadge} />
+          <FooterShortcuts />
         </div>
 
-        {!collapsed && (
-          <>
-            <ShortcutHint label="Capture" keys={['N']} />
-            <ShortcutHint label="Switcher" keys={[MOD_KEY, 'K']} />
-            <div className="pt-1.5 text-xs font-mono text-paper-400 dark:text-pitch-500">
-              {version ? `v${version}` : ''}
-            </div>
-          </>
+        {!collapsed && version && (
+          <div className="text-xs font-mono text-paper-400 dark:text-pitch-500">
+            v{version}
+          </div>
         )}
       </div>
 
@@ -441,7 +440,7 @@ function FooterIconLink({ to, icon: Icon, label, active, badge = false }) {
 
 function ShortcutHint({ label, keys }) {
   return (
-    <div className="flex items-center justify-between text-xs text-paper-500 dark:text-paper-700">
+    <div className="flex items-center justify-between gap-4 text-xs text-paper-500 dark:text-paper-700">
       <span className="font-display uppercase tracking-wide">{label}</span>
       <span className="flex items-center gap-0.5">
         {keys.map((k) => (
@@ -453,6 +452,47 @@ function ShortcutHint({ label, keys }) {
           </kbd>
         ))}
       </span>
+    </div>
+  )
+}
+
+// Keyboard-shortcut affordance for the footer: a single icon that reveals the
+// shortcut list on hover, instead of two permanent rows. Opens upward (the
+// footer sits at the bottom of the rail).
+function FooterShortcuts() {
+  return (
+    <div className="relative group/keys">
+      <button
+        type="button"
+        aria-label="Keyboard shortcuts"
+        title="Keyboard shortcuts"
+        className="
+          flex items-center justify-center p-2 rounded-md
+          text-paper-500 dark:text-paper-600
+          hover:bg-paper-200 dark:hover:bg-pitch-700
+          hover:text-pitch-700 dark:hover:text-paper-200
+          transition-colors
+        "
+      >
+        <Keyboard size={15} />
+      </button>
+
+      {/* Hover popover */}
+      <div className="
+        absolute bottom-full left-0 mb-2 z-30 w-44
+        p-2.5 rounded-lg space-y-1.5
+        bg-white dark:bg-pitch-700
+        border border-paper-300 dark:border-pitch-500 shadow-lg
+        opacity-0 translate-y-1 pointer-events-none
+        group-hover/keys:opacity-100 group-hover/keys:translate-y-0
+        transition-all duration-150
+      ">
+        <p className="font-display uppercase tracking-widest text-[9px] text-paper-400 dark:text-paper-600 mb-1.5">
+          Shortcuts
+        </p>
+        <ShortcutHint label="Capture" keys={['N']} />
+        <ShortcutHint label="Switcher" keys={[MOD_KEY, 'K']} />
+      </div>
     </div>
   )
 }
