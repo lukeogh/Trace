@@ -24,6 +24,7 @@ export default function Sidebar({
   const { areaId } = useParams()
   const location = useLocation()
   const settingsActive = location.pathname === '/settings'
+  const logActive = location.pathname === '/log'
   const version = useAppVersion()
 
   // ─── Collapse state ────────────────────────────────────────────────────────
@@ -98,10 +99,10 @@ export default function Sidebar({
         transition-[width] duration-150 ease-out
       "
     >
-      {/* Brand — mark + wordmark with mint dot + slogan.
+      {/* Brand - mark + wordmark with mint dot + slogan.
           Wrapped in `group` so the Logo's SVG paths can react on hover
           (defined in Logo.jsx via group-hover). Mint dot replaces the
-          full stop after "Trace" — same character, brand-coloured. */}
+          full stop after "Trace" - same character, brand-coloured. */}
       <div className={`
         ${collapsed ? 'px-3 py-4 flex justify-center' : 'px-4 py-5'}
         border-b border-paper-300 dark:border-pitch-700
@@ -127,7 +128,7 @@ export default function Sidebar({
                     className="inline-block w-[6px] h-[6px] rounded-full bg-mint ml-[3px] flex-shrink-0"
                   />
                 </span>
-                {/* Slogan — tight tracking + light opacity so it sits behind the brand. */}
+                {/* Slogan - tight tracking + light opacity so it sits behind the brand. */}
                 <span className="mt-1 font-mono uppercase tracking-[0.12em] text-[9px] text-paper-400 dark:text-paper-700 truncate">
                   Stay across everything.
                 </span>
@@ -137,7 +138,7 @@ export default function Sidebar({
         </Link>
       </div>
 
-      {/* Quick switcher trigger (hidden when collapsed — search icon serves as a hint via the nav rail) */}
+      {/* Quick switcher trigger (hidden when collapsed - search icon serves as a hint via the nav rail) */}
       {!collapsed && (
         <div className="px-3 pt-3">
           <button
@@ -169,14 +170,14 @@ export default function Sidebar({
         </div>
       )}
 
-      {/* Top nav links */}
+      {/* Top nav links - primary destinations only. Audit Log moved to the
+          footer utility row (it's a look-back tool, not everyday navigation). */}
       <div className={`${collapsed ? 'px-2' : 'px-3'} pt-3 pb-1 space-y-0.5`}>
         <NavLink to="/" icon={LayoutDashboard} label="Dashboard" active={location.pathname === '/'} collapsed={collapsed} />
-        <NavLink to="/log" icon={History} label="Audit Log" active={location.pathname === '/log'} collapsed={collapsed} />
         <NavLink to="/process" icon={BrainCircuit} label="Smart Generate" active={location.pathname === '/process'} collapsed={collapsed} />
       </div>
 
-      {/* Areas section header (hidden when collapsed — icons alone provide the hierarchy) */}
+      {/* Areas section header (hidden when collapsed - icons alone provide the hierarchy) */}
       {!collapsed && (
         <div className="px-4 pt-3 pb-1">
           <span className="text-xs font-display uppercase tracking-widest text-paper-500 dark:text-paper-700">
@@ -256,7 +257,7 @@ export default function Sidebar({
           )
         })}
 
-        {/* Subtle add-area row — sits directly under the last area entry */}
+        {/* Subtle add-area row - sits directly under the last area entry */}
         {collapsed ? (
           <CollapsedIconButton
             icon={Plus}
@@ -286,14 +287,14 @@ export default function Sidebar({
       <div className={`
         ${collapsed ? 'px-2 py-3' : 'px-4 py-3'}
         border-t border-paper-300 dark:border-pitch-700
-        ${collapsed ? 'space-y-2' : 'space-y-1.5'}
+        ${collapsed ? 'space-y-2' : 'space-y-2.5'}
       `}>
-        {/* System Settings cog — links to /settings (with badge dot for updates) */}
-        <SystemSettingsButton
-          collapsed={collapsed}
-          badge={systemSettingsBadge}
-          active={settingsActive}
-        />
+        {/* Utility row - icon-only Audit Log + System, names shown as tooltips.
+            Stacked when collapsed, side-by-side when expanded. */}
+        <div className={`flex ${collapsed ? 'flex-col items-center gap-2' : 'items-center gap-1'}`}>
+          <FooterIconLink to="/log" icon={History} label="Audit Log" active={logActive} />
+          <FooterIconLink to="/settings" icon={Settings} label="System" active={settingsActive} badge={systemSettingsBadge} />
+        </div>
 
         {!collapsed && (
           <>
@@ -307,11 +308,11 @@ export default function Sidebar({
       </div>
 
       {/* Collapse / expand toggle.
-          Vertically centred on the sidebar's right edge — Notion-style —
+          Vertically centred on the sidebar's right edge - Notion-style -
           so it's a steady, predictable target. The chevron always points
           in the direction the panel will move: left when expanded (to
           collapse), right when collapsed (to expand). Sits half on the
-          sidebar, half on the canvas — discoverable on hover. */}
+          sidebar, half on the canvas - discoverable on hover. */}
       <button
         onClick={() => setCollapsed((c) => !c)}
         title={`${collapsed ? 'Expand' : 'Collapse'} sidebar (${MOD_KEY}+B)`}
@@ -337,7 +338,7 @@ export default function Sidebar({
         }
       </button>
 
-      {/* Resize handle — disabled when collapsed */}
+      {/* Resize handle - disabled when collapsed */}
       {!collapsed && (
         <div
           onMouseDown={onMouseDownHandle}
@@ -410,60 +411,29 @@ function CollapsedIconButton({ icon: Icon, label, onClick }) {
   )
 }
 
-function SystemSettingsButton({ collapsed, badge, active }) {
-  const inner = (
-    <span className="relative">
-      <Settings size={collapsed ? 15 : 13} />
-      {badge && (
-        <span
-          className="
-            absolute -top-1 -right-1 w-2 h-2 rounded-full
-            bg-mint ring-2 ring-paper-100 dark:ring-pitch-900
-          "
-          aria-label="Update available"
-        />
-      )}
-    </span>
-  )
-
-  // Active styling matches the rest of the nav rail — predictable destination,
-  // not a floating popover. ADHD: one less context-switch surface.
-  if (collapsed) {
-    return (
-      <Link
-        to="/settings"
-        title={badge ? 'System settings (update available)' : 'System settings'}
-        className={`
-          w-full flex items-center justify-center p-2 rounded-md transition-colors
-          ${active
-            ? 'bg-mint-50 dark:bg-mint-900/20 text-mint-700 dark:text-mint-300 ring-1 ring-mint/30'
-            : 'text-paper-500 dark:text-paper-600 hover:bg-paper-200 dark:hover:bg-pitch-700 hover:text-pitch-700 dark:hover:text-paper-200'
-          }
-        `}
-      >
-        {inner}
-      </Link>
-    )
-  }
+// Icon-only footer utility link. The name lives in the tooltip, not the rail -
+// these are occasional destinations (Audit Log, System), not everyday nav.
+// `badge` shows a mint dot (used for a pending update on System).
+function FooterIconLink({ to, icon: Icon, label, active, badge = false }) {
   return (
     <Link
-      to="/settings"
+      to={to}
+      title={badge ? `${label} (update available)` : label}
+      aria-label={label}
       className={`
-        w-full flex items-center justify-between gap-2 px-2 py-1.5 rounded-md transition-colors
+        relative flex items-center justify-center p-2 rounded-md transition-colors
         ${active
-          ? 'bg-mint-50 dark:bg-mint-900/20 text-mint-700 dark:text-mint-300'
+          ? 'bg-mint-50 dark:bg-mint-900/20 text-mint-700 dark:text-mint-300 ring-1 ring-mint/30'
           : 'text-paper-500 dark:text-paper-600 hover:bg-paper-200 dark:hover:bg-pitch-700 hover:text-pitch-700 dark:hover:text-paper-200'
         }
       `}
     >
-      <span className="flex items-center gap-2">
-        {inner}
-        <span className="font-display uppercase tracking-wide text-xs">System</span>
-      </span>
+      <Icon size={15} />
       {badge && (
-        <span className="text-[9px] font-mono uppercase tracking-wide text-paper-700 dark:text-paper-200">
-          Update
-        </span>
+        <span
+          className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-mint ring-2 ring-paper-100 dark:ring-pitch-900"
+          aria-label="Update available"
+        />
       )}
     </Link>
   )

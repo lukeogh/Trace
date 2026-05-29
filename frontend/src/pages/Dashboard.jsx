@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { MessageSquare, ArrowRight, RefreshCw, Activity, Plus, PenLine, Link2, Paperclip, Clock, CheckSquare, CheckCheck, Sparkles, RotateCcw, ChevronDown, ChevronUp } from 'lucide-react'
+import { MessageSquare, ArrowRight, RefreshCw, Activity, Plus, PenLine, Link2, Paperclip, Clock, CheckSquare, CheckCheck, Sparkles, RotateCcw, ChevronDown, ChevronUp, Leaf } from 'lucide-react'
 import { formatDistanceToNow, format, differenceInDays, differenceInCalendarDays, parseISO } from 'date-fns'
 import { areasApi, entriesApi } from '../api/client'
+import { getTodayNudge } from '../api/nudges'
 import StatusBadge from '../components/StatusBadge'
 import WeeklyRoundupModal from '../components/WeeklyRoundupModal'
 import { AreaIcon } from '../components/IconPicker'
@@ -32,7 +33,7 @@ function getTimeGreeting(date = new Date()) {
   if (h >= 5 && h < 12) return 'Good morning'
   if (h >= 12 && h < 17) return 'Good afternoon'
   if (h >= 17 && h < 22) return 'Good evening'
-  return 'Working late'   // 22:00–04:59 — softer than "good night"
+  return 'Working late'   // 22:00–04:59 - softer than "good night"
 }
 
 // Strip a display name down to its first token so the greeting reads
@@ -52,6 +53,11 @@ export default function Dashboard() {
   const { configured: aiConfigured } = useAIConfigured()
 
   const [roundupOpen, setRoundupOpen] = useState(false)
+  const [nudge, setNudge] = useState(null)
+
+  useEffect(() => {
+    getTodayNudge().then((n) => setNudge(n?.text || null)).catch(() => setNudge(null))
+  }, [])
 
   // View mode persisted to localStorage
   const [viewMode, setViewMode] = useState(
@@ -93,8 +99,8 @@ export default function Dashboard() {
   if (error)   return <ErrorState message={error} onRetry={load} />
 
   const filterNotice = (() => {
-    if (viewMode === 'priority') return 'Priority order — blocked first'
-    if (viewMode === 'focus')    return 'Focus mode — stable areas hidden'
+    if (viewMode === 'priority') return 'Priority order - blocked first'
+    if (viewMode === 'focus')    return 'Focus mode - stable areas hidden'
     return null
   })()
 
@@ -108,7 +114,7 @@ export default function Dashboard() {
       ">
         <div className="max-w-6xl mx-auto flex items-start justify-between gap-6 pr-14">
           <div className="min-w-0">
-            {/* Greeting + date. Personal anchor — orients the eye and the
+            {/* Greeting + date. Personal anchor - orients the eye and the
                 hour. First-name only so the line stays short and warm. */}
             <h1 className="font-display font-medium text-3xl tracking-tight text-pitch-800 dark:text-white leading-tight">
               {getTimeGreeting()}
@@ -162,6 +168,21 @@ export default function Dashboard() {
 
       {/* ── Area grid ── */}
       <main className="max-w-6xl mx-auto px-8 py-8">
+        {/* Daily nudge - a calm, rotating usage reminder. Quiet by design:
+            soft tint, small leaf mark, no dismiss, no call to action. */}
+        {nudge && (
+          <div className="
+            flex items-start gap-3 mb-6 px-4 py-3 rounded-xl
+            bg-mint-50/60 dark:bg-mint-900/10
+            border border-mint/20
+          ">
+            <Leaf size={15} className="flex-shrink-0 mt-0.5 text-mint-700/80 dark:text-mint-300/80" />
+            <p className="text-sm leading-relaxed text-pitch-600 dark:text-paper-300">
+              {nudge}
+            </p>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {displayAreas.map((area) => (
             <AreaCard key={area.id} area={area} />
@@ -254,7 +275,7 @@ function AreaCard({ area }) {
         <p className="text-sm text-paper-600 dark:text-paper-500 leading-relaxed flex-1 line-clamp-3 mb-4">
           {area.summary || (
             <span className="italic text-paper-400 dark:text-paper-700">
-              No summary yet — click to add one.
+              No summary yet - click to add one.
             </span>
           )}
         </p>
@@ -478,7 +499,7 @@ function ComingUp() {
                 </span>
               )}
               <span className="font-mono text-xs text-paper-400 dark:text-paper-700 flex-shrink-0">
-                {todo.due_date ? format(parseISO(todo.due_date), 'EEE d MMM') : '—'}
+                {todo.due_date ? format(parseISO(todo.due_date), 'EEE d MMM') : '-'}
               </span>
             </Link>
           ))
@@ -494,7 +515,7 @@ function RecentActivity({ viewMode }) {
   const [items, setItems] = useState([])
   const [showAll, setShowAll] = useState(false)
 
-  // Collapsed state — persisted, but Focus mode forces collapsed on first load.
+  // Collapsed state - persisted, but Focus mode forces collapsed on first load.
   const [collapsed, setCollapsed] = useState(() => {
     const stored = localStorage.getItem('recentActivityCollapsed')
     if (stored != null) return stored === 'true'

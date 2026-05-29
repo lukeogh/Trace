@@ -12,7 +12,7 @@ parser.add_argument("--port", type=int, default=None, help="Port to listen on")
 parser.add_argument("--data-dir", type=str, default=None, help="Data directory path")
 _args, _unknown = parser.parse_known_args()
 
-# Path resolution — onedir-frozen vs. interpreter / Docker run
+# Path resolution - onedir-frozen vs. interpreter / Docker run
 if getattr(sys, "frozen", False):
     # PyInstaller onedir: sys.executable is the launcher, _MEIPASS is _internal/
     _BUNDLE_DIR = os.path.dirname(sys.executable)
@@ -51,14 +51,35 @@ from routers import (
     storage as storage_router,
     subtasks as subtasks_router,
     ai_features as ai_features_router,
+    nudges as nudges_router,
 )
 
-# Trace. launches with no seeded areas — the user creates their own from the
+# Trace. launches with no seeded areas - the user creates their own from the
 # sidebar's "+ Add your first area" prompt. The previous seven-area software
 # seed was removed when the product was broadened away from a single-team
 # deployment; existing installations are unaffected because the seed only
 # ever ran when the areas table was empty.
 INITIAL_AREAS = []
+
+# Hand-written starter set for the dashboard's daily nudge. Calm, second-person,
+# never demanding. The AI can add more over time (source='ai'); these are the
+# always-present baseline seeded on first run.
+SEED_NUDGES = [
+    "Keeping each area current quietly takes the strain off your next update - a sentence or two is plenty.",
+    "Before a meeting, a five-minute skim of the related area is often all it takes to feel ready.",
+    "Little and often beats a big catch-up. A short note today saves a long one later.",
+    "Capture the thought while it's fresh - you can always tidy it up afterwards.",
+    "Threads keep related work together, so nothing important quietly drifts out of view.",
+    "When notes pile up, Smart Generate can turn the mess into clear next steps.",
+    "Marking something done is worth the small moment - the closure adds up.",
+    "If an area's gone quiet, a quick look might surface something waiting on you.",
+    "Big tasks feel lighter once they're broken into a few honest steps.",
+    "You don't need to record everything - just enough that future-you isn't left guessing.",
+    "The weekly roundup reads your progress back to you, so you don't have to hold it all in your head.",
+    "A calm two-minute check-in is usually enough to stay across everything.",
+    "Jot the decision and the why - the reasoning is the part that's easiest to forget.",
+    "Updating as you go means there's never a daunting backlog waiting for you.",
+]
 
 
 def _init_db():
@@ -86,11 +107,13 @@ def _init_db():
             "CREATE TABLE IF NOT EXISTS storage_sync_logs (id INTEGER PRIMARY KEY, event_type VARCHAR(30) DEFAULT 'backup', status VARCHAR(20) NOT NULL, provider VARCHAR(30), remote_path VARCHAR(500), size_bytes INTEGER, error_message TEXT, occurred_at DATETIME DEFAULT CURRENT_TIMESTAMP)",
             "ALTER TABLE attachments ADD COLUMN remote_path VARCHAR(500)",
             "ALTER TABLE attachments ADD COLUMN sync_status VARCHAR(20) DEFAULT 'local'",
-            # Task decomposition — subtasks are entries with a parent_id
+            # Task decomposition - subtasks are entries with a parent_id
             "ALTER TABLE entries ADD COLUMN parent_id INTEGER REFERENCES entries(id) ON DELETE CASCADE",
             "ALTER TABLE entries ADD COLUMN time_estimate_minutes INTEGER",
             "ALTER TABLE entries ADD COLUMN subtask_order INTEGER",
             "ALTER TABLE entries ADD COLUMN decomp_dismissed BOOLEAN DEFAULT 0",
+            # Daily dashboard nudges
+            "CREATE TABLE IF NOT EXISTS nudges (id INTEGER PRIMARY KEY, text TEXT NOT NULL, source VARCHAR(20) DEFAULT 'seed', active BOOLEAN DEFAULT 1, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)",
         ]:
             try:
                 conn.execute(text(sql))
@@ -155,6 +178,11 @@ def _init_db():
             for data in INITIAL_AREAS:
                 db.add(models.Area(**data))
             db.commit()
+        # Seed the daily nudge pool on first run (idempotent - only when empty).
+        if db.query(models.Nudge).count() == 0:
+            for text in SEED_NUDGES:
+                db.add(models.Nudge(text=text, source="seed"))
+            db.commit()
     finally:
         db.close()
 
@@ -204,6 +232,7 @@ app.include_router(settings_router.router, prefix="/api")
 app.include_router(storage_router.router, prefix="/api")
 app.include_router(subtasks_router.router, prefix="/api")
 app.include_router(ai_features_router.router, prefix="/api")
+app.include_router(nudges_router.router, prefix="/api")
 
 # Serve uploaded files at /uploads/<stored_name>
 if os.path.exists(UPLOAD_DIR):

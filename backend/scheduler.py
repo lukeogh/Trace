@@ -57,9 +57,10 @@ def _refresh_area(db, area: models.Area, provider) -> bool:
     system = (
         "You write concise status summaries for an area of someone's work.\n"
         "Output exactly 2 sentences. No preamble, no formatting, no bullet points.\n"
-        "Sentence 1: the current state — what's happening right now, what's in motion.\n"
-        "Sentence 2: what's next or blocking — risks, pending decisions, what to watch.\n"
-        "Tone: direct, factual, suitable for a status board. Avoid filler like 'currently' or 'we are'."
+        "Sentence 1: the current state - what's happening right now, what's in motion.\n"
+        "Sentence 2: what's next or blocking - risks, pending decisions, what to watch.\n"
+        "Tone: direct, factual, suitable for a status board. Avoid filler like 'currently' or 'we are'.\n"
+        "Use commas or hyphens for punctuation, never em dashes."
     )
     user_msg = (
         f"Area: {area.name}\n"
@@ -95,8 +96,24 @@ def _refresh_area(db, area: models.Area, provider) -> bool:
     return True
 
 
+def topup_nudges():
+    """Daily: ask the AI to add a couple of fresh dashboard nudges, growing
+    the pool over time. No-op when AI is unconfigured or the pool is full."""
+    from database import SessionLocal
+    from routers.nudges import generate_nudges
+    db = SessionLocal()
+    try:
+        result = generate_nudges(db, count=2)
+        if result.get("added"):
+            log.info("Nudge top-up: added %d", result["added"])
+    except Exception as e:
+        log.warning("Nudge top-up failed: %s", e)
+    finally:
+        db.close()
+
+
 def run_nightly_backup():
-    """Cron entry point — nightly encrypted DB backup to the configured
+    """Cron entry point - nightly encrypted DB backup to the configured
     remote backend. Skips cleanly if no cloud is connected or the user has
     disabled the backup toggle in Settings → Storage."""
     from database import SessionLocal
@@ -121,7 +138,7 @@ def run_nightly_backup():
 
 
 def refresh_all_overviews():
-    """Cron entry point — iterate non-stable areas and refresh via the
+    """Cron entry point - iterate non-stable areas and refresh via the
     configured AI provider. Skips silently if the provider isn't ready
     (e.g. user hasn't configured one in Settings → AI Engine)."""
     from ai_provider import get_provider
@@ -130,7 +147,7 @@ def refresh_all_overviews():
     refreshed = 0
     try:
         provider = get_provider(db)
-        # Quick sanity-check before iterating areas — saves N failed calls
+        # Quick sanity-check before iterating areas - saves N failed calls
         # if the provider is unconfigured or unreachable.
         ok, msg = provider.test()
         if not ok:
@@ -169,6 +186,13 @@ def start():
         run_nightly_backup,
         CronTrigger(hour=2, minute=0, timezone="Europe/Brussels"),
         id="nightly-db-backup",
+        replace_existing=True,
+        misfire_grace_time=3600,
+    )
+    _scheduler.add_job(
+        topup_nudges,
+        CronTrigger(hour=12, minute=5, timezone="Europe/Brussels"),
+        id="daily-nudge-topup",
         replace_existing=True,
         misfire_grace_time=3600,
     )
