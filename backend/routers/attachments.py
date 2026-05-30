@@ -70,7 +70,7 @@ async def upload_file(
               new_value=attachment.original_name or attachment.name)
 
     # Queue background upload to the configured remote backend. The local
-    # write has already succeeded — this is best-effort sync that won't block
+    # write has already succeeded - this is best-effort sync that won't block
     # the response. If no cloud is configured the task is a no-op.
     background_tasks.add_task(
         _upload_to_remote,
@@ -86,7 +86,7 @@ def _upload_to_remote(attachment_id: int, local_path: str, stored_name: str) -> 
     """
     Upload a locally-saved attachment to the configured cloud backend.
 
-    Runs AFTER the HTTP response has been sent — failures are logged but
+    Runs AFTER the HTTP response has been sent - failures are logged but
     never affect the user. Creates its own DB session because the request's
     session was closed when FastAPI sent the response (P2 in the storage
     prompt's pitfalls list).
@@ -97,7 +97,7 @@ def _upload_to_remote(attachment_id: int, local_path: str, stored_name: str) -> 
     try:
         backend = get_storage_backend(db)
         if backend.provider_name == "local":
-            return  # No cloud configured — local-only is the desired state.
+            return  # No cloud configured - local-only is the desired state.
         with open(local_path, "rb") as f:
             data = f.read()
         remote_path = backend.upload_bytes(data, f"attachments/{stored_name}")

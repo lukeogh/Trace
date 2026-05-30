@@ -3,7 +3,7 @@ import { ListTree, X, Check, Clock, Loader2, Trash2 } from 'lucide-react'
 import { createSubtasks, dismissDecomp } from '../api/tasks'
 
 /**
- * TaskDecompositionDrawer — slides in from the right after a to-do is saved,
+ * TaskDecompositionDrawer - slides in from the right after a to-do is saved,
  * when the AI judges the task worth breaking up. The user can rename or remove
  * each suggested subtask, then approve or defer.
  *
@@ -74,7 +74,7 @@ export default function TaskDecompositionDrawer({
       onApprove?.(data.subtasks)
       handleClose()
     } catch (e) {
-      // Surface nothing fancy — leave the drawer open so they can retry.
+      // Surface nothing fancy - leave the drawer open so they can retry.
       console.error('Failed to create subtasks:', e)
     } finally {
       setIsSubmitting(false)
@@ -130,7 +130,7 @@ export default function TaskDecompositionDrawer({
           </h2>
           <p className="text-xs text-paper-500 dark:text-paper-600 mt-1 leading-relaxed">
             This task looks like it has a few moving parts. Here's a suggested
-            sequence — edit anything, remove what doesn't fit.
+            sequence - edit anything, remove what doesn't fit.
           </p>
 
           <div className="mt-3 px-3 py-2 rounded-md bg-paper-100 dark:bg-pitch-700 border border-paper-200 dark:border-pitch-500">
@@ -157,7 +157,7 @@ export default function TaskDecompositionDrawer({
           ))}
           {items.length === 0 && (
             <div className="text-center py-8 text-paper-500 dark:text-paper-600 text-sm">
-              All subtasks removed — close to keep the original task only.
+              All subtasks removed - close to keep the original task only.
             </div>
           )}
         </div>
@@ -183,7 +183,7 @@ export default function TaskDecompositionDrawer({
             {isSubmitting ? (
               <><Loader2 size={15} className="animate-spin" /> Creating…</>
             ) : (
-              <><Check size={15} /> Looks good — create {items.length} subtask{items.length !== 1 ? 's' : ''}</>
+              <><Check size={15} /> Looks good - create {items.length} subtask{items.length !== 1 ? 's' : ''}</>
             )}
           </button>
 

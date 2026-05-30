@@ -63,7 +63,7 @@ class Entry(Base):
     due_date = Column(Date, nullable=True)
     # Scheduled time for meeting-type entries (null for other types)
     meeting_at = Column(DateTime, nullable=True)
-    # Free-form notes — used mostly on investigative todos to capture
+    # Free-form notes - used mostly on investigative todos to capture
     # findings while the task is still open. Nullable across all types.
     notes = Column(Text, nullable=True)
 
@@ -75,7 +75,7 @@ class Entry(Base):
     time_estimate_minutes = Column(Integer, nullable=True)
     # Display ordering among siblings under the same parent.
     subtask_order = Column(Integer, nullable=True)
-    # True once the user has dismissed the breakdown drawer for this todo —
+    # True once the user has dismissed the breakdown drawer for this todo -
     # enables the "Break this down" later affordance without re-triggering.
     decomp_dismissed = Column(Boolean, default=False, nullable=False)
 
@@ -115,7 +115,7 @@ class Attachment(Base):
     # Populated by the background upload task in routers/attachments.py
     # after the file lands on Nextcloud / Dropbox / etc.
     remote_path = Column(String(500), nullable=True)
-    # local | synced | pending | failed — drives the sync indicator in UI
+    # local | synced | pending | failed - drives the sync indicator in UI
     # and lets future retry logic know which attachments to chase.
     sync_status = Column(String(20), nullable=True, default="local")
     created_at = Column(DateTime, server_default=func.now())
@@ -187,7 +187,7 @@ class StorageSyncLog(Base):
       - "backup"          : nightly encrypted DB snapshot upload
       - "attachment_sync" : (future) per-attachment remote upload audit
 
-    Surfaced in the StorageSetupModal's Manage view — the user sees the last
+    Surfaced in the StorageSetupModal's Manage view - the user sees the last
     few rows as a quick "did backups actually run?" sanity check.
     """
     __tablename__ = "storage_sync_logs"
@@ -201,3 +201,21 @@ class StorageSyncLog(Base):
     size_bytes = Column(Integer, nullable=True)
     error_message = Column(Text, nullable=True)
     occurred_at = Column(DateTime, server_default=func.now())
+
+
+class Nudge(Base):
+    """
+    Gentle daily usage reminders shown above the dashboard widgets.
+
+    Seeded with a hand-written set on first run; the AI can top the pool up
+    over time (source='ai'). One is surfaced per calendar day, rotated
+    deterministically so it's stable across reloads within a day.
+    """
+    __tablename__ = "nudges"
+
+    id = Column(Integer, primary_key=True, index=True)
+    text = Column(Text, nullable=False)
+    # seed | ai - where this nudge came from
+    source = Column(String(20), nullable=False, default="seed")
+    active = Column(Boolean, default=True, nullable=False)
+    created_at = Column(DateTime, server_default=func.now())

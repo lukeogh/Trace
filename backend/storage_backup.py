@@ -9,7 +9,7 @@ The flow (run nightly by scheduler.py, or manually via POST /storage/backup/run)
   4. Log the outcome in storage_sync_logs so the UI's Manage view can show it.
   5. Prune older backups, keeping the most recent RETENTION_COUNT.
 
-Skips cleanly when there's no remote backend configured — the nightly job
+Skips cleanly when there's no remote backend configured - the nightly job
 checks before getting here, but defensive too.
 """
 
@@ -31,7 +31,7 @@ BACKUP_PREFIX = "trace-backup-"
 def run_backup(db_session) -> dict:
     """
     Run a full encrypted backup. Returns {"status": "success"|"failed"|"skipped", ...}.
-    Never raises — failures are logged + recorded in storage_sync_logs.
+    Never raises - failures are logged + recorded in storage_sync_logs.
     """
     from database import DB_PATH
     from storage_backend import get_storage_backend, get_or_create_fernet_key
@@ -40,7 +40,7 @@ def run_backup(db_session) -> dict:
     backend = get_storage_backend(db_session)
 
     if backend.provider_name == "local":
-        log.info("No remote backend — skipping backup.")
+        log.info("No remote backend - skipping backup.")
         return {"status": "skipped", "reason": "No remote backend configured."}
 
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
@@ -49,7 +49,7 @@ def run_backup(db_session) -> dict:
 
     try:
         # ── 1. Safe SQLite snapshot via the backup API ───────────────────────
-        # P3: never use shutil.copy on a live SQLite with WAL — you'll get
+        # P3: never use shutil.copy on a live SQLite with WAL - you'll get
         # a corrupt backup. The sqlite3 connect().backup() API is the only
         # safe way to do this.
         with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as tmp:
@@ -92,7 +92,7 @@ def run_backup(db_session) -> dict:
 
     except Exception as e:
         log.error("Backup failed: %s", e)
-        # Best-effort log — if the DB session is also dead this will silently
+        # Best-effort log - if the DB session is also dead this will silently
         # fail, but the main `log.error` already wrote stderr.
         try:
             db_session.add(StorageSyncLog(
@@ -125,5 +125,5 @@ def _prune_old_backups(backend) -> None:
             backend.delete(path)
             log.info("Pruned old backup: %s", path)
     except Exception as e:
-        # Pruning is non-fatal — log and continue.
+        # Pruning is non-fatal - log and continue.
         log.warning("Backup pruning failed (non-fatal): %s", e)

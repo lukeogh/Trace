@@ -1,12 +1,12 @@
 /**
- * Spinner — inline loading indicator using "The Draw" at button scale.
+ * Spinner - inline loading indicator using "The Draw" at button scale.
  *
  * Uses currentColor so it inherits its parent's text colour. Drop into
  * any button, input, or text run that needs a loading state.
  *
  * Props:
- *   size      — pixel dimensions (default 14)
- *   className — optional extra classes
+ *   size      - pixel dimensions (default 14)
+ *   className - optional extra classes
  *
  * Usage:
  *   <button>{loading && <Spinner />} Save</button>

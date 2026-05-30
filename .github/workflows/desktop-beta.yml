@@ -92,7 +92,7 @@ jobs:
           tmp=$(mktemp)
           jq --arg v "$V" '.version = $v' src-tauri/tauri.conf.json > "$tmp"
           mv "$tmp" src-tauri/tauri.conf.json
-          # Cargo.toml — keep the base version (no SemVer pre-release) so
+          # Cargo.toml - keep the base version (no SemVer pre-release) so
           # Cargo.lock doesn't need regenerating. Only the bundle's
           # displayed version (read from tauri.conf.json) reflects beta.
 
@@ -111,7 +111,7 @@ jobs:
       - name: Build backend sidecar
         run: python scripts/build-backend.py
 
-      # Beta builds NSIS only — MSI's version validator rejects the
+      # Beta builds NSIS only - MSI's version validator rejects the
       # `+<sha>` build metadata we append to the beta version string, and
       # we never publish the MSI in beta releases anyway (the Collect
       # bundles step below only picks up *setup.exe / .sig). Saves ~30s
@@ -144,7 +144,7 @@ jobs:
           NSIS_EXE=$(ls artifacts/*setup.exe 2>/dev/null | head -1)
           NSIS_SIG=$(ls artifacts/*setup.exe.sig 2>/dev/null | head -1)
           if [[ -z "$NSIS_EXE" || -z "$NSIS_SIG" ]]; then
-            echo "Missing NSIS bundle or its .sig — can't build manifest" >&2
+            echo "Missing NSIS bundle or its .sig - can't build manifest" >&2
             exit 1
           fi
           SIG=$(cat "$NSIS_SIG")
@@ -182,6 +182,6 @@ jobs:
             --repo "${{ github.repository }}" \
             --target "${{ github.sha }}" \
             --prerelease \
-            --title "Beta — ${{ steps.version.outputs.version }}" \
-            --notes "Auto-generated beta build from main @ $(git rev-parse --short HEAD). Tag intentionally moves on every push — use the stable tags (vX.Y.Z) for reproducible installs." \
+            --title "Beta - ${{ steps.version.outputs.version }}" \
+            --notes "Auto-generated beta build from main @ $(git rev-parse --short HEAD). Tag intentionally moves on every push - use the stable tags (vX.Y.Z) for reproducible installs." \
             artifacts/*

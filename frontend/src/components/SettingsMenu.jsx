@@ -7,7 +7,7 @@ import { TEXT_SIZES } from '../hooks/useTextSize'
 const MAX_AVATAR_BYTES = 2 * 1024 * 1024  // 2 MB
 
 /**
- * Personal settings — avatar button in the top-right of the screen.
+ * Personal settings - avatar button in the top-right of the screen.
  *
  * Houses *personal/visual* preferences only: profile photo, display name,
  * theme, font, text size. Anything about the app's *system state* (AI

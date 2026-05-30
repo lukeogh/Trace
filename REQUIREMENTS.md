@@ -1,4 +1,4 @@
-# Trace. — Requirements Specification
+# Trace. - Requirements Specification
 
 **Version:** 1.0.0
 **Prepared by:** Claude (Anthropic)
@@ -8,9 +8,9 @@
 
 ## 1. Product Purpose
 
-A self-hosted activity log for anyone juggling multiple parallel responsibilities — a tool for people who need to keep their hand on several spinning plates at once. Organise your world into **areas** (one per plate), break each area into **threads** of focused work, and keep a chronological record of todos, decisions, meetings, blockers, and notes inside every thread.
+A self-hosted activity log for anyone juggling multiple parallel responsibilities - a tool for people who need to keep their hand on several spinning plates at once. Organise your world into **areas** (one per plate), break each area into **threads** of focused work, and keep a chronological record of todos, decisions, meetings, blockers, and notes inside every thread.
 
-Replaces ad-hoc notes scattered across documents, chats, and inboxes with a single structured, searchable, audit-logged record of what is happening across all your areas — and why.
+Replaces ad-hoc notes scattered across documents, chats, and inboxes with a single structured, searchable, audit-logged record of what is happening across all your areas - and why.
 
 AI surfaces (optional, gated on an Anthropic API key) accelerate the chores: parsing messy input into structured items, regenerating area Overviews on a daily schedule, drafting a weekly status digest.
 
@@ -18,7 +18,7 @@ AI surfaces (optional, gated on an Anthropic API key) accelerate the chores: par
 
 ## 2. Areas
 
-Areas are user-created — there is no fixed list. The app launches empty and prompts the user to create their first area from the sidebar.
+Areas are user-created - there is no fixed list. The app launches empty and prompts the user to create their first area from the sidebar.
 
 Each area carries a name, a slug (auto-generated from the name), a chosen Lucide icon (optional), a free-text Overview (manually editable or AI-regenerated), and a status (`stable` / `active` / `review` / `blocked`).
 
@@ -156,7 +156,7 @@ Warm, calm, professional. Paper-and-ink restraint with a single muted-indigo acc
 - Dark/light toggle with `useTheme` hook
 - Defaults to dark on first load
 - Persists preference to `localStorage`
-- Implemented via Tailwind `darkMode: 'class'` — `dark` class on `<html>`
+- Implemented via Tailwind `darkMode: 'class'` - `dark` class on `<html>`
 
 ---
 
@@ -179,7 +179,7 @@ Warm, calm, professional. Paper-and-ink restraint with a single muted-indigo acc
 - Mapped to `8080` on the host
 
 ### Volumes
-- `./data:/data` — persists DB and uploaded files
+- `./data:/data` - persists DB and uploaded files
 
 ### Env vars
 | Variable | Default | Purpose |
@@ -192,7 +192,7 @@ Warm, calm, professional. Paper-and-ink restraint with a single muted-indigo acc
 
 ## 8. Access Control
 
-Version 1.0 — single user, no authentication. The app is intended to run on a private homelab network (LAN or Tailscale). Do not expose port 8080 to the public internet without adding authentication first.
+Version 1.0 - single user, no authentication. The app is intended to run on a private homelab network (LAN or Tailscale). Do not expose port 8080 to the public internet without adding authentication first.
 
 **Future consideration:** Add HTTP Basic Auth or session-based auth when multi-user access or public exposure is required.
 

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 
 /**
- * User's display name — used for the settings avatar's initials and as the
+ * User's display name - used for the settings avatar's initials and as the
  * identity surface in the sidebar. Persists to localStorage.
  */
 export function useDisplayName() {

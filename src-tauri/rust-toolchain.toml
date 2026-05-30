@@ -1,7 +1,7 @@
 # Pin Rust 1.94 because Rust 1.95.0 stabilized std::ops::Receiver, which
 # breaks crates that reference Self::Target inside Deref impls without
 # disambiguation (shlex, serde_core, memchr…). Once the ecosystem catches
-# up — likely a minor-version bump of those crates — we can drop this file
+# up - likely a minor-version bump of those crates - we can drop this file
 # and pick up whichever stable rustc is current.
 [toolchain]
 channel = "1.94"

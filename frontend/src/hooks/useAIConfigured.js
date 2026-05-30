@@ -1,12 +1,12 @@
 /**
- * useAIConfigured — single source of truth for "is the AI engine ready?".
+ * useAIConfigured - single source of truth for "is the AI engine ready?".
  *
  * Returns:
  *   - configured: boolean | null    (null = still loading)
  *   - loading:    boolean
  *
  * All AI-dependent surfaces (Smart Generate page, area Update button,
- * Weekly Roundup button) call this hook and gate their UI on it — so the
+ * Weekly Roundup button) call this hook and gate their UI on it - so the
  * user doesn't get to invest effort before discovering AI isn't set up.
  *
  * Cross-page sync: when the wizard on /settings finishes saving, it

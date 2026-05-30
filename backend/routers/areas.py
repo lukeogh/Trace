@@ -169,9 +169,10 @@ def suggest_area_summary(area_id: int, db: Session = Depends(get_db)):
     system = (
         "You write concise status summaries for an area of someone's work.\n"
         "Output exactly 2 sentences. No preamble, no formatting, no bullet points.\n"
-        "Sentence 1: the current state — what's happening right now, what's in motion.\n"
-        "Sentence 2: what's next or blocking — risks, pending decisions, what to watch.\n"
-        "Tone: direct, factual, suitable for a status board. Avoid filler like 'currently' or 'we are'."
+        "Sentence 1: the current state - what's happening right now, what's in motion.\n"
+        "Sentence 2: what's next or blocking - risks, pending decisions, what to watch.\n"
+        "Tone: direct, factual, suitable for a status board. Avoid filler like 'currently' or 'we are'.\n"
+        "Use commas or hyphens for punctuation, never em dashes."
     )
 
     user_msg = (

@@ -1,5 +1,5 @@
 /**
- * Tauri bridge — thin wrappers around Tauri invoke calls.
+ * Tauri bridge - thin wrappers around Tauri invoke calls.
  *
  * Every function is a no-op (returns null) when running outside Tauri so
  * the rest of the app stays unaware. The browser/Docker build of the
@@ -34,7 +34,7 @@ export async function pickDataDir() {
 
 /**
  * Copies trace.db + uploads/ from the current data dir to `newPath` and
- * saves the new path to the config store. The old data is **not** deleted —
+ * saves the new path to the config store. The old data is **not** deleted -
  * intentional safety net. Caller must `relaunch()` afterwards because the
  * running sidecar still points at the old location.
  *
@@ -53,7 +53,7 @@ export async function relaunch() {
 
 // ── Updater ──────────────────────────────────────────────────────────────
 
-/** "stable" | "beta" — defaults to "stable" outside Tauri. */
+/** "stable" | "beta" - defaults to "stable" outside Tauri. */
 export async function getUpdateChannel() {
   if (!isTauri()) return 'stable'
   const { invoke: tauriInvoke } = await import('@tauri-apps/api/core')
@@ -100,7 +100,7 @@ async function getUpdaterAuthHeader() {
  *   - null outside Tauri.
  *
  * We pass the endpoint override on every check because the tauri-plugin-
- * updater Rust Builder doesn't allow runtime endpoint changes — but the JS
+ * updater Rust Builder doesn't allow runtime endpoint changes - but the JS
  * `check({ endpoints, headers })` does. The Authorization header is what
  * lets us reach the private repo's releases.
  */

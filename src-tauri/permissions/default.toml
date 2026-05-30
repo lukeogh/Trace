@@ -3,7 +3,7 @@
 # App-level permissions for Trace.'s custom Tauri commands.
 #
 # Pattern: one [[permission]] per command, gathered into a [[set]] named
-# "default" — this mirrors the plugin permission convention and is what
+# "default" - this mirrors the plugin permission convention and is what
 # Tauri 2's runtime ACL resolver expects. Putting all commands inside a
 # single [[permission]].commands.allow array works at compile time but
 # was silently ignored at runtime in our testing.

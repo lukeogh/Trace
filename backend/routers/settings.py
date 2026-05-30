@@ -1,5 +1,5 @@
 """
-Settings router — app-level configuration over HTTP.
+Settings router - app-level configuration over HTTP.
 
 Currently exposes:
   - GET  /settings/ai          → current AI config (api key masked)
@@ -37,7 +37,7 @@ def get_ai_presets():
     Return the list of known provider presets for the frontend picker.
 
     Includes label, default_model, needs_key, needs_url, base_url, key_prefix
-    — never the user's actual key (those live in app_settings).
+    - never the user's actual key (those live in app_settings).
     """
     return {
         k: {
@@ -59,7 +59,7 @@ def update_ai_config(payload: schemas.AIConfig, db: Session = Depends(get_db)):
 
     The frontend may echo back the *masked* api_key (all bullets) when the
     user is editing other fields without changing the key. Detect that and
-    preserve the stored key — otherwise the user would silently nuke their
+    preserve the stored key - otherwise the user would silently nuke their
     key by saving any other field.
     """
     raw_existing = _read_config(db)

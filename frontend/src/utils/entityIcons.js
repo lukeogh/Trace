@@ -12,7 +12,7 @@ import { PenLine, CheckSquare, Scale, Calendar, MessageSquare, Eye, Activity, Pa
 export const ENTITY = {
   entry: {
     // Stored type value stays "entry"; the human-facing label is "Update"
-    // (a log update). Only this label changes — no data migration.
+    // (a log update). Only this label changes - no data migration.
     label: 'Update',
     Icon: PenLine,
     tint: 'text-paper-700 dark:text-paper-200',
@@ -59,7 +59,7 @@ export function entityFor(type) {
   return ENTITY[type] ?? ENTITY.entry
 }
 
-// Structural concepts (sections, lists, page headers) — not entry types.
+// Structural concepts (sections, lists, page headers) - not entry types.
 export const SECTION_ICONS = {
   thread:     MessageSquare,
   overview:   Eye,

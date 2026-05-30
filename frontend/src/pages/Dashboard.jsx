@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { MessageSquare, ArrowRight, RefreshCw, Activity, Plus, PenLine, Link2, Paperclip, Clock, CheckSquare, CheckCheck, Sparkles, RotateCcw, ChevronDown, ChevronUp } from 'lucide-react'
+import { MessageSquare, ArrowRight, RefreshCw, Clock, Sparkles, RotateCcw, Leaf, ChevronDown } from 'lucide-react'
 import { formatDistanceToNow, format, differenceInDays, differenceInCalendarDays, parseISO } from 'date-fns'
 import { areasApi, entriesApi } from '../api/client'
+import { getTodayNudge, getRandomNudge } from '../api/nudges'
 import StatusBadge from '../components/StatusBadge'
 import WeeklyRoundupModal from '../components/WeeklyRoundupModal'
 import { AreaIcon } from '../components/IconPicker'
@@ -32,7 +33,7 @@ function getTimeGreeting(date = new Date()) {
   if (h >= 5 && h < 12) return 'Good morning'
   if (h >= 12 && h < 17) return 'Good afternoon'
   if (h >= 17 && h < 22) return 'Good evening'
-  return 'Working late'   // 22:00–04:59 — softer than "good night"
+  return 'Working late'   // 22:00–04:59 - softer than "good night"
 }
 
 // Strip a display name down to its first token so the greeting reads
@@ -52,6 +53,29 @@ export default function Dashboard() {
   const { configured: aiConfigured } = useAIConfigured()
 
   const [roundupOpen, setRoundupOpen] = useState(false)
+  // { id, text } | null — store id too so the "show another" button can
+  // ask the backend for a nudge that isn't the one currently on screen.
+  const [nudge, setNudge] = useState(null)
+  const [shufflingNudge, setShufflingNudge] = useState(false)
+
+  useEffect(() => {
+    getTodayNudge()
+      .then((n) => setNudge(n?.text ? { id: n.id, text: n.text } : null))
+      .catch(() => setNudge(null))
+  }, [])
+
+  const handleShuffleNudge = async () => {
+    if (shufflingNudge) return
+    setShufflingNudge(true)
+    try {
+      const next = await getRandomNudge(nudge?.id)
+      if (next?.text) setNudge({ id: next.id, text: next.text })
+    } catch {
+      // best-effort - leave the current nudge on screen
+    } finally {
+      setShufflingNudge(false)
+    }
+  }
 
   // View mode persisted to localStorage
   const [viewMode, setViewMode] = useState(
@@ -93,8 +117,8 @@ export default function Dashboard() {
   if (error)   return <ErrorState message={error} onRetry={load} />
 
   const filterNotice = (() => {
-    if (viewMode === 'priority') return 'Priority order — blocked first'
-    if (viewMode === 'focus')    return 'Focus mode — stable areas hidden'
+    if (viewMode === 'priority') return 'Priority order - blocked first'
+    if (viewMode === 'focus')    return 'Focus mode - stable areas hidden'
     return null
   })()
 
@@ -106,9 +130,9 @@ export default function Dashboard() {
         bg-paper-100/90 dark:bg-pitch-800/90 backdrop-blur-md
         border-b border-paper-300 dark:border-pitch-700
       ">
-        <div className="max-w-6xl mx-auto flex items-start justify-between gap-6 pr-14">
+        <div className="max-w-[1600px] mx-auto flex items-start justify-between gap-6 pr-14">
           <div className="min-w-0">
-            {/* Greeting + date. Personal anchor — orients the eye and the
+            {/* Greeting + date. Personal anchor - orients the eye and the
                 hour. First-name only so the line stays short and warm. */}
             <h1 className="font-display font-medium text-3xl tracking-tight text-pitch-800 dark:text-white leading-tight">
               {getTimeGreeting()}
@@ -141,7 +165,7 @@ export default function Dashboard() {
         </div>
 
         {filterNotice && (
-          <div className="max-w-6xl mx-auto mt-3 flex items-center gap-2">
+          <div className="max-w-[1600px] mx-auto mt-3 flex items-center gap-2">
             <span className="text-xs font-mono uppercase tracking-widest text-paper-500 dark:text-paper-600">
               {filterNotice}
             </span>
@@ -161,8 +185,43 @@ export default function Dashboard() {
       </header>
 
       {/* ── Area grid ── */}
-      <main className="max-w-6xl mx-auto px-8 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+      <main className="max-w-[1600px] mx-auto px-8 py-8">
+        {/* Daily nudge - a calm, rotating usage reminder. Quiet by design:
+            soft tint, small leaf mark, no call to action. A subtle refresh
+            icon on the right lets the user flick through the pool. */}
+        {nudge?.text && (
+          <div className="
+            flex items-start gap-3 mb-6 px-4 py-3 rounded-xl
+            bg-mint-50/60 dark:bg-mint-900/10
+            border border-mint/20
+          ">
+            <Leaf size={15} className="flex-shrink-0 mt-0.5 text-mint-700/80 dark:text-mint-300/80" />
+            <p className="flex-1 text-sm leading-relaxed text-pitch-600 dark:text-paper-300">
+              {nudge.text}
+            </p>
+            <button
+              onClick={handleShuffleNudge}
+              disabled={shufflingNudge}
+              title="Show another"
+              aria-label="Show another nudge"
+              className="
+                flex-shrink-0 p-1 rounded
+                text-paper-500 dark:text-paper-600
+                hover:text-pitch-700 dark:hover:text-paper-300
+                opacity-50 hover:opacity-100
+                disabled:cursor-not-allowed
+                transition-all
+              "
+            >
+              <RefreshCw size={13} className={shufflingNudge ? 'animate-spin' : ''} />
+            </button>
+          </div>
+        )}
+
+        <div
+          className="grid gap-4"
+          style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))' }}
+        >
           {displayAreas.map((area) => (
             <AreaCard key={area.id} area={area} />
           ))}
@@ -170,9 +229,8 @@ export default function Dashboard() {
       </main>
 
       {/* ── Below-fold sections ── */}
-      <div className="max-w-6xl mx-auto px-8 pb-12">
-        <ComingUp />
-        <RecentActivity viewMode={viewMode} />
+      <div className="max-w-[1600px] mx-auto px-8 pb-12">
+        <ComingUpStrip />
       </div>
 
       <WeeklyRoundupModal isOpen={roundupOpen} onClose={() => setRoundupOpen(false)} />
@@ -192,7 +250,7 @@ function ViewSegmentedControl({ viewMode, onChange }) {
           className={`
             px-3 py-1 rounded text-xs font-display uppercase tracking-wide transition-colors
             ${viewMode === key
-              ? 'bg-white dark:bg-pitch-800 text-pitch-800 dark:text-white shadow-sm'
+              ? 'bg-mint-50 dark:bg-mint-900/20 text-mint-700 dark:text-mint-300 shadow-sm'
               : 'text-paper-600 dark:text-paper-500 hover:text-pitch-700 dark:hover:text-paper-300'
             }
           `}
@@ -210,11 +268,14 @@ function AreaCard({ area }) {
   const config         = getAreaStatus(area.status)
   const relativeTime   = formatDistanceToNow(new Date(area.updated_at), { addSuffix: true })
   const daysSinceUpdate = differenceInDays(new Date(), new Date(area.updated_at))
+  // Stable areas recede so the urgent ones carry the eye. Present but quiet;
+  // full weight returns on hover.
+  const isStable = area.status === 'stable'
 
   return (
     <Link
       to={`/area/${area.id}`}
-      className="
+      className={`
         group relative flex flex-col rounded-xl border overflow-hidden
         bg-white dark:bg-pitch-700
         border-paper-300 dark:border-pitch-500
@@ -223,7 +284,8 @@ function AreaCard({ area }) {
         hover:-translate-y-0.5
         transition-all duration-200
         animate-fade-in
-      "
+        ${isStable ? 'opacity-60 hover:opacity-100' : ''}
+      `}
     >
       {/* Status accent stripe */}
       <div
@@ -254,7 +316,7 @@ function AreaCard({ area }) {
         <p className="text-sm text-paper-600 dark:text-paper-500 leading-relaxed flex-1 line-clamp-3 mb-4">
           {area.summary || (
             <span className="italic text-paper-400 dark:text-paper-700">
-              No summary yet — click to add one.
+              No summary yet - click to add one.
             </span>
           )}
         </p>
@@ -292,7 +354,10 @@ function AreaCard({ area }) {
 function DashboardSkeleton() {
   return (
     <div className="flex-1 min-h-screen bg-paper-100 dark:bg-pitch-800 bg-grid-light dark:bg-grid-dark">
-      <div className="max-w-6xl mx-auto px-8 py-8 grid grid-cols-3 gap-4">
+      <div
+        className="max-w-[1600px] mx-auto px-8 py-8 grid gap-4"
+        style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))' }}
+      >
         {Array.from({ length: 7 }).map((_, i) => (
           <div key={i} className="h-44 rounded-xl bg-paper-200 dark:bg-pitch-700 animate-pulse" />
         ))}
@@ -314,88 +379,6 @@ function ErrorState({ message, onRetry }) {
   )
 }
 
-// ─── Recent activity ──────────────────────────────────────────────────────────
-
-const EVENT_CONFIG = {
-  thread_created: {
-    Icon: Plus,
-    className: 'bg-paper-200 dark:bg-pitch-700 text-paper-700 dark:text-paper-200',
-  },
-  entry_added: {
-    Icon: PenLine,
-    className: 'bg-violet-500/10 text-violet-500 dark:text-violet-400',
-  },
-  status_changed: {
-    Icon: RefreshCw,
-    className: 'bg-amber-500/10 text-amber-500 dark:text-amber-400',
-  },
-  link_added: {
-    Icon: Link2,
-    className: 'bg-sky-500/10 text-sky-500 dark:text-sky-400',
-  },
-  file_uploaded: {
-    Icon: Paperclip,
-    className: 'bg-teal-500/10 text-teal-500 dark:text-teal-400',
-  },
-  todo_completed: {
-    Icon: CheckCheck,
-    className: 'bg-emerald-500/10 text-emerald-500 dark:text-emerald-400',
-  },
-}
-
-function formatActivityDetail(eventType, detail, threadTitle) {
-  if (eventType === 'thread_created') return detail || threadTitle
-  if (eventType === 'entry_added') return detail || 'New entry added'
-  if (eventType === 'todo_completed') return detail || 'To-do completed'
-  if (eventType === 'status_changed') return detail ? `Status changed ${detail}` : 'Status changed'
-  if (eventType === 'file_uploaded') return detail ? `File: ${detail}` : 'File uploaded'
-  if (eventType === 'link_added') return detail ? `Link: ${detail}` : 'Link added'
-  return detail || eventType
-}
-
-function ActivityRow({ item }) {
-  const cfg = EVENT_CONFIG[item.event_type] ?? EVENT_CONFIG.entry_added
-  const { Icon } = cfg
-  const primaryText = formatActivityDetail(item.event_type, item.detail, item.thread_title)
-  const showThreadContext = item.event_type !== 'thread_created'
-
-  return (
-    <Link
-      to={`/thread/${item.thread_id}`}
-      className="
-        px-4 py-3 flex items-center gap-3 transition-colors duration-150
-        hover:bg-paper-200/50 dark:hover:bg-pitch-700/40
-        first:rounded-t-xl last:rounded-b-xl
-      "
-    >
-      <span className={`p-1.5 rounded-md flex-shrink-0 ${cfg.className}`}>
-        <Icon size={13} />
-      </span>
-      <span className="font-display font-semibold uppercase tracking-wide text-xs text-pitch-700 dark:text-paper-200 flex-shrink-0">
-        {item.area_name}
-      </span>
-      <span className="text-paper-400 dark:text-paper-700 text-xs flex-shrink-0">/</span>
-      <div className="flex flex-col flex-1 min-w-0">
-        <span className="text-xs text-pitch-500 dark:text-paper-300 truncate">
-          {primaryText}
-        </span>
-        {showThreadContext && (
-          <span className="text-xs text-paper-500 dark:text-paper-700 truncate">
-            {item.thread_title}
-          </span>
-        )}
-      </div>
-      <StatusBadge status={item.thread_status} type="thread" size="xs" />
-      <span
-        className="font-mono text-xs text-paper-400 dark:text-paper-700 flex-shrink-0"
-        title={format(new Date(item.occurred_at), 'dd MMM yyyy HH:mm')}
-      >
-        {formatDistanceToNow(new Date(item.occurred_at), { addSuffix: true })}
-      </span>
-    </Link>
-  )
-}
-
 // ─── Coming Up (upcoming todos) ───────────────────────────────────────────────
 
 const TODAY = new Date()
@@ -409,175 +392,125 @@ function getDueGroup(dueDateStr) {
   return 'later'
 }
 
-const GROUP_CONFIG = {
-  overdue: { label: 'Overdue', labelClass: 'text-red-500 dark:text-red-400' },
-  today:   { label: 'Today',   labelClass: 'text-amber-500 dark:text-amber-400' },
-  week:    { label: 'This Week', labelClass: 'text-paper-600 dark:text-paper-500' },
-  later:   { label: 'Later',   labelClass: 'text-paper-500 dark:text-paper-600' },
-}
-
-function ComingUp() {
+// One calm line counting what's due, bucketed overdue / today / this week.
+// The detail still lives in each thread, one click away - and a chevron
+// expands the strip inline so the user can scan the actual items without
+// leaving the dashboard. Collapsed state persists across reloads so the
+// view stays predictable (ADHD: predictable destinations beat surprises).
+// Hides entirely when nothing is due. Counts use the functional status
+// palette (terracotta, amber-muted), never brand mint.
+function ComingUpStrip() {
   const [todos, setTodos] = useState([])
-
-  useEffect(() => {
-    entriesApi.getUpcoming(20).then(setTodos).catch(() => {})
-  }, [])
-
-  if (todos.length === 0) {
-    return (
-      <div className="mb-10 flex flex-col items-center justify-center min-h-[80px]">
-        <CheckSquare size={20} className="text-paper-400 dark:text-paper-700 mb-1.5" />
-        <p className="text-xs text-paper-500 dark:text-paper-700 italic">No open to-dos</p>
-      </div>
-    )
-  }
-
-  const groups = { overdue: [], today: [], week: [], later: [] }
-  todos.forEach((t) => groups[getDueGroup(t.due_date)].push(t))
-
-  return (
-    <div className="mb-10">
-      <div className="flex items-center gap-2 mb-3">
-        <span className="font-display uppercase tracking-widest text-xs text-paper-500 dark:text-paper-600">
-          Coming Up
-        </span>
-      </div>
-
-      <div className="bg-white dark:bg-pitch-700 border border-paper-300 dark:border-pitch-500 rounded-xl divide-y divide-paper-200 dark:divide-pitch-700 overflow-hidden">
-        {Object.entries(groups).map(([groupKey, items]) => {
-          if (items.length === 0) return null
-          const { label, labelClass } = GROUP_CONFIG[groupKey]
-          return items.map((todo, i) => (
-            <Link
-              key={todo.id}
-              to={`/thread/${todo.thread_id}`}
-              className="
-                px-4 py-3 flex items-center gap-3 transition-colors duration-150
-                hover:bg-paper-200/50 dark:hover:bg-pitch-700/40
-                first:rounded-t-xl last:rounded-b-xl
-              "
-            >
-              <span className="p-1.5 rounded-md flex-shrink-0 bg-emerald-500/10 text-emerald-500 dark:text-emerald-400">
-                <CheckSquare size={13} />
-              </span>
-              <span className="font-display font-semibold uppercase tracking-wide text-xs text-pitch-700 dark:text-paper-200 flex-shrink-0">
-                {todo.area_name}
-              </span>
-              <span className="text-paper-400 dark:text-paper-700 text-xs flex-shrink-0">/</span>
-              <div className="flex flex-col flex-1 min-w-0">
-                <span className="text-xs text-pitch-500 dark:text-paper-300 truncate">
-                  {todo.content}
-                </span>
-                <span className="text-xs text-paper-500 dark:text-paper-700 truncate">
-                  {todo.thread_title}
-                </span>
-              </div>
-              {i === 0 && (
-                <span className={`font-mono text-xs flex-shrink-0 ${labelClass}`}>
-                  {label}
-                </span>
-              )}
-              <span className="font-mono text-xs text-paper-400 dark:text-paper-700 flex-shrink-0">
-                {todo.due_date ? format(parseISO(todo.due_date), 'EEE d MMM') : '—'}
-              </span>
-            </Link>
-          ))
-        })}
-      </div>
-    </div>
+  const [collapsed, setCollapsed] = useState(
+    () => localStorage.getItem('comingUpCollapsed') !== 'false'
   )
-}
 
-// ─── Recent activity ──────────────────────────────────────────────────────────
-
-function RecentActivity({ viewMode }) {
-  const [items, setItems] = useState([])
-  const [showAll, setShowAll] = useState(false)
-
-  // Collapsed state — persisted, but Focus mode forces collapsed on first load.
-  const [collapsed, setCollapsed] = useState(() => {
-    const stored = localStorage.getItem('recentActivityCollapsed')
-    if (stored != null) return stored === 'true'
-    return viewMode === 'focus'
-  })
-
-  // When the view mode flips to focus, auto-collapse (and remember).
   useEffect(() => {
-    if (viewMode === 'focus') {
-      setCollapsed(true)
-      localStorage.setItem('recentActivityCollapsed', 'true')
-    }
-  }, [viewMode])
+    entriesApi.getUpcoming(50).then(setTodos).catch(() => {})
+  }, [])
 
   const toggle = () => {
     setCollapsed((c) => {
       const next = !c
-      localStorage.setItem('recentActivityCollapsed', String(next))
+      localStorage.setItem('comingUpCollapsed', String(next))
       return next
     })
   }
 
-  useEffect(() => {
-    areasApi.getActivity(10).then(setItems).catch(() => {})
-  }, [])
-
-  const visible = showAll ? items : items.slice(0, 5)
-  const hasMore = items.length > 5
-
-  if (items.length === 0) {
-    return (
-      <div className="mt-10 flex flex-col items-center justify-center min-h-[80px]">
-        <Activity size={20} className="text-paper-400 dark:text-paper-700 mb-1.5" />
-        <p className="text-xs text-paper-500 dark:text-paper-700 italic">No activity recorded yet</p>
-      </div>
-    )
+  // Bucket the todos once, derive counts from the buckets.
+  const buckets = { overdue: [], today: [], week: [] }
+  todos.forEach((t) => {
+    const g = getDueGroup(t.due_date)
+    if (g === 'overdue' || g === 'today' || g === 'week') buckets[g].push(t)
+  })
+  const counts = {
+    overdue: buckets.overdue.length,
+    today:   buckets.today.length,
+    week:    buckets.week.length,
   }
 
+  const nothing = counts.overdue + counts.today + counts.week === 0
+  if (nothing) return null
+
+  const SECTIONS = [
+    { key: 'overdue', label: 'Overdue',   colorClass: 'text-terracotta' },
+    { key: 'today',   label: 'Today',     colorClass: 'text-amber-muted' },
+    { key: 'week',    label: 'This Week', colorClass: 'text-paper-600 dark:text-paper-500' },
+  ]
+
   return (
-    <div className="mt-10">
+    <div className="rounded-xl bg-paper-200 dark:bg-pitch-700 overflow-hidden">
+      {/* Strip header - click anywhere to expand/collapse */}
       <button
         onClick={toggle}
+        aria-expanded={!collapsed}
         className="
-          w-full flex items-center gap-2 mb-3 py-1
-          text-left transition-colors
-          text-paper-500 dark:text-paper-600
-          hover:text-pitch-700 dark:hover:text-paper-200
+          w-full flex items-center gap-4 px-4 py-3 text-sm
+          hover:bg-paper-300/60 dark:hover:bg-pitch-600/60
+          transition-colors
         "
       >
-        {collapsed ? <ChevronDown size={13} /> : <ChevronUp size={13} />}
-        <span className="font-display uppercase tracking-widest text-xs">
-          Recent Activity
+        <span className="font-mono uppercase tracking-widest text-xs text-paper-500 dark:text-paper-600">
+          Coming Up
         </span>
-        <span className="font-mono text-xs text-paper-400 dark:text-paper-700">
-          {items.length}
-        </span>
+        {counts.overdue > 0 && (
+          <span className="font-medium text-terracotta">{counts.overdue} overdue</span>
+        )}
+        {counts.today > 0 && (
+          <span className="font-medium text-amber-muted">{counts.today} today</span>
+        )}
+        {counts.week > 0 && (
+          <span className="text-paper-600 dark:text-paper-500">{counts.week} this week</span>
+        )}
+        <ChevronDown
+          size={15}
+          className={`ml-auto flex-shrink-0 text-paper-500 dark:text-paper-600 transition-transform duration-200 ${collapsed ? '' : 'rotate-180'}`}
+        />
       </button>
 
+      {/* Expanded list - bucketed items, each linking to its thread */}
       {!collapsed && (
-        <>
-          <div className="bg-white dark:bg-pitch-700 border border-paper-300 dark:border-pitch-500 rounded-xl divide-y divide-paper-200 dark:divide-pitch-700 overflow-hidden">
-            {visible.map((item, i) => (
-              <ActivityRow key={`${item.thread_id}-${item.occurred_at}-${i}`} item={item} />
-            ))}
-          </div>
-
-          {hasMore && (
-            <div className="mt-2 flex justify-center">
-              <button
-                onClick={() => setShowAll(v => !v)}
-                className="
-                  p-2 rounded-md text-xs font-display uppercase tracking-wide transition-colors duration-150
-                  text-paper-500 dark:text-paper-600
-                  hover:text-paper-700 dark:hover:text-paper-200
-                  hover:bg-paper-200 dark:hover:bg-pitch-700
-                "
-              >
-                {showAll ? 'Show less' : 'Show 5 more'}
-              </button>
-            </div>
-          )}
-        </>
+        <div className="border-t border-paper-300/70 dark:border-pitch-600/70 divide-y divide-paper-300/60 dark:divide-pitch-600/60">
+          {SECTIONS.map(({ key, label, colorClass }) => {
+            const items = buckets[key]
+            if (items.length === 0) return null
+            return (
+              <div key={key} className="px-4 py-2.5">
+                <p className={`font-mono uppercase tracking-widest text-[10px] mb-1.5 ${colorClass}`}>
+                  {label}
+                </p>
+                <div className="space-y-0.5">
+                  {items.map((t) => (
+                    <Link
+                      key={t.id}
+                      to={`/thread/${t.thread_id}`}
+                      className="
+                        flex items-center gap-3 px-2 py-1.5 rounded-md
+                        hover:bg-paper-300/60 dark:hover:bg-pitch-600/60
+                        transition-colors
+                      "
+                    >
+                      <span className="font-display uppercase tracking-wide text-[11px] text-pitch-700 dark:text-paper-200 flex-shrink-0">
+                        {t.area_name}
+                      </span>
+                      <span className="text-paper-400 dark:text-paper-700 text-xs flex-shrink-0">/</span>
+                      <span className="flex-1 text-xs text-pitch-600 dark:text-paper-300 truncate">
+                        {t.content}
+                      </span>
+                      {t.due_date && (
+                        <span className="font-mono text-xs text-paper-500 dark:text-paper-600 flex-shrink-0">
+                          {format(parseISO(t.due_date), 'EEE d MMM')}
+                        </span>
+                      )}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )
+          })}
+        </div>
       )}
     </div>
   )
 }
+

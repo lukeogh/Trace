@@ -12,7 +12,7 @@ import { isTauri, checkForUpdate, relaunchForUpdate } from '../api/tauri'
  *   3. User clicks "Install" → `install()` downloads + verifies + applies.
  *   4. User clicks "Later" → `dismiss()` writes the version to localStorage
  *      under `updateDismissedVersions`. The toast disappears but the
- *      System Settings cog gets a badge dot — gentle reminder.
+ *      System Settings cog gets a badge dot - gentle reminder.
  *   5. If a NEW version becomes available later (e.g. v0.1.2 after they
  *      dismissed v0.1.1), the toast re-appears because the new version
  *      isn't in the dismissed list. Only that specific version was
@@ -50,7 +50,7 @@ function saveDismissed(set) {
   try {
     localStorage.setItem(DISMISSED_KEY, JSON.stringify([...set]))
   } catch {
-    // localStorage might be unavailable (private mode, etc.) — fail open.
+    // localStorage might be unavailable (private mode, etc.) - fail open.
   }
 }
 
@@ -78,7 +78,7 @@ export function useUpdater() {
         if (!result.available) return setStatus('none')
         setAvailable(result)
         // If the user has already dismissed this exact version, jump
-        // straight to the 'dismissed' state — only the cog badge will
+        // straight to the 'dismissed' state - only the cog badge will
         // show, no toast.
         const isDismissed = dismissed.has(result.version)
         setStatus(isDismissed ? 'dismissed' : 'available')
@@ -90,7 +90,7 @@ export function useUpdater() {
       })
 
     return () => { cancelled = true }
-    // We deliberately don't depend on `dismissed` here — the initial check
+    // We deliberately don't depend on `dismissed` here - the initial check
     // should only run once per session-window, and re-runs of the effect
     // when dismissed changes would re-trigger the network call. Subsequent
     // dismissals are handled by the dismiss() callback below.

@@ -31,7 +31,7 @@ def _find_rustc() -> str:
 
     Prefers $PATH, then falls back to the standard rustup install location
     (~/.cargo/bin/rustc[.exe]) since cargo's bin dir is often missing from
-    the shell that launches this script — particularly Windows `py` launcher
+    the shell that launches this script - particularly Windows `py` launcher
     sessions, which don't source the user's shell profile.
     """
     candidate = shutil.which("rustc")
@@ -69,7 +69,7 @@ def _check_backend_deps_installed() -> None:
     Without this, PyInstaller silently produces a bundle that omits the
     missing modules, then the installed app crashes at startup with
     `ModuleNotFoundError: No module named 'uvicorn'`. We've shipped that
-    footgun once already — never again.
+    footgun once already - never again.
     """
     required = ["uvicorn", "fastapi", "sqlalchemy", "anthropic", "apscheduler"]
     missing = []
@@ -124,7 +124,7 @@ def main() -> None:
     if not os.path.exists(src_dir):
         raise RuntimeError(
             f"PyInstaller output not found at {src_dir}. "
-            "The PyInstaller step may have failed — re-run with --clean."
+            "The PyInstaller step may have failed - re-run with --clean."
         )
 
     if os.path.exists(dest_dir):

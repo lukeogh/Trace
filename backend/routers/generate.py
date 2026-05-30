@@ -2,7 +2,7 @@
 Smart Generate / AI extraction endpoints.
 
 All AI calls go through the pluggable provider abstraction in ai_provider.py
-— the user picks Claude / Groq / Gemini / Ollama / custom in
+- the user picks Claude / Groq / Gemini / Ollama / custom in
 Settings → AI Engine, and this router stays provider-agnostic.
 
 Error handling: `provider.complete()` raises RuntimeError with a user-readable
@@ -129,6 +129,7 @@ def generate_roundup(payload: schemas.RoundupRequest, db: Session = Depends(get_
     prompt = f"""You are writing a weekly status update summarising activity across the user's areas of work.
 Write in a professional, direct tone suitable for sharing or keeping as a personal record.
 Be concise. Use plain prose with no markdown formatting. Use dashes for list items if needed.
+Use commas or hyphens for punctuation, never em dashes.
 
 Structure:
 1. One short executive paragraph (3-4 sentences) summarising the week across all areas.

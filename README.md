@@ -2,7 +2,7 @@
 
 > Stay across everything.
 
-A self-hosted activity log for anyone juggling multiple parallel responsibilities. Organise your world into **areas** (one per spinning plate), break each area into **threads** of focused work, and keep a chronological record of todos, decisions, meetings, blockers, and notes inside every thread. AI surfaces help where they materially save time — parse messy input into structured items, regenerate area summaries automatically, draft a weekly status digest in one click. Self-hosted, single Docker container, your data on a disk you own.
+A self-hosted activity log for anyone juggling multiple parallel responsibilities. Organise your world into **areas** (one per spinning plate), break each area into **threads** of focused work, and keep a chronological record of todos, decisions, meetings, blockers, and notes inside every thread. AI surfaces help where they materially save time - parse messy input into structured items, regenerate area summaries automatically, draft a weekly status digest in one click. Self-hosted, single Docker container, your data on a disk you own.
 
 ---
 
@@ -27,7 +27,7 @@ docker compose up --build -d
 # http://localhost:8080
 ```
 
-On first run, the database is created automatically. The app launches empty — add your first area from the sidebar (`+ Add your first area`). All data persists in the `./data/` directory.
+On first run, the database is created automatically. The app launches empty - add your first area from the sidebar (`+ Add your first area`). All data persists in the `./data/` directory.
 
 ### Stop the container
 
@@ -49,7 +49,7 @@ docker compose up --build -d
 trace/
 │
 ├── backend/                  Python FastAPI application
-│   ├── main.py               App entry point — initialises DB, mounts routers, serves frontend
+│   ├── main.py               App entry point - initialises DB, mounts routers, serves frontend
 │   ├── database.py           SQLAlchemy engine and session factory
 │   ├── models.py             ORM models: Area, Thread, Entry, Attachment
 │   ├── schemas.py            Pydantic schemas for request/response validation
@@ -63,20 +63,20 @@ trace/
 ├── frontend/                 React + Vite application
 │   ├── index.html            HTML entry point (loads Google Fonts)
 │   ├── vite.config.js        Vite config with /api proxy for dev mode
-│   ├── tailwind.config.js    Trace tokens — paper/pitch/accent palettes, Geist + Lexend fonts
+│   ├── tailwind.config.js    Trace tokens - paper/pitch/accent palettes, Geist + Lexend fonts
 │   ├── postcss.config.js     PostCSS for Tailwind
 │   └── src/
 │       ├── main.jsx          React root mount
 │       ├── App.jsx           Router + theme provider + shell layout
 │       ├── index.css         Tailwind base + custom CSS (grid texture, markdown prose, scrollbars)
 │       ├── api/
-│       │   └── client.js     All API calls — thin fetch wrapper over every endpoint
+│       │   └── client.js     All API calls - thin fetch wrapper over every endpoint
 │       ├── hooks/
 │       │   └── useTheme.js   Dark/light mode toggle; persists to localStorage
 │       ├── utils/
 │       │   └── status.js     Status config (colours, labels) for areas and threads
 │       ├── components/
-│       │   ├── Sidebar.jsx       Left nav — area list with status dots
+│       │   ├── Sidebar.jsx       Left nav - area list with status dots
 │       │   ├── StatusBadge.jsx   Coloured pill badge for area/thread status
 │       │   ├── ThemeToggle.jsx   Sun/Moon button
 │       │   ├── Modal.jsx         Reusable overlay dialog
@@ -85,10 +85,10 @@ trace/
 │       │   └── ThreadCard.jsx    Area view card linking to a thread
 │       └── pages/
 │           ├── Dashboard.jsx   Area grid with status, counts, AI-generated overviews
-│           ├── AreaView.jsx    Single area — Overview, thread list, new thread modal
-│           ├── ThreadView.jsx  Full thread — entry timeline, files, links, linked threads
+│           ├── AreaView.jsx    Single area - Overview, thread list, new thread modal
+│           ├── ThreadView.jsx  Full thread - entry timeline, files, links, linked threads
 │           ├── LogView.jsx     Audit log viewer
-│           └── ProcessView.jsx Smart Generate — AI extracts items from notes / .eml / .ics / PDFs
+│           └── ProcessView.jsx Smart Generate - AI extracts items from notes / .eml / .ics / PDFs
 │
 ├── data/                     Runtime data (git-ignored, Docker volume mount)
 │   ├── department.db         SQLite database (filename kept for backward compatibility)
@@ -189,8 +189,8 @@ Uploaded files are served at `/uploads/:stored_name`.
 
 All data lives in `./data/` and is never committed to git.
 
-- `./data/department.db` — SQLite database (filename kept for backward compatibility). Back this up to preserve your records.
-- `./data/uploads/` — Uploaded files. Include this in any backup.
+- `./data/department.db` - SQLite database (filename kept for backward compatibility). Back this up to preserve your records.
+- `./data/uploads/` - Uploaded files. Include this in any backup.
 
 **Backup:**
 ```bash

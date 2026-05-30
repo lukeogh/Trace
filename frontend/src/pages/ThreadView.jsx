@@ -25,7 +25,7 @@ import { ENTITY, ENTITY_TYPES, entityFor, SECTION_ICONS } from '../utils/entityI
 
 const INACTIVITY_THRESHOLD_DAYS = 7
 
-// Entry composer types — meetings are added through the dedicated Add Meeting
+// Entry composer types - meetings are added through the dedicated Add Meeting
 // button so they don't appear here.
 const ENTRY_TYPES = ENTITY_TYPES.filter((t) => t.key !== 'meeting')
 
@@ -61,7 +61,7 @@ export default function ThreadView() {
   const [dueDate, setDueDate] = useState(null)
   const [addingEntry, setAddingEntry] = useState(false)
 
-  // AI hint flows — action detection on Updates, decomposition on to-dos
+  // AI hint flows - action detection on Updates, decomposition on to-dos
   const {
     actionSuggestions, drawerState,
     onEntrySaved, clearActions, openBreakdownDrawer, closeDrawer,
@@ -102,7 +102,7 @@ export default function ThreadView() {
   const [meetingOpen, setMeetingOpen] = useState(false)
   const [addingMeeting, setAddingMeeting] = useState(false)
 
-  // Status-change modal — driven by the picker. Holds the target status
+  // Status-change modal - driven by the picker. Holds the target status
   // until the user confirms or cancels.
   const [statusTarget, setStatusTarget] = useState(null)
   const [changingStatus, setChangingStatus] = useState(false)
@@ -231,7 +231,7 @@ export default function ThreadView() {
       setDueDate(null)
       toast('Entry added')
       // Fire the AI hint flows in the background (action detection on
-      // Updates, decomposition assessment on to-dos). No await — the entry
+      // Updates, decomposition assessment on to-dos). No await - the entry
       // is already saved; suggestions surface a beat later if relevant.
       onEntrySaved(entry)
     } catch (e) { toast(e.message, 'error') }
@@ -359,7 +359,7 @@ export default function ThreadView() {
 
   // ── Attachments ─────────────────────────────────────────────────────────────
 
-  // Modal-driven link add (Label + URL form). Kept as an optional fallback —
+  // Modal-driven link add (Label + URL form). Kept as an optional fallback -
   // drag/paste straight onto the Links card is the primary path now.
   const addLink = async (payload) => {
     const form = payload ?? linkForm
@@ -375,7 +375,7 @@ export default function ThreadView() {
     finally { setAddingLink(false) }
   }
 
-  // Upload a single File object — used by both the file input and drag-drop.
+  // Upload a single File object - used by both the file input and drag-drop.
   const uploadFileObject = async (file) => {
     if (!file) return
     setUploadingFile(true)
@@ -842,9 +842,11 @@ export default function ThreadView() {
                       onToggleComplete={(completed) => toggleEntryComplete(entry.id, completed)}
                       onSaveNotes={(notes) => saveEntryNotes(entry.id, notes)}
                       onSaveMeeting={(fields) => saveMeetingFields(entry.id, fields)}
+                      onBreakDown={openBreakdownDrawer}
+                      onSubtasksChange={(updated) => updateEntrySubtasks(entry.id, updated)}
                     />
 
-                    {/* AI action suggestions — appears below the Update that triggered them */}
+                    {/* AI action suggestions - appears below the Update that triggered them */}
                     {actionSuggestions?.entryId === entry.id && (
                       <div className="ml-10">
                         <ActionSuggestionBanner
@@ -854,18 +856,6 @@ export default function ThreadView() {
                           onDismiss={clearActions}
                         />
                       </div>
-                    )}
-
-                    {/* Subtasks — nested under to-do entries */}
-                    {entry.type === 'todo' && (
-                      <SubtaskList
-                        parentId={entry.id}
-                        subtasks={entry.subtasks || []}
-                        decomp_dismissed={entry.decomp_dismissed}
-                        taskTitle={entry.content}
-                        onBreakDown={openBreakdownDrawer}
-                        onSubtasksChange={(updated) => updateEntrySubtasks(entry.id, updated)}
-                      />
                     )}
                   </div>
                 ))}
@@ -877,7 +867,7 @@ export default function ThreadView() {
         {/* ── Right: Attachments ───────────────────────────────────────────── */}
         <aside className="w-72 flex-shrink-0">
           <div className="sticky top-32 space-y-5">
-            {/* Files — drop a file anywhere on this card, or click Upload */}
+            {/* Files - drop a file anywhere on this card, or click Upload */}
             <div
               onDragEnter={onFilesDragEnter}
               onDragLeave={onFilesDragLeave}
@@ -916,7 +906,7 @@ export default function ThreadView() {
                 </div>
               )}
 
-              {/* Always-visible drop zone — primary affordance, not just an
+              {/* Always-visible drop zone - primary affordance, not just an
                   empty state. Sits beneath the file list. */}
               <button
                 type="button"
@@ -950,7 +940,7 @@ export default function ThreadView() {
               )}
             </div>
 
-            {/* Links — paste a URL inline, label after, or click +Add */}
+            {/* Links - paste a URL inline, label after, or click +Add */}
             <div className="p-4 rounded-xl bg-paper-100 dark:bg-pitch-700 border border-paper-300 dark:border-pitch-500">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-xs font-display uppercase tracking-widest text-paper-500 dark:text-paper-600 flex items-center gap-1.5">
@@ -966,7 +956,7 @@ export default function ThreadView() {
                 </button>
               </div>
 
-              {/* Inline composer — type or paste a URL, then label it */}
+              {/* Inline composer - type or paste a URL, then label it */}
               <div className="mb-3 space-y-1.5">
                 <input
                   type="url"
@@ -1132,7 +1122,7 @@ export default function ThreadView() {
         submitting={changingStatus}
       />
 
-      {/* Task decomposition drawer — slides in when the AI suggests a breakdown */}
+      {/* Task decomposition drawer - slides in when the AI suggests a breakdown */}
       {drawerState && (
         <TaskDecompositionDrawer
           entryId={drawerState.entryId}
@@ -1324,7 +1314,7 @@ function TaskCheckbox({ completed, onToggle }) {
 
 // ─── Entry block ──────────────────────────────────────────────────────────────
 
-function EntryBlock({ entry, editing, draft, onEditStart, onDraftChange, onSave, onCancel, onDelete, onToggleComplete, onSaveNotes, onSaveMeeting }) {
+function EntryBlock({ entry, editing, draft, onEditStart, onDraftChange, onSave, onCancel, onDelete, onToggleComplete, onSaveNotes, onSaveMeeting, onBreakDown, onSubtasksChange }) {
   const date = new Date(entry.created_at)
   const wasEdited = entry.updated_at !== entry.created_at
   const isDecision = entry.type === 'decision'
@@ -1473,6 +1463,19 @@ function EntryBlock({ entry, editing, draft, onEditStart, onDraftChange, onSave,
             </div>
           )}
         </div>
+
+        {/* Subtasks - rendered INSIDE the card border so they read as part of
+            the same to-do group, not a detached list below it. */}
+        {isTodo && !editing && (
+          <SubtaskList
+            parentId={entry.id}
+            subtasks={entry.subtasks || []}
+            decomp_dismissed={entry.decomp_dismissed}
+            taskTitle={entry.content}
+            onBreakDown={onBreakDown}
+            onSubtasksChange={onSubtasksChange}
+          />
+        )}
       </div>
     </div>
   )
@@ -1480,7 +1483,7 @@ function EntryBlock({ entry, editing, draft, onEditStart, onDraftChange, onSave,
 
 // ─── File item ────────────────────────────────────────────────────────────────
 
-// Extensions the browser can render natively — open in a new tab.
+// Extensions the browser can render natively - open in a new tab.
 // Everything else: the browser will use Content-Disposition (download
 // then OS app) which is the best a web app can do for "open in the
 // program of the extension".
@@ -1507,7 +1510,7 @@ function FileItem({ file, onDelete }) {
         PDFs, images, audio, video and plain-text formats open inline in a
         new tab. Everything else carries `download` so the browser hands the
         file off to the OS, which opens it in the default app for the
-        extension — the closest a web app can get to "open in the program
+        extension - the closest a web app can get to "open in the program
         of the extension".
       */}
       <a
@@ -1573,7 +1576,7 @@ function ThreadSkeleton() {
   )
 }
 
-// ─── Meeting body — title + datetime with inline edit ────────────────────────
+// ─── Meeting body - title + datetime with inline edit ────────────────────────
 
 function MeetingBody({ entry, editing, onEditStart, onCancel, onSave }) {
   const initialDt = entry.meeting_at ? toLocalInput(new Date(entry.meeting_at)) : ''
@@ -1681,7 +1684,7 @@ function toLocalInput(d) {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
-// ─── Todo notes — collapsible free-text capture for investigative todos ──────
+// ─── Todo notes - collapsible free-text capture for investigative todos ──────
 
 function TodoNotes({ initial, onSave }) {
   const hasContent = (initial || '').trim().length > 0
@@ -1736,7 +1739,7 @@ function TodoNotes({ initial, onSave }) {
           value={value}
           onChange={(e) => setValue(e.target.value)}
           onBlur={flush}
-          placeholder="Capture findings, links, attempts — saved when you click away."
+          placeholder="Capture findings, links, attempts - saved when you click away."
           rows={3}
           className="
             mt-1.5 w-full text-xs leading-relaxed

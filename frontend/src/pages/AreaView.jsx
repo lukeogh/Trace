@@ -92,7 +92,7 @@ export default function AreaView() {
     try {
       const result = await areasApi.suggestSummary(areaId)
       setSummaryDraft(result.summary)
-      toast('Suggestion ready — review and save')
+      toast('Suggestion ready - review and save')
     } catch (e) {
       toast(e.message, 'error')
     } finally {
@@ -193,7 +193,7 @@ export default function AreaView() {
               {area.name}
             </h1>
 
-            {/* Status badge — click to change */}
+            {/* Status badge - click to change */}
             <div className="relative">
               <button onClick={() => setEditingStatus((v) => !v)}>
                 <StatusBadge status={area.status} type="area" />
@@ -241,7 +241,7 @@ export default function AreaView() {
       </header>
 
       <div className="max-w-4xl mx-auto px-8 py-6">
-        {/* Overview — de-boxed, section-header pattern */}
+        {/* Overview - de-boxed, section-header pattern */}
         <section className="mb-8">
           <div className="flex items-center justify-between mb-3 pb-2 border-b border-paper-200 dark:border-pitch-700">
             <div className="flex items-center gap-2">
@@ -279,7 +279,7 @@ export default function AreaView() {
             </div>
           </div>
 
-          {/* Body — wrapped in a relative container so the loading overlay
+          {/* Body - wrapped in a relative container so the loading overlay
               can sit over it */}
           <div className="relative">
             {editingSummary ? (

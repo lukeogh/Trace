@@ -385,7 +385,7 @@ function ItemCard({ item: initialItem, areaId, areaThreads, selectedAreaName, on
 // ─── ProcessView ──────────────────────────────────────────────────────────────
 
 export default function ProcessView() {
-  // AI gate — checked first so the rest of the page doesn't even mount its
+  // AI gate - checked first so the rest of the page doesn't even mount its
   // ingest/extract machinery when the engine isn't set up.
   const { configured: aiConfigured, loading: aiLoading } = useAIConfigured()
 
@@ -510,7 +510,7 @@ export default function ProcessView() {
       setTimeout(() => {
         setProcessing(false)
         if (e.message.includes('ANTHROPIC_API_KEY')) {
-          setError('API key not configured — add ANTHROPIC_API_KEY to your .env file and rebuild.')
+          setError('API key not configured - add ANTHROPIC_API_KEY to your .env file and rebuild.')
         } else {
           setError(e.message)
         }
@@ -550,7 +550,7 @@ export default function ProcessView() {
     setParseSource(null)
   }
 
-  // All items reviewed — show completion banner instead of results panel
+  // All items reviewed - show completion banner instead of results panel
   const allReviewed = hasExtracted && items.length === 0
 
   return (
@@ -569,9 +569,9 @@ export default function ProcessView() {
         </div>
       </header>
 
-      {/* AI gate — show the empty state instead of the form when no engine
+      {/* AI gate - show the empty state instead of the form when no engine
           is configured. Don't flash the form while we're still loading the
-          status — wait until we know one way or the other. */}
+          status - wait until we know one way or the other. */}
       {aiLoading ? (
         <div className="max-w-3xl mx-auto px-8 py-12 flex justify-center">
           <Spinner />
@@ -582,11 +582,11 @@ export default function ProcessView() {
         </div>
       ) : (
       <div className="max-w-3xl mx-auto px-8 py-6 space-y-6">
-        {/* Intro — short tagline + three-step "how it works" */}
+        {/* Intro - short tagline + three-step "how it works" */}
         <div className="space-y-4">
           <p className="text-base leading-relaxed text-pitch-700 dark:text-paper-200 max-w-2xl">
             Turn messy input into structured items. Drop notes, emails,
-            calendar invites, or PDFs — Trace extracts the to-dos,
+            calendar invites, or PDFs - Trace extracts the to-dos,
             decisions, and context for you to approve.
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
@@ -768,7 +768,7 @@ export default function ProcessView() {
           )}
         </div>
 
-        {/* All reviewed — completion banner */}
+        {/* All reviewed - completion banner */}
         {allReviewed && (
           <div className="
             bg-white dark:bg-pitch-700 border border-paper-300 dark:border-pitch-500 rounded-xl

@@ -4,7 +4,7 @@ import { X, AlertTriangle } from 'lucide-react'
 /**
  * Accessible modal dialog with built-in protection against accidental dismiss.
  *
- *   isDirty    — when true, backdrop click is ignored entirely; Escape and the
+ *   isDirty    - when true, backdrop click is ignored entirely; Escape and the
  *                X button trigger an inline "Discard changes?" confirm before
  *                actually closing. Defaults to false (legacy behaviour: click
  *                anywhere closes).
@@ -20,7 +20,7 @@ export default function Modal({ isOpen, onClose, title, children, width = 'max-w
   const [confirming, setConfirming] = useState(false)
   const panelRef = useRef(null)
 
-  // ── Refocus guard — ignore backdrop clicks right after window refocus ──
+  // ── Refocus guard - ignore backdrop clicks right after window refocus ──
   const lastFocusedAt = useRef(0)
   useEffect(() => {
     const onFocus = () => { lastFocusedAt.current = Date.now() }

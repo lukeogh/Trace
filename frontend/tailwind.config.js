@@ -16,7 +16,7 @@ export default {
           100: '#F7F4ED',  // page bg
           200: '#EFECE3',  // card
           300: '#E5E1D6',  // sub-card / hover
-          400: '#D4CFC2',  // stone — borders
+          400: '#D4CFC2',  // stone - borders
           500: '#A8A49E',  // soft text on dark
           600: '#8A877F',  // ink-muted
           700: '#4A4845',  // ink-soft
@@ -72,7 +72,7 @@ export default {
         lexend: ['Lexend', 'Geist', 'ui-sans-serif', 'system-ui', 'sans-serif'],
         // Geist Mono: timestamps, IDs, code, technical labels
         mono: ['Geist Mono', 'JetBrains Mono', 'ui-monospace', 'monospace'],
-        // Keep "display" for backwards compatibility — now points to Geist
+        // Keep "display" for backwards compatibility - now points to Geist
         display: ['Geist', 'ui-sans-serif', 'system-ui', 'sans-serif'],
       },
       letterSpacing: {

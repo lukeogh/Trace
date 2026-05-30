@@ -34,7 +34,7 @@ log = logging.getLogger("trace.ai")
 # Keyed by provider id. Each entry feeds:
 #   - the factory (build the right adapter, fill in defaults)
 #   - the GET /settings/ai/presets endpoint (frontend picker shows these)
-# api_key is never stored here — these are descriptions only.
+# api_key is never stored here - these are descriptions only.
 
 PROVIDER_PRESETS: dict[str, dict] = {
     "claude": {
@@ -110,7 +110,7 @@ class AIProvider(ABC):
         """
         Quick sanity-check used by the Settings → AI Engine "Test" button.
         Returns (ok, human_message). Default implementation asks the model
-        to reply with the literal word "ok" — robust to small variations.
+        to reply with the literal word "ok" - robust to small variations.
         """
         try:
             result = self.complete(
@@ -152,7 +152,7 @@ class AnthropicProvider(AIProvider):
 
 
 # ─── OpenAI-compatible adapter ────────────────────────────────────────────────
-# One adapter, many providers — anything that speaks the OpenAI chat API
+# One adapter, many providers - anything that speaks the OpenAI chat API
 # (Groq, Gemini /openai endpoint, Ollama /v1, Azure OpenAI, OpenRouter, etc.)
 
 class OpenAICompatProvider(AIProvider):
@@ -160,7 +160,7 @@ class OpenAICompatProvider(AIProvider):
 
     def __init__(self, api_key: str, model: str, base_url: Optional[str] = None):
         # Ollama doesn't validate the key but the SDK requires a non-empty
-        # string — "ollama" is the conventional placeholder.
+        # string - "ollama" is the conventional placeholder.
         self._api_key = api_key or "ollama"
         self._model = model
         self._base_url = base_url
@@ -256,7 +256,7 @@ def _build_provider(config: dict) -> AIProvider:
 class _UnconfiguredProvider(AIProvider):
     """
     Placeholder returned when AI isn't configured (or is misconfigured).
-    All calls raise RuntimeError with a clear message — the router layer
+    All calls raise RuntimeError with a clear message - the router layer
     turns this into a 502 with a user-readable body.
     """
 

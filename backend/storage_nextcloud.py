@@ -39,7 +39,7 @@ class NextcloudBackend(StorageBackend):
         return "nextcloud"
 
     def _client(self):
-        """Build a fresh WebDAV client. Cheap — no connection pooling needed."""
+        """Build a fresh WebDAV client. Cheap - no connection pooling needed."""
         from webdav3.client import Client
         return Client({
             "webdav_hostname": f"{self._url}/remote.php/dav/files/{self._username}",
@@ -49,7 +49,7 @@ class NextcloudBackend(StorageBackend):
         })
 
     def _ensure_folder(self, client, path: str) -> None:
-        """Create a folder and its parents idempotently — webdav has no mkdir -p."""
+        """Create a folder and its parents idempotently - webdav has no mkdir -p."""
         parts = path.strip("/").split("/")
         current = ""
         for part in parts:
@@ -58,7 +58,7 @@ class NextcloudBackend(StorageBackend):
                 if not client.check(current):
                     client.mkdir(current)
             except Exception:
-                # Already exists or transient permission noise — continue.
+                # Already exists or transient permission noise - continue.
                 pass
 
     def upload_bytes(self, data: bytes, remote_path: str) -> str:
@@ -122,18 +122,18 @@ class NextcloudBackend(StorageBackend):
             reachable = client.check("/")
             if reachable:
                 return True, f"Connected to Nextcloud at {self._url}"
-            return False, "Connected but could not verify access — check the username."
+            return False, "Connected but could not verify access - check the username."
         except Exception as e:
             msg = str(e).lower()
             if "401" in msg or "unauthorized" in msg:
                 return False, "Invalid username or app password. Check your Nextcloud Security settings."
             if "502" in msg or "503" in msg or "504" in msg:
-                # Proxy got a bad/empty response from the upstream — Nextcloud
+                # Proxy got a bad/empty response from the upstream - Nextcloud
                 # itself is down, restarting, or your reverse proxy isn't
                 # forwarding WebDAV methods (PROPFIND, etc.).
                 return False, f"{self._url} is reachable but its upstream returned an error. Is Nextcloud running? If you're behind a reverse proxy, make sure it forwards WebDAV methods."
             if "connection" in msg or "refused" in msg or "timeout" in msg:
-                return False, f"Could not reach {self._url} — check the server URL and your network."
+                return False, f"Could not reach {self._url} - check the server URL and your network."
             if "404" in msg:
-                return False, f"{self._url} does not look like a Nextcloud server — check the URL."
+                return False, f"{self._url} does not look like a Nextcloud server - check the URL."
             return False, f"Nextcloud error: {e}"

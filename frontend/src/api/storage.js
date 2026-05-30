@@ -1,5 +1,5 @@
 /**
- * Storage API helpers — talks to the Trace backend's /storage/* routes.
+ * Storage API helpers - talks to the Trace backend's /storage/* routes.
  *
  * Mirrors the pattern in api/settings.js: throws on non-2xx with the
  * server's `detail` message so callers can surface the error verbatim.
@@ -15,7 +15,7 @@ async function _handle(res, fallback) {
   return res.json()
 }
 
-/** Current storage config — `is_connected: false` until the user sets up a remote. */
+/** Current storage config - `is_connected: false` until the user sets up a remote. */
 export async function getStorageConfig() {
   return _handle(await fetch(`${BASE}/storage/config`), 'Failed to load storage config')
 }
@@ -32,7 +32,7 @@ export async function saveStorageConfig(config) {
   )
 }
 
-/** Disconnect — falls back to local. Remote files are NOT touched. */
+/** Disconnect - falls back to local. Remote files are NOT touched. */
 export async function disconnectStorage() {
   return _handle(
     await fetch(`${BASE}/storage/config`, { method: 'DELETE' }),
@@ -42,7 +42,7 @@ export async function disconnectStorage() {
 
 /**
  * Dry-run a connection. Pass a config to test those values without saving
- * (the wizard path) — or call with no args to test the currently-saved config.
+ * (the wizard path) - or call with no args to test the currently-saved config.
  *
  * Critical: the wizard MUST pass a config, otherwise a failed test would
  * still leave the previous saved config in place + the UI's is_connected
@@ -59,7 +59,7 @@ export async function testStorageConnection(config) {
   )
 }
 
-/** Queue an immediate backup. Returns instantly — backup runs in the background. */
+/** Queue an immediate backup. Returns instantly - backup runs in the background. */
 export async function runManualBackup() {
   return _handle(
     await fetch(`${BASE}/storage/backup/run`, { method: 'POST' }),
@@ -67,7 +67,7 @@ export async function runManualBackup() {
   )
 }
 
-/** Most recent 20 sync log entries — drives the Manage view's history list. */
+/** Most recent 20 sync log entries - drives the Manage view's history list. */
 export async function getBackupLogs() {
   return _handle(
     await fetch(`${BASE}/storage/backup/logs`),

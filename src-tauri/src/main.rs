@@ -12,11 +12,11 @@ use tauri_plugin_dialog::DialogExt;
 use tauri_plugin_shell::{process::CommandChild, ShellExt};
 use tauri_plugin_store::StoreExt;
 
-/// Stable channel — `latest` redirects to the most recent non-prerelease.
+/// Stable channel - `latest` redirects to the most recent non-prerelease.
 const STABLE_UPDATE_ENDPOINT: &str =
     "https://github.com/lukeogh/Trace/releases/latest/download/latest.json";
 
-/// Beta channel — CI updates a sliding `beta` release tag on every push to
+/// Beta channel - CI updates a sliding `beta` release tag on every push to
 /// `main`, so this URL always points at the most recent beta build.
 const BETA_UPDATE_ENDPOINT: &str =
     "https://github.com/lukeogh/Trace/releases/download/beta/latest-beta.json";
@@ -30,7 +30,7 @@ const UPDATE_CHANNEL_KEY: &str = "update_channel";
 /// frontend as a Bearer header on updater requests so we can fetch the
 /// manifest + bundle from the private releases endpoint.
 ///
-/// `None` in local dev builds without the env var set — the updater simply
+/// `None` in local dev builds without the env var set - the updater simply
 /// won't function, which is acceptable in dev (you ship updates from CI).
 const UPDATER_TOKEN: Option<&str> = option_env!("TRACE_UPDATER_TOKEN");
 
@@ -40,7 +40,7 @@ const UPDATER_TOKEN: Option<&str> = option_env!("TRACE_UPDATER_TOKEN");
 const BACKEND_DIR_NAME: &str = "trace-backend-x86_64-pc-windows-msvc";
 
 /// Filename of the persisted config inside the Tauri app-data dir (NOT the
-/// user-configurable data dir — Tauri's plugin-store always writes here).
+/// user-configurable data dir - Tauri's plugin-store always writes here).
 const CONFIG_STORE: &str = "config.json";
 
 /// JSON key inside `CONFIG_STORE` holding the user-chosen data directory.
@@ -48,7 +48,7 @@ const DATA_DIR_KEY: &str = "data_dir";
 
 /// Find a free TCP port by binding to port 0 and reading what the OS hands
 /// back. The listener is dropped immediately, freeing the port for the
-/// sidecar. There is a tiny TOCTOU race here — acceptable for a single-user
+/// sidecar. There is a tiny TOCTOU race here - acceptable for a single-user
 /// desktop app on the loopback interface.
 fn find_free_port() -> u16 {
     let listener = TcpListener::bind("127.0.0.1:0").expect("failed to bind to a free port");
@@ -90,7 +90,7 @@ fn wait_for_backend(port: u16) -> Result<(), String> {
 /// OS-appropriate default per-user data dir. On Windows this is
 /// `%APPDATA%\com.trace.app\` (driven by the identifier in tauri.conf.json).
 /// Falls back to a `Trace` folder in the platform's local-data dir if Tauri's
-/// path resolver fails — which it shouldn't, but defensive code is cheap.
+/// path resolver fails - which it shouldn't, but defensive code is cheap.
 fn default_data_dir(app: &AppHandle) -> std::path::PathBuf {
     app.path()
         .app_data_dir()
@@ -103,8 +103,8 @@ fn default_data_dir(app: &AppHandle) -> std::path::PathBuf {
 
 /// Reads the user-chosen data dir from the config store, falling back to the
 /// OS default when nothing is saved (first launch, or after a fresh install).
-/// Validates that the saved path is at least theoretically usable — i.e. the
-/// path itself exists or its parent does — so a stale config from a removed
+/// Validates that the saved path is at least theoretically usable - i.e. the
+/// path itself exists or its parent does - so a stale config from a removed
 /// USB drive doesn't trap the user.
 fn resolve_data_dir(app: &AppHandle) -> std::path::PathBuf {
     if let Ok(store) = app.store(CONFIG_STORE) {
@@ -140,7 +140,7 @@ async fn pick_data_dir(app: AppHandle) -> Result<Option<String>, String> {
 
 /// Copies the user's data (trace.db + uploads/) from the current location to
 /// `new_path`, verifies the copy, and writes the new path to the config store.
-/// The old location is **never** deleted — copy-not-move is intentional.
+/// The old location is **never** deleted - copy-not-move is intentional.
 ///
 /// The running sidecar still points at the old data, so the caller is
 /// expected to invoke `relaunch` after this succeeds.
@@ -157,7 +157,7 @@ async fn migrate_and_set_data_dir(app: AppHandle, new_path: String) -> Result<()
     std::fs::create_dir_all(&new_dir)
         .map_err(|e| format!("Could not create directory {}: {}", new_path, e))?;
 
-    // Copy the SQLite DB. Skip if the destination already has one — we'd
+    // Copy the SQLite DB. Skip if the destination already has one - we'd
     // rather refuse than silently clobber data the user might still want.
     let old_db = old_dir.join("trace.db");
     let new_db = new_dir.join("trace.db");
@@ -202,7 +202,7 @@ fn relaunch(app: AppHandle) {
     app.restart();
 }
 
-/// Returns the chosen update channel — "stable" by default.
+/// Returns the chosen update channel - "stable" by default.
 #[tauri::command]
 fn get_update_channel(app: AppHandle) -> String {
     resolve_update_channel(&app)
@@ -259,7 +259,7 @@ fn get_update_endpoint(app: AppHandle) -> String {
 
 /// Returns the Authorization header value the updater should send on
 /// requests to GitHub Releases. `None` means the binary wasn't built with
-/// a token baked in (local dev) — in that case the frontend skips the
+/// a token baked in (local dev) - in that case the frontend skips the
 /// header and the updater fails gracefully when hitting the private repo.
 #[tauri::command]
 fn get_updater_auth_header() -> Option<String> {
@@ -267,8 +267,22 @@ fn get_updater_auth_header() -> Option<String> {
 }
 
 
+/// Authoritative app version. Returns `env!("CARGO_PKG_VERSION")`, which is
+/// the Rust crate version compiled into this binary - sourced from Cargo.toml
+/// at build time, bumped in lockstep with tauri.conf.json on every release.
+///
+/// Why a custom command instead of `@tauri-apps/api/app`'s `getVersion()`:
+/// the JS API has historically had permission and WebView-cache edge cases
+/// that left the sidebar showing a stale version after an in-place upgrade.
+/// Reading from the binary side-steps both classes of issue.
+#[tauri::command]
+fn app_version() -> &'static str {
+    env!("CARGO_PKG_VERSION")
+}
+
+
 /// Recursively copy `src` into `dst`. Existing files at the destination are
-/// left alone (this is what makes the migration idempotent — re-running the
+/// left alone (this is what makes the migration idempotent - re-running the
 /// "Change…" flow with the same destination is a no-op).
 fn copy_dir_recursive(src: &std::path::Path, dst: &std::path::Path) -> std::io::Result<()> {
     std::fs::create_dir_all(dst)?;
@@ -287,12 +301,12 @@ fn copy_dir_recursive(src: &std::path::Path, dst: &std::path::Path) -> std::io::
 
 // ── App setup ────────────────────────────────────────────────────────────────
 
-/// Kills the sidecar — both via Tauri's CommandChild and a follow-up
+/// Kills the sidecar - both via Tauri's CommandChild and a follow-up
 /// `taskkill /T /F /PID …` to handle the entire process tree on Windows.
 /// `child.kill()` alone has proven unreliable: we've seen `trace-backend.exe`
 /// survive after `app.exit(0)`, which is the orphan-quit bug from task #67.
 ///
-/// Safe to call multiple times — both `kill()` and `taskkill` return
+/// Safe to call multiple times - both `kill()` and `taskkill` return
 /// non-zero / errors on a process that's already gone, which we ignore.
 fn nuke_sidecar(child: Option<CommandChild>) {
     let Some(child) = child else { return };
@@ -315,7 +329,7 @@ fn nuke_sidecar(child: Option<CommandChild>) {
 }
 
 /// Belt-and-braces cleanup that runs on every launch BEFORE spawning the
-/// sidecar — kills any leftover `trace-backend.exe` from a previous launch
+/// sidecar - kills any leftover `trace-backend.exe` from a previous launch
 /// that crashed, was force-quit via Task Manager, or otherwise escaped the
 /// normal nuke_sidecar() teardown. Safe because we're a single-user
 /// desktop app: there's only ever one `trace-backend.exe` that should be
@@ -338,10 +352,10 @@ fn kill_orphan_backends() {
 }
 
 fn main() {
-    // Shared handle to the spawned sidecar — used so both the window-close
+    // Shared handle to the spawned sidecar - used so both the window-close
     // handler and the RunEvent::Exit hook can kill the child cleanly on
     // app quit. Two paths to cleanup because in practice neither alone is
-    // reliable — see nuke_sidecar() docs.
+    // reliable - see nuke_sidecar() docs.
     let sidecar_child: Arc<Mutex<Option<CommandChild>>> = Arc::new(Mutex::new(None));
     let sidecar_child_for_exit = sidecar_child.clone();
     let sidecar_child_for_close = sidecar_child.clone();
@@ -367,7 +381,7 @@ fn main() {
         .plugin(tauri_plugin_process::init())
         .plugin(updater)
         .plugin(tauri_plugin_single_instance::init(|app, _argv, _cwd| {
-            // A second launch happened — focus the existing window instead of
+            // A second launch happened - focus the existing window instead of
             // starting another backend.
             if let Some(window) = app.get_webview_window("main") {
                 let _ = window.show();
@@ -384,11 +398,12 @@ fn main() {
             set_update_channel,
             get_update_endpoint,
             get_updater_auth_header,
+            app_version,
         ])
         .setup(move |app| {
             // Clean up any orphan backend from a previous launch (crash,
             // Task Manager force-close, antivirus-killed process, etc.)
-            // BEFORE we try to spawn a new one — saves the user from
+            // BEFORE we try to spawn a new one - saves the user from
             // having to manually taskkill leftovers.
             kill_orphan_backends();
 
@@ -406,7 +421,7 @@ fn main() {
 
             // Resolve the bundled PyInstaller onedir from the Tauri resource
             // directory. We can't use sidecar() here because PyInstaller
-            // produces an .exe + _internal/ folder pair, not a single file —
+            // produces an .exe + _internal/ folder pair, not a single file -
             // so we ship the whole folder as a resource and invoke the exe
             // by absolute path.
             let resource_dir = app
@@ -420,7 +435,7 @@ fn main() {
 
             if !backend_exe.exists() {
                 let msg = format!(
-                    "trace-backend.exe not found at {} — did `python scripts/build-backend.py` \
+                    "trace-backend.exe not found at {} - did `python scripts/build-backend.py` \
                      run before `tauri build`?",
                     backend_exe.display()
                 );
@@ -449,7 +464,7 @@ fn main() {
             // sidecar console is suppressed in release builds.
 
             // Block this thread until the backend responds. The Tauri runtime
-            // hasn't started the event loop yet — this is fine.
+            // hasn't started the event loop yet - this is fine.
             wait_for_backend(port).map_err(|e| {
                 eprintln!("{}", e);
                 std::io::Error::new(std::io::ErrorKind::TimedOut, e)
@@ -473,7 +488,7 @@ fn main() {
             // a lingering `trace-backend.exe` in the background after they
             // hit X. The RunEvent::Exit hook below also runs nuke_sidecar()
             // as a fallback in case the close path takes a different route
-            // (tauri shutdown, OS signal, etc.) — see task #67 docs.
+            // (tauri shutdown, OS signal, etc.) - see task #67 docs.
             if let tauri::WindowEvent::CloseRequested { .. } = event {
                 let child = sidecar_child_for_close.lock().unwrap().take();
                 nuke_sidecar(child);
@@ -484,7 +499,7 @@ fn main() {
         .expect("error while building the Trace. desktop shell")
         .run(move |_app, event| {
             if let tauri::RunEvent::Exit = event {
-                // Belt-and-braces cleanup — see nuke_sidecar() docs.
+                // Belt-and-braces cleanup - see nuke_sidecar() docs.
                 let child = sidecar_child_for_exit.lock().unwrap().take();
                 nuke_sidecar(child);
             }

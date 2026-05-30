@@ -72,7 +72,7 @@ def get_thread(thread_id: int, db: Session = Depends(get_db)):
         description=thread.description or "",
         created_at=thread.created_at,
         updated_at=thread.updated_at,
-        # Only top-level entries — subtasks (parent_id set) are nested under
+        # Only top-level entries - subtasks (parent_id set) are nested under
         # their parent todo's `subtasks` field, so excluding them here keeps
         # them from rendering twice in the timeline.
         entries=[

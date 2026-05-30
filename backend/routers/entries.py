@@ -111,7 +111,7 @@ def update_entry(
     elif payload.meeting_at is not None:
         entry.meeting_at = payload.meeting_at
 
-    # notes — distinguish "user cleared notes" (empty string) from "untouched"
+    # notes - distinguish "user cleared notes" (empty string) from "untouched"
     # (None). Audit-log only when the value actually changed.
     if payload.notes is not None and (payload.notes or "") != (entry.notes or ""):
         old_excerpt = (entry.notes or "")[:200]
