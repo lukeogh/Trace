@@ -15,6 +15,7 @@ import NewAreaModal from './components/NewAreaModal'
 import SplashScreen from './components/SplashScreen'
 import Sidebar from './components/Sidebar'
 import Dashboard from './pages/Dashboard'
+import Insights from './pages/Insights'
 import AreaView from './pages/AreaView'
 import ThreadView from './pages/ThreadView'
 import LogView from './pages/LogView'
@@ -135,6 +136,7 @@ function Shell({ onOpenSwitcher, onOpenNewArea, updater, systemSettingsBadge }) 
       <main className="flex-1 min-w-0">
         <Routes>
           <Route path="/" element={<Dashboard />} />
+          <Route path="/insights" element={<Insights />} />
           <Route path="/area/:areaId" element={<AreaView />} />
           <Route path="/thread/:threadId" element={<ThreadView />} />
           <Route path="/log" element={<LogView />} />

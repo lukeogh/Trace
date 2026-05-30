@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react'
-import { useParams, useNavigate, Link } from 'react-router-dom'
+import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom'
 import {
   Plus, Edit3, Trash2, Check, X,
   Paperclip, Link2, Upload, ExternalLink, UploadCloud,
@@ -46,6 +46,13 @@ export default function ThreadView() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [lastVisitedBanner, setLastVisitedBanner] = useState(null)
+
+  // Deep-link: /thread/:id?entry=:entryId scrolls to and briefly highlights a
+  // specific entry. Used by the Insights page (todo arrows, calendar/meeting
+  // rows) so a click lands the user exactly on the item, not just the thread.
+  const [searchParams, setSearchParams] = useSearchParams()
+  const deepLinkEntryId = searchParams.get('entry')
+  const [highlightedEntryId, setHighlightedEntryId] = useState(null)
 
   // Thread-level editing
   const [editingTitle, setEditingTitle] = useState(false)
@@ -125,6 +132,32 @@ export default function ThreadView() {
   }
 
   useEffect(() => { load() }, [threadId])
+
+  // Deep-link scroll + highlight. Once the thread (and its entries) are loaded,
+  // if ?entry= points at an entry on this thread, scroll it into view and pulse
+  // a brief mint highlight. We clear the param afterwards so a later manual
+  // refresh doesn't re-trigger it. rAF + a short delay lets the timeline finish
+  // its mount/fade-in before we measure scroll position.
+  useEffect(() => {
+    if (!deepLinkEntryId || !thread) return
+    const id = `entry-${deepLinkEntryId}`
+    const t = setTimeout(() => {
+      const el = document.getElementById(id)
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        setHighlightedEntryId(Number(deepLinkEntryId))
+        // Fade the highlight out after a beat, then strip the URL param.
+        setTimeout(() => setHighlightedEntryId(null), 2200)
+      }
+      setSearchParams((prev) => {
+        const next = new URLSearchParams(prev)
+        next.delete('entry')
+        return next
+      }, { replace: true })
+    }, 350)
+    return () => clearTimeout(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [deepLinkEntryId, thread?.id])
 
   // Last-visited banner
   useEffect(() => {
@@ -832,6 +865,7 @@ export default function ThreadView() {
                   <div key={entry.id}>
                     <EntryBlock
                       entry={entry}
+                      highlighted={highlightedEntryId === entry.id}
                       editing={editingEntryId === entry.id}
                       draft={entryDraft}
                       onEditStart={() => { setEditingEntryId(entry.id); setEntryDraft(entry.content) }}
@@ -1314,7 +1348,7 @@ function TaskCheckbox({ completed, onToggle }) {
 
 // ─── Entry block ──────────────────────────────────────────────────────────────
 
-function EntryBlock({ entry, editing, draft, onEditStart, onDraftChange, onSave, onCancel, onDelete, onToggleComplete, onSaveNotes, onSaveMeeting, onBreakDown, onSubtasksChange }) {
+function EntryBlock({ entry, highlighted, editing, draft, onEditStart, onDraftChange, onSave, onCancel, onDelete, onToggleComplete, onSaveNotes, onSaveMeeting, onBreakDown, onSubtasksChange }) {
   const date = new Date(entry.created_at)
   const wasEdited = entry.updated_at !== entry.created_at
   const isDecision = entry.type === 'decision'
@@ -1326,7 +1360,14 @@ function EntryBlock({ entry, editing, draft, onEditStart, onDraftChange, onSave,
   const [editingMeeting, setEditingMeeting] = useState(false)
 
   return (
-    <div id={`entry-${entry.id}`} className="relative pl-10 pb-6 group animate-fade-in">
+    <div
+      id={`entry-${entry.id}`}
+      className={`relative pl-10 pb-6 group animate-fade-in rounded-lg transition-all duration-700 ${
+        highlighted
+          ? 'ring-2 ring-mint/60 bg-mint-50/40 dark:bg-mint-900/15 -ml-2 pl-12 pr-2'
+          : 'ring-0'
+      }`}
+    >
       {/* Timeline dot */}
       <div className={`
         absolute left-3 top-1.5 w-2.5 h-2.5 rounded-full border-2 border-white dark:border-pitch-800 z-10

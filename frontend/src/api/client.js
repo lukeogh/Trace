@@ -178,3 +178,10 @@ export const attachmentsApi = {
   delete: (id) =>
     request(`/attachments/${id}`, { method: 'DELETE' }),
 }
+
+// ─── Insights ─────────────────────────────────────────────────────────────────
+
+export const insightsApi = {
+  get: (lookbackDays = 7) =>
+    request(`/insights?lookback_days=${lookbackDays}`),
+}
