@@ -12,7 +12,9 @@ shifts naturally as the AI grows the pool over time.
 
 import json
 import logging
+import random as _random
 from datetime import date
+from typing import Optional
 
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
@@ -41,7 +43,32 @@ def get_today(db: Session = Depends(get_db)):
         return {"text": None}
     idx = date.today().toordinal() % len(nudges)
     chosen = nudges[idx]
-    return {"text": chosen.text, "source": chosen.source}
+    return {"id": chosen.id, "text": chosen.text, "source": chosen.source}
+
+
+@router.get("/nudges/random")
+def get_random(exclude: Optional[int] = None, db: Session = Depends(get_db)):
+    """
+    Return a random active nudge, optionally excluding one id. Drives the
+    "show another" refresh button on the dashboard banner - lets the user
+    flick through the pool without waiting for the daily rotation.
+    """
+    q = db.query(models.Nudge).filter(models.Nudge.active == True)  # noqa: E712
+    if exclude is not None:
+        q = q.filter(models.Nudge.id != exclude)
+    candidates = q.all()
+    # If excluding leaves nothing (pool of one), fall back to whatever's there.
+    if not candidates:
+        only = (
+            db.query(models.Nudge)
+            .filter(models.Nudge.active == True)  # noqa: E712
+            .first()
+        )
+        if not only:
+            return {"text": None}
+        return {"id": only.id, "text": only.text, "source": only.source}
+    chosen = _random.choice(candidates)
+    return {"id": chosen.id, "text": chosen.text, "source": chosen.source}
 
 
 NUDGE_SYSTEM = """

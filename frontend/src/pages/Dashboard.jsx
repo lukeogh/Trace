@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { MessageSquare, ArrowRight, RefreshCw, Clock, Sparkles, RotateCcw, Leaf, ChevronDown } from 'lucide-react'
 import { formatDistanceToNow, format, differenceInDays, differenceInCalendarDays, parseISO } from 'date-fns'
 import { areasApi, entriesApi } from '../api/client'
-import { getTodayNudge } from '../api/nudges'
+import { getTodayNudge, getRandomNudge } from '../api/nudges'
 import StatusBadge from '../components/StatusBadge'
 import WeeklyRoundupModal from '../components/WeeklyRoundupModal'
 import { AreaIcon } from '../components/IconPicker'
@@ -53,11 +53,29 @@ export default function Dashboard() {
   const { configured: aiConfigured } = useAIConfigured()
 
   const [roundupOpen, setRoundupOpen] = useState(false)
+  // { id, text } | null — store id too so the "show another" button can
+  // ask the backend for a nudge that isn't the one currently on screen.
   const [nudge, setNudge] = useState(null)
+  const [shufflingNudge, setShufflingNudge] = useState(false)
 
   useEffect(() => {
-    getTodayNudge().then((n) => setNudge(n?.text || null)).catch(() => setNudge(null))
+    getTodayNudge()
+      .then((n) => setNudge(n?.text ? { id: n.id, text: n.text } : null))
+      .catch(() => setNudge(null))
   }, [])
+
+  const handleShuffleNudge = async () => {
+    if (shufflingNudge) return
+    setShufflingNudge(true)
+    try {
+      const next = await getRandomNudge(nudge?.id)
+      if (next?.text) setNudge({ id: next.id, text: next.text })
+    } catch {
+      // best-effort - leave the current nudge on screen
+    } finally {
+      setShufflingNudge(false)
+    }
+  }
 
   // View mode persisted to localStorage
   const [viewMode, setViewMode] = useState(
@@ -169,17 +187,34 @@ export default function Dashboard() {
       {/* ── Area grid ── */}
       <main className="max-w-[1600px] mx-auto px-8 py-8">
         {/* Daily nudge - a calm, rotating usage reminder. Quiet by design:
-            soft tint, small leaf mark, no dismiss, no call to action. */}
-        {nudge && (
+            soft tint, small leaf mark, no call to action. A subtle refresh
+            icon on the right lets the user flick through the pool. */}
+        {nudge?.text && (
           <div className="
             flex items-start gap-3 mb-6 px-4 py-3 rounded-xl
             bg-mint-50/60 dark:bg-mint-900/10
             border border-mint/20
           ">
             <Leaf size={15} className="flex-shrink-0 mt-0.5 text-mint-700/80 dark:text-mint-300/80" />
-            <p className="text-sm leading-relaxed text-pitch-600 dark:text-paper-300">
-              {nudge}
+            <p className="flex-1 text-sm leading-relaxed text-pitch-600 dark:text-paper-300">
+              {nudge.text}
             </p>
+            <button
+              onClick={handleShuffleNudge}
+              disabled={shufflingNudge}
+              title="Show another"
+              aria-label="Show another nudge"
+              className="
+                flex-shrink-0 p-1 rounded
+                text-paper-500 dark:text-paper-600
+                hover:text-pitch-700 dark:hover:text-paper-300
+                opacity-50 hover:opacity-100
+                disabled:cursor-not-allowed
+                transition-all
+              "
+            >
+              <RefreshCw size={13} className={shufflingNudge ? 'animate-spin' : ''} />
+            </button>
           </div>
         )}
 
