@@ -23,9 +23,13 @@ Output:
 
 ```
 src-tauri/target/release/bundle/nsis/Trace_1.0.0_x64-setup.exe   # 27 MB NSIS installer
-src-tauri/target/release/bundle/msi/Trace_1.0.0_x64_en-US.msi    # 31 MB MSI installer
 src-tauri/target/release/trace.exe                                # bare exe (no installer)
 ```
+
+The NSIS installer runs without admin elevation and installs to
+`%LOCALAPPDATA%\Programs\Trace\` so the in-app updater can write to the
+install directory without UAC. We no longer ship the MSI; see
+[Why no MSI?](#why-no-msi) below.
 
 ---
 
@@ -78,7 +82,7 @@ Actions hosted runners.
 ┌─────────────────────────────────────────────────────────────┐
 │ Trace_1.0.0_x64-setup.exe                                   │
 │  installs to                                                │
-│  C:\Program Files\Trace\                                    │
+│  %LOCALAPPDATA%\Programs\Trace\                             │
 │    ├── trace.exe                  (Tauri Rust shell)        │
 │    ├── resources/                                           │
 │    │   └── binaries/                                        │
