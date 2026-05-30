@@ -18,6 +18,7 @@ import {
 } from '../api/settings'
 import { getStorageConfig } from '../api/storage'
 import StorageSetupModal from '../components/StorageSetupModal'
+import IntegrationsHub from '../components/IntegrationsHub'
 import { useAppVersion } from '../hooks/useAppVersion'
 import { notifyAIConfigChanged } from '../hooks/useAIConfigured'
 
@@ -65,8 +66,9 @@ export default function SystemSettings({ updater }) {
       </header>
 
       <main className="max-w-3xl mx-auto px-8 py-8 space-y-6">
-        <AISection />
-        <StorageSection />
+        <IntegrationsHub />
+        <AISection id="integration-ai" />
+        <StorageSection id="integration-storage" />
         {isTauri() && <UpdateSection updater={updater} />}
         <AboutSection />
       </main>
@@ -76,7 +78,7 @@ export default function SystemSettings({ updater }) {
 
 // ─── AI Engine ────────────────────────────────────────────────────────────────
 
-function AISection() {
+function AISection({ id }) {
   const [config, setConfig] = useState(null)
   const [editing, setEditing] = useState(false)
 
@@ -87,7 +89,7 @@ function AISection() {
   useEffect(() => { refresh() }, [])
 
   return (
-    <Card>
+    <Card id={id}>
       <CardHeader
         icon={Cpu}
         title="AI Engine"
@@ -740,7 +742,7 @@ function UpdateSection({ updater }) {
 // rows share a card so the user's mental model of "where my data lives" is
 // one place to look, not two.
 
-function StorageSection() {
+function StorageSection({ id }) {
   // Local data path state
   const [dataDir, setDataDir] = useState(null)
   const [migrating, setMigrating] = useState(false)
@@ -789,7 +791,7 @@ function StorageSection() {
 
   return (
     <>
-      <Card>
+      <Card id={id}>
         <CardHeader
           icon={Database}
           title="Storage"
@@ -973,13 +975,19 @@ function Row({ label, value }) {
 
 // ─── Layout primitives ────────────────────────────────────────────────────────
 
-function Card({ children }) {
+function Card({ children, id }) {
   return (
-    <section className="
-      rounded-xl border p-5
-      bg-white dark:bg-pitch-700
-      border-paper-300 dark:border-pitch-500
-    ">
+    <section
+      id={id}
+      className="
+        rounded-xl border p-5
+        bg-white dark:bg-pitch-700
+        border-paper-300 dark:border-pitch-500
+        ring-offset-paper-100 dark:ring-offset-pitch-800
+        transition-shadow duration-300
+        scroll-mt-24
+      "
+    >
       {children}
     </section>
   )
