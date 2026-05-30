@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { MessageSquare, ArrowRight, RefreshCw, Clock, Sparkles, RotateCcw, Leaf } from 'lucide-react'
+import { MessageSquare, ArrowRight, RefreshCw, Clock, Sparkles, RotateCcw, Leaf, ChevronDown } from 'lucide-react'
 import { formatDistanceToNow, format, differenceInDays, differenceInCalendarDays, parseISO } from 'date-fns'
 import { areasApi, entriesApi } from '../api/client'
 import { getTodayNudge } from '../api/nudges'
@@ -357,48 +357,123 @@ function getDueGroup(dueDateStr) {
   return 'later'
 }
 
-// One calm line that counts what's due, bucketed overdue / today / this week.
-// The detail still lives in each thread, one click away. Disappears entirely
-// when nothing is due. Counts use the functional status palette (terracotta,
-// amber-muted), never brand mint.
+// One calm line counting what's due, bucketed overdue / today / this week.
+// The detail still lives in each thread, one click away - and a chevron
+// expands the strip inline so the user can scan the actual items without
+// leaving the dashboard. Collapsed state persists across reloads so the
+// view stays predictable (ADHD: predictable destinations beat surprises).
+// Hides entirely when nothing is due. Counts use the functional status
+// palette (terracotta, amber-muted), never brand mint.
 function ComingUpStrip() {
-  const [counts, setCounts] = useState({ overdue: 0, today: 0, week: 0 })
+  const [todos, setTodos] = useState([])
+  const [collapsed, setCollapsed] = useState(
+    () => localStorage.getItem('comingUpCollapsed') !== 'false'
+  )
 
   useEffect(() => {
-    entriesApi.getUpcoming(50)
-      .then((todos) => {
-        const c = { overdue: 0, today: 0, week: 0 }
-        todos.forEach((t) => {
-          const g = getDueGroup(t.due_date)
-          if (g === 'overdue') c.overdue += 1
-          else if (g === 'today') c.today += 1
-          else if (g === 'week') c.week += 1
-        })
-        setCounts(c)
-      })
-      .catch(() => {})
+    entriesApi.getUpcoming(50).then(setTodos).catch(() => {})
   }, [])
+
+  const toggle = () => {
+    setCollapsed((c) => {
+      const next = !c
+      localStorage.setItem('comingUpCollapsed', String(next))
+      return next
+    })
+  }
+
+  // Bucket the todos once, derive counts from the buckets.
+  const buckets = { overdue: [], today: [], week: [] }
+  todos.forEach((t) => {
+    const g = getDueGroup(t.due_date)
+    if (g === 'overdue' || g === 'today' || g === 'week') buckets[g].push(t)
+  })
+  const counts = {
+    overdue: buckets.overdue.length,
+    today:   buckets.today.length,
+    week:    buckets.week.length,
+  }
 
   const nothing = counts.overdue + counts.today + counts.week === 0
   if (nothing) return null
 
+  const SECTIONS = [
+    { key: 'overdue', label: 'Overdue',   colorClass: 'text-terracotta' },
+    { key: 'today',   label: 'Today',     colorClass: 'text-amber-muted' },
+    { key: 'week',    label: 'This Week', colorClass: 'text-paper-600 dark:text-paper-500' },
+  ]
+
   return (
-    <div className="
-      flex items-center gap-4 px-4 py-3 rounded-xl
-      bg-paper-200 dark:bg-pitch-700
-      text-sm
-    ">
-      <span className="font-mono uppercase tracking-widest text-xs text-paper-500 dark:text-paper-600">
-        Coming Up
-      </span>
-      {counts.overdue > 0 && (
-        <span className="font-medium text-terracotta">{counts.overdue} overdue</span>
-      )}
-      {counts.today > 0 && (
-        <span className="font-medium text-amber-muted">{counts.today} today</span>
-      )}
-      {counts.week > 0 && (
-        <span className="text-paper-600 dark:text-paper-500">{counts.week} this week</span>
+    <div className="rounded-xl bg-paper-200 dark:bg-pitch-700 overflow-hidden">
+      {/* Strip header - click anywhere to expand/collapse */}
+      <button
+        onClick={toggle}
+        aria-expanded={!collapsed}
+        className="
+          w-full flex items-center gap-4 px-4 py-3 text-sm
+          hover:bg-paper-300/60 dark:hover:bg-pitch-600/60
+          transition-colors
+        "
+      >
+        <span className="font-mono uppercase tracking-widest text-xs text-paper-500 dark:text-paper-600">
+          Coming Up
+        </span>
+        {counts.overdue > 0 && (
+          <span className="font-medium text-terracotta">{counts.overdue} overdue</span>
+        )}
+        {counts.today > 0 && (
+          <span className="font-medium text-amber-muted">{counts.today} today</span>
+        )}
+        {counts.week > 0 && (
+          <span className="text-paper-600 dark:text-paper-500">{counts.week} this week</span>
+        )}
+        <ChevronDown
+          size={15}
+          className={`ml-auto flex-shrink-0 text-paper-500 dark:text-paper-600 transition-transform duration-200 ${collapsed ? '' : 'rotate-180'}`}
+        />
+      </button>
+
+      {/* Expanded list - bucketed items, each linking to its thread */}
+      {!collapsed && (
+        <div className="border-t border-paper-300/70 dark:border-pitch-600/70 divide-y divide-paper-300/60 dark:divide-pitch-600/60">
+          {SECTIONS.map(({ key, label, colorClass }) => {
+            const items = buckets[key]
+            if (items.length === 0) return null
+            return (
+              <div key={key} className="px-4 py-2.5">
+                <p className={`font-mono uppercase tracking-widest text-[10px] mb-1.5 ${colorClass}`}>
+                  {label}
+                </p>
+                <div className="space-y-0.5">
+                  {items.map((t) => (
+                    <Link
+                      key={t.id}
+                      to={`/thread/${t.thread_id}`}
+                      className="
+                        flex items-center gap-3 px-2 py-1.5 rounded-md
+                        hover:bg-paper-300/60 dark:hover:bg-pitch-600/60
+                        transition-colors
+                      "
+                    >
+                      <span className="font-display uppercase tracking-wide text-[11px] text-pitch-700 dark:text-paper-200 flex-shrink-0">
+                        {t.area_name}
+                      </span>
+                      <span className="text-paper-400 dark:text-paper-700 text-xs flex-shrink-0">/</span>
+                      <span className="flex-1 text-xs text-pitch-600 dark:text-paper-300 truncate">
+                        {t.content}
+                      </span>
+                      {t.due_date && (
+                        <span className="font-mono text-xs text-paper-500 dark:text-paper-600 flex-shrink-0">
+                          {format(parseISO(t.due_date), 'EEE d MMM')}
+                        </span>
+                      )}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )
+          })}
+        </div>
       )}
     </div>
   )
