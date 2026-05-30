@@ -48,6 +48,11 @@ identifier = "allow-get-updater-auth-header"
 description = "Read the baked-in PAT for the private releases endpoint."
 commands.allow = ["get_updater_auth_header"]
 
+[[permission]]
+identifier = "allow-app-version"
+description = "Read the running app version (compiled from Cargo.toml). Used by the sidebar footer to stay in sync after in-place upgrades."
+commands.allow = ["app_version"]
+
 [[set]]
 identifier = "allow-all"
 description = "All custom Trace. desktop commands."
@@ -60,4 +65,5 @@ permissions = [
     "allow-set-update-channel",
     "allow-get-update-endpoint",
     "allow-get-updater-auth-header",
+    "allow-app-version",
 ]

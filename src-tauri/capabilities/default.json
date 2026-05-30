@@ -15,7 +15,6 @@
   "permissions": [
     "core:default",
     "core:app:default",
-    "allow-app-version",
     "allow-get-data-dir",
     "allow-pick-data-dir",
     "allow-migrate-and-set-data-dir",
@@ -24,6 +23,7 @@
     "allow-set-update-channel",
     "allow-get-update-endpoint",
     "allow-get-updater-auth-header",
+    "allow-app-version",
     "shell:default",
     "shell:allow-execute",
     "shell:allow-spawn",
