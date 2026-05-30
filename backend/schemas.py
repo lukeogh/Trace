@@ -425,3 +425,42 @@ class StorageSyncLogOut(BaseModel):
     occurred_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+# ─── Insights ─────────────────────────────────────────────────────────────────
+# Read-only aggregates for the Insights page. Everything here is computed on the
+# fly from existing tables - no new storage. Designed to grow: as integrations
+# (Jira, mail, PRs) land, add sibling schemas and fields rather than reshaping
+# these.
+
+class MomentumArea(BaseModel):
+    """One area ranked by recent activity. Null when there are too few areas
+    to make a ranking meaningful (the frontend hides the card in that case)."""
+    area_id: int
+    area_name: str
+    icon: Optional[str] = None
+    status: str
+    entry_count: int            # entries created in the lookback window
+    last_activity_at: Optional[datetime] = None
+    days_since_activity: Optional[int] = None
+
+
+class CalendarEntryOut(BaseModel):
+    """A meeting-type entry, surfaced for the calendar/next-meeting cards."""
+    id: int
+    thread_id: int
+    thread_title: str
+    area_id: int
+    area_name: str
+    content: str
+    meeting_at: datetime
+
+
+class InsightsOut(BaseModel):
+    """Everything the Insights page needs in a single round-trip."""
+    most_active: Optional[MomentumArea] = None
+    quietest: Optional[MomentumArea] = None
+    next_meeting: Optional[CalendarEntryOut] = None
+    recent_meetings: List[CalendarEntryOut] = []
+    area_count: int = 0
+    lookback_days: int = 7

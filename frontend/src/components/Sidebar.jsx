@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { Link, useParams, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard, History, BrainCircuit, Search, Plus,
-  ChevronLeft, ChevronRight, Settings, Keyboard,
+  ChevronLeft, ChevronRight, Settings, Keyboard, Sparkles,
 } from 'lucide-react'
 import { getAreaStatus } from '../utils/status'
 import { MOD_KEY } from '../utils/platform'
@@ -174,6 +174,7 @@ export default function Sidebar({
           footer utility row (it's a look-back tool, not everyday navigation). */}
       <div className={`${collapsed ? 'px-2' : 'px-3'} pt-3 pb-1 space-y-0.5`}>
         <NavLink to="/" icon={LayoutDashboard} label="Dashboard" active={location.pathname === '/'} collapsed={collapsed} />
+        <NavLink to="/insights" icon={Sparkles} label="Insights" active={location.pathname === '/insights'} collapsed={collapsed} />
         <NavLink to="/process" icon={BrainCircuit} label="Smart Generate" active={location.pathname === '/process'} collapsed={collapsed} />
       </div>
 

@@ -52,6 +52,7 @@ from routers import (
     subtasks as subtasks_router,
     ai_features as ai_features_router,
     nudges as nudges_router,
+    insights as insights_router,
 )
 
 # Trace. launches with no seeded areas - the user creates their own from the
@@ -233,6 +234,7 @@ app.include_router(storage_router.router, prefix="/api")
 app.include_router(subtasks_router.router, prefix="/api")
 app.include_router(ai_features_router.router, prefix="/api")
 app.include_router(nudges_router.router, prefix="/api")
+app.include_router(insights_router.router, prefix="/api")
 
 # Serve uploaded files at /uploads/<stored_name>
 if os.path.exists(UPLOAD_DIR):
