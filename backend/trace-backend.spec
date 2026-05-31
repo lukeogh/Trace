@@ -86,7 +86,11 @@ a = Analysis(
         'aiofiles.os',
         'aiofiles.threadpool',
         # Trace's own backend modules (PyInstaller doesn't always discover them
-        # when run.py imports them indirectly through `from main import app`)
+        # when run.py imports them indirectly through `from main import app`).
+        # IMPORTANT: every new router gets a line here. Static analysis worked
+        # in earlier releases but v0.6.0 shipped with routers/microsoft.py
+        # silently absent from the bundle, which 404'd /api/microsoft/auth/login
+        # while sibling routes appeared to work. Belt-and-braces from here.
         'main',
         'database',
         'models',
@@ -94,6 +98,12 @@ a = Analysis(
         'audit',
         'ingest',
         'scheduler',
+        'ai_provider',
+        'storage_backend',
+        'storage_backup',
+        'storage_nextcloud',
+        'microsoft_graph',
+        'services_signals',
         'routers',
         'routers.areas',
         'routers.threads',
@@ -101,6 +111,22 @@ a = Analysis(
         'routers.attachments',
         'routers.generate',
         'routers.ingest',
+        'routers.settings',
+        'routers.storage',
+        'routers.subtasks',
+        'routers.ai_features',
+        'routers.nudges',
+        'routers.insights',
+        'routers.microsoft',
+        'routers.signals',
+        # MSAL + its lazy-loaded crypto helpers (Microsoft Graph OAuth).
+        # PyInstaller doesn't always catch msal's internal `importlib.import_module`
+        # calls.
+        'msal',
+        'msal.application',
+        'msal.token_cache',
+        'msal.authority',
+        'msal.oauth2cli',
     ],
     hookspath=[],
     hooksconfig={},
