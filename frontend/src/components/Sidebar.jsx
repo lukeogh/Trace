@@ -2,12 +2,13 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { Link, useParams, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard, History, BrainCircuit, Search, Plus,
-  ChevronLeft, ChevronRight, Settings, Keyboard, Sparkles,
+  ChevronLeft, ChevronRight, Settings, Keyboard, Telescope, Radar,
 } from 'lucide-react'
 import { getAreaStatus } from '../utils/status'
 import { MOD_KEY } from '../utils/platform'
 import { AreaIcon } from './IconPicker'
 import { useAppVersion } from '../hooks/useAppVersion'
+import { listSignals } from '../api/signals'
 import Logo from './Logo'
 
 const MIN_WIDTH = 200
@@ -26,6 +27,24 @@ export default function Sidebar({
   const settingsActive = location.pathname === '/settings'
   const logActive = location.pathname === '/log'
   const version = useAppVersion()
+
+  // ─── Signals pending count (sidebar badge) ─────────────────────────────────
+  // Poll every 60s so the badge updates without a refresh after the
+  // scheduler's 30-min sync drops new pending items. Cheap query - just a
+  // count, no payload. Failures (e.g. backend down at boot) are swallowed.
+  const [signalsPending, setSignalsPending] = useState(0)
+  useEffect(() => {
+    let cancelled = false
+    const tick = async () => {
+      try {
+        const r = await listSignals()
+        if (!cancelled) setSignalsPending(r?.pending_count || 0)
+      } catch { /* swallow */ }
+    }
+    tick()
+    const id = setInterval(tick, 60_000)
+    return () => { cancelled = true; clearInterval(id) }
+  }, [location.pathname])  // re-poll on nav so accept/dismiss reflects fast
 
   // ─── Collapse state ────────────────────────────────────────────────────────
   // Persisted across sessions. Ctrl/Cmd+B toggles (VSCode convention).
@@ -174,7 +193,15 @@ export default function Sidebar({
           footer utility row (it's a look-back tool, not everyday navigation). */}
       <div className={`${collapsed ? 'px-2' : 'px-3'} pt-3 pb-1 space-y-0.5`}>
         <NavLink to="/" icon={LayoutDashboard} label="Dashboard" active={location.pathname === '/'} collapsed={collapsed} />
-        <NavLink to="/insights" icon={Sparkles} label="Insights" active={location.pathname === '/insights'} collapsed={collapsed} />
+        <NavLink to="/insights" icon={Telescope} label="Insights" active={location.pathname === '/insights'} collapsed={collapsed} />
+        <NavLink
+          to="/signals"
+          icon={Radar}
+          label="Signals"
+          active={location.pathname === '/signals'}
+          collapsed={collapsed}
+          badge={signalsPending}
+        />
         <NavLink to="/process" icon={BrainCircuit} label="Smart Generate" active={location.pathname === '/process'} collapsed={collapsed} />
       </div>
 
@@ -357,14 +384,15 @@ export default function Sidebar({
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-function NavLink({ to, icon: Icon, label, active, collapsed }) {
+function NavLink({ to, icon: Icon, label, active, collapsed, badge }) {
+  const showBadge = typeof badge === 'number' && badge > 0
   if (collapsed) {
     return (
       <Link
         to={to}
-        title={label}
+        title={`${label}${showBadge ? ` · ${badge}` : ''}`}
         className={`
-          flex items-center justify-center p-2 rounded-md transition-colors
+          relative flex items-center justify-center p-2 rounded-md transition-colors
           ${active
             ? 'bg-mint-50 dark:bg-mint-900/20 text-mint-700 dark:text-mint-300 ring-1 ring-mint/30'
             : 'text-paper-600 dark:text-paper-500 hover:bg-paper-200 dark:hover:bg-pitch-700 hover:text-pitch-700 dark:hover:text-paper-200'
@@ -372,6 +400,9 @@ function NavLink({ to, icon: Icon, label, active, collapsed }) {
         `}
       >
         <Icon size={16} />
+        {showBadge && (
+          <span className="absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full bg-mint" aria-label={`${badge} pending`} />
+        )}
       </Link>
     )
   }
@@ -388,7 +419,16 @@ function NavLink({ to, icon: Icon, label, active, collapsed }) {
       `}
     >
       <Icon size={15} className="flex-shrink-0" />
-      <span className="font-display uppercase tracking-wide text-xs">{label}</span>
+      <span className="font-display uppercase tracking-wide text-xs flex-1">{label}</span>
+      {showBadge && (
+        <span className="
+          ml-auto text-[10px] font-mono px-1.5 py-0.5 rounded-full
+          bg-mint-50 dark:bg-mint-900/30 text-mint-700 dark:text-mint-300
+          min-w-[18px] text-center
+        ">
+          {badge > 99 ? '99+' : badge}
+        </span>
+      )}
     </Link>
   )
 }

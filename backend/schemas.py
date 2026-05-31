@@ -464,3 +464,91 @@ class InsightsOut(BaseModel):
     recent_meetings: List[CalendarEntryOut] = []
     area_count: int = 0
     lookback_days: int = 7
+
+
+# ─── Signals / Microsoft 365 ──────────────────────────────────────────────────
+# Source-agnostic staging surface for externally-sourced items awaiting user
+# triage. Microsoft Outlook is the first source; future Jira/GitHub items use
+# the same shape.
+
+class MicrosoftConfigIn(BaseModel):
+    """User-supplied Azure app registration credentials."""
+    client_id: str
+    client_secret: str
+    tenant_id: str = "common"
+
+
+class MicrosoftConfigOut(BaseModel):
+    """API view - secret is masked. is_configured is true iff client_id + secret are set."""
+    client_id: Optional[str] = None
+    client_secret_masked: Optional[str] = None
+    tenant_id: str = "common"
+    is_configured: bool = False
+
+
+class MicrosoftProfileOut(BaseModel):
+    """Connected MS account, minimal v1 fields. tokens never leave the server."""
+    connected: bool
+    display_name: Optional[str] = None
+    email: Optional[str] = None
+    connected_at: Optional[str] = None
+    last_synced: Optional[str] = None
+
+
+class SignalItemOut(BaseModel):
+    """A pending/assigned Signal row, enriched with the AI suggestion's labels."""
+    id: int
+    source: str
+    external_id: str
+    kind: str
+    title: str
+    starts_at: Optional[datetime] = None
+    ends_at: Optional[datetime] = None
+    location: Optional[str] = None
+    organizer: Optional[str] = None
+    is_all_day: bool
+    status: str
+    suggested_area_id: Optional[int] = None
+    suggested_area_name: Optional[str] = None
+    suggested_thread_id: Optional[int] = None
+    suggested_thread_title: Optional[str] = None
+    assigned_entry_id: Optional[int] = None
+    created_at: datetime
+    updated_at: datetime
+
+
+class SignalListOut(BaseModel):
+    """Wraps the list with a count and an unconfigured-AI hint."""
+    items: List[SignalItemOut]
+    pending_count: int
+    ai_configured: bool
+
+
+class SignalAcceptIn(BaseModel):
+    """User confirms a signal into an Entry. Either an existing thread,
+    or a new thread under an area."""
+    area_id: int
+    thread_id: Optional[int] = None
+    new_thread_title: Optional[str] = None
+
+
+class SignalReassignIn(BaseModel):
+    """Move the suggestion to a different area/thread without accepting yet."""
+    area_id: Optional[int] = None
+    thread_id: Optional[int] = None
+
+
+# ─── Signals dashboard nudge setting ──────────────────────────────────────────
+
+class SignalNudgeSettingOut(BaseModel):
+    """How loudly Signals announces itself on the dashboard.
+
+    off          - sidebar badge only, no dashboard line
+    gentle       - one calm line, dismissible for the session (default)
+    with-peek    - one calm line + a 1-item preview card
+    """
+    mode: str = "gentle"  # off | gentle | with-peek
+
+
+class SignalNudgeSettingIn(BaseModel):
+    mode: str

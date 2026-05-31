@@ -79,6 +79,13 @@ class Entry(Base):
     # enables the "Break this down" later affordance without re-triggering.
     decomp_dismissed = Column(Boolean, default=False, nullable=False)
 
+    # ── External provenance (Signals) ────────────────────────────────────────
+    # When a meeting Entry is created by accepting a Signals item, the upstream
+    # source's stable id (Graph event id for Microsoft) is stored here so the
+    # 30-min re-sync can update the entry in place if the event moves. NULL
+    # for manual entries.
+    external_id = Column(String(256), nullable=True, index=True)
+
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
@@ -201,6 +208,98 @@ class StorageSyncLog(Base):
     size_bytes = Column(Integer, nullable=True)
     error_message = Column(Text, nullable=True)
     occurred_at = Column(DateTime, server_default=func.now())
+
+
+class MicrosoftIntegration(Base):
+    """
+    Connected Microsoft 365 account (one row, single-user app).
+
+    Tokens are Fernet-encrypted at rest using the same per-install key the
+    Nextcloud backup uses (storage_backend.get_or_create_fernet_key). Decryption
+    happens just-in-time inside the token-refresh helper - the raw access token
+    never sits in memory longer than a request.
+
+    Lost key = stored tokens unrecoverable, user simply reconnects. Documented
+    trade-off, single-user homelab tool.
+    """
+    __tablename__ = "microsoft_integrations"
+
+    id = Column(Integer, primary_key=True, index=True)
+    # Graph /me id - stable per Microsoft account.
+    microsoft_user_id = Column(String(256), unique=True, nullable=False)
+
+    # Encrypted secrets - never log, never return via API.
+    access_token_enc = Column(Text, nullable=False)
+    refresh_token_enc = Column(Text, nullable=True)
+    token_expiry = Column(DateTime, nullable=True)  # UTC
+
+    # Minimal profile cache - "connected as <email>" is all v1 surfaces.
+    # job_title/department/office_location/avatar_data_uri columns exist for
+    # forward-compat (see MS365_INTEGRATION_SPEC_1.md §0 - rich profile card
+    # deferred from v1) but are not populated or rendered.
+    display_name = Column(String(256), nullable=True)
+    email = Column(String(256), nullable=True)
+    job_title = Column(String(256), nullable=True)
+    department = Column(String(256), nullable=True)
+    office_location = Column(String(256), nullable=True)
+    avatar_data_uri = Column(Text, nullable=True)
+
+    connected_at = Column(DateTime, server_default=func.now())
+    last_synced = Column(DateTime, nullable=True)
+
+
+class SignalItem(Base):
+    """
+    Staging row for an externally-sourced item awaiting user triage.
+
+    Items arrive automatically (Graph sync, future Jira/GitHub) but never
+    become structured log entries until the user accepts them - "capture
+    automatically, file deliberately" (see spec §2).
+
+    Source-agnostic from day one: `source` discriminates microsoft / jira /
+    github / etc. `kind` discriminates meeting / task / review / etc.
+
+    Dedup key is (source, external_id). Re-sync updates in place. Upstream
+    cancellation flips status to 'dismissed' rather than hard-deleting.
+    """
+    __tablename__ = "signal_items"
+
+    id = Column(Integer, primary_key=True, index=True)
+    # microsoft | jira | github | ... - dimension for routing & filtering.
+    source = Column(String(30), nullable=False, index=True)
+    # Stable upstream id - unique per source via composite index below.
+    external_id = Column(String(256), nullable=False, index=True)
+    # meeting | task | review | mention | ...
+    kind = Column(String(30), nullable=False)
+
+    title = Column(String(500), nullable=False)
+    # Meeting fields - null for non-meeting kinds.
+    starts_at = Column(DateTime, nullable=True)
+    ends_at = Column(DateTime, nullable=True)
+    location = Column(String(500), nullable=True)
+    organizer = Column(String(255), nullable=True)
+    is_all_day = Column(Boolean, default=False, nullable=False)
+
+    # pending | assigned | dismissed
+    # 'assigned' means accepted and committed to an Entry; 'dismissed' covers
+    # both user-dismissed and upstream-cancelled / auto-expired.
+    status = Column(String(20), nullable=False, default="pending", index=True)
+
+    # AI suggestion - filled when the sync job has a configured AI provider.
+    # Null when AI is unconfigured, or when the AI declined to suggest (no
+    # strong match) - the UI surfaces this as a "choose area" state.
+    suggested_area_id = Column(Integer, ForeignKey("areas.id", ondelete="SET NULL"), nullable=True)
+    suggested_thread_id = Column(Integer, ForeignKey("threads.id", ondelete="SET NULL"), nullable=True)
+
+    # Once accepted, points at the committed Entry. Lets a re-sync update the
+    # entry if the upstream event moves.
+    assigned_entry_id = Column(Integer, ForeignKey("entries.id", ondelete="SET NULL"), nullable=True)
+
+    # Original Graph payload (JSON) for debugging + forward-compat.
+    raw_json = Column(Text, nullable=True)
+
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
 
 class Nudge(Base):

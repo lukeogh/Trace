@@ -19,6 +19,7 @@ import {
 import { getStorageConfig } from '../api/storage'
 import StorageSetupModal from '../components/StorageSetupModal'
 import IntegrationsHub from '../components/IntegrationsHub'
+import MicrosoftIntegration from '../components/MicrosoftIntegration'
 import { useAppVersion } from '../hooks/useAppVersion'
 import { notifyAIConfigChanged } from '../hooks/useAIConfigured'
 
@@ -69,6 +70,7 @@ export default function SystemSettings({ updater }) {
         <IntegrationsHub />
         <AISection id="integration-ai" />
         <StorageSection id="integration-storage" />
+        <MicrosoftSection id="integration-microsoft" />
         {isTauri() && <UpdateSection updater={updater} />}
         <AboutSection />
       </main>
@@ -920,6 +922,34 @@ function StorageSection({ id }) {
         />
       )}
     </>
+  )
+}
+
+// ─── Microsoft 365 ────────────────────────────────────────────────────────────
+
+function MicrosoftSection({ id }) {
+  return (
+    <Card id={id}>
+      <CardHeader
+        icon={MicrosoftLogo}
+        title="Microsoft 365"
+        subtitle="Outlook calendar via Signals. Read-only, encrypted tokens."
+      />
+      <MicrosoftIntegration />
+    </Card>
+  )
+}
+
+// Microsoft 4-square logo. Inline SVG (lucide doesn't ship one) so the card
+// header reads instantly as "Microsoft" without dropping back to a generic icon.
+function MicrosoftLogo({ size = 16 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true" className="flex-shrink-0 mt-1">
+      <rect x="1"  y="1"  width="10" height="10" fill="#F25022"/>
+      <rect x="13" y="1"  width="10" height="10" fill="#7FBA00"/>
+      <rect x="1"  y="13" width="10" height="10" fill="#00A4EF"/>
+      <rect x="13" y="13" width="10" height="10" fill="#FFB900"/>
+    </svg>
   )
 }
 
