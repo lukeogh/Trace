@@ -96,6 +96,30 @@ def _refresh_area(db, area: models.Area, provider) -> bool:
     return True
 
 
+def run_microsoft_signal_sync():
+    """Cron entry point - 30-min Microsoft 365 calendar pull into signal_items.
+
+    Skips silently if no MS account is connected or the token refresh fails;
+    delegates the real work to services_signals.run_microsoft_sync (which
+    also handles the on-demand /sync-now button via the microsoft router).
+    """
+    from database import SessionLocal
+    from services_signals import run_microsoft_sync
+    db = SessionLocal()
+    try:
+        result = run_microsoft_sync(db)
+        if not result.get("skipped"):
+            log.info(
+                "MS signal sync: +%d new, %d updated, %d dismissed, %d expired",
+                result.get("added", 0), result.get("updated", 0),
+                result.get("dismissed", 0), result.get("expired", 0),
+            )
+    except Exception as e:
+        log.warning("MS signal sync failed: %s", e)
+    finally:
+        db.close()
+
+
 def topup_nudges():
     """Daily: ask the AI to add a couple of fresh dashboard nudges, growing
     the pool over time. No-op when AI is unconfigured or the pool is full."""
@@ -196,8 +220,18 @@ def start():
         replace_existing=True,
         misfire_grace_time=3600,
     )
+    # Microsoft 365 calendar → signal_items sync. Every 30 min, all day -
+    # someone might add a meeting to your calendar at 23:00 and you want it
+    # in Trace by morning. Skips silently if MS isn't connected.
+    _scheduler.add_job(
+        run_microsoft_signal_sync,
+        CronTrigger(minute="*/30", timezone="Europe/Brussels"),
+        id="microsoft-signal-sync",
+        replace_existing=True,
+        misfire_grace_time=1800,
+    )
     _scheduler.start()
-    log.info("Scheduler started: 12:00 Overview refresh + 02:00 backup, Europe/Brussels.")
+    log.info("Scheduler started: 12:00 Overview + 02:00 backup + */30min MS sync, Europe/Brussels.")
 
 
 def shutdown():

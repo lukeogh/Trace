@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Cpu, Cloud, Github, KanbanSquare, Plus, Check, Clock } from 'lucide-react'
 import { getStorageConfig } from '../api/storage'
+import { getMicrosoftProfile } from '../api/microsoft'
 import { useAIConfigured } from '../hooks/useAIConfigured'
 
 /**
@@ -53,10 +54,8 @@ const INTEGRATIONS = [
     name: 'Microsoft 365',
     tagline: 'Outlook calendar via Signals',
     iconKey: 'microsoft',
-    sectionId: null,
-    statusFn: () => 'coming-soon',
-    comingIn: 'v0.6.0',
-    learnMoreUrl: 'https://github.com/lukeogh/Trace/issues',
+    sectionId: 'integration-microsoft',
+    statusFn: (state) => state.microsoftConnected ? 'connected' : 'unconfigured',
   },
   {
     key: 'github',
@@ -109,14 +108,22 @@ export default function IntegrationsHub() {
   // pill from "set up" → "live" without a refetch here.
   const { configured: aiConfigured } = useAIConfigured()
   const [storageConnected, setStorageConnected] = useState(false)
+  const [microsoftConnected, setMicrosoftConnected] = useState(false)
 
   useEffect(() => {
     getStorageConfig()
       .then((c) => setStorageConnected(Boolean(c?.is_connected)))
       .catch(() => setStorageConnected(false))
+    getMicrosoftProfile()
+      .then((p) => setMicrosoftConnected(Boolean(p?.connected)))
+      .catch(() => setMicrosoftConnected(false))
   }, [])
 
-  const state = { aiConfigured: aiConfigured === true, storageConnected }
+  const state = {
+    aiConfigured: aiConfigured === true,
+    storageConnected,
+    microsoftConnected,
+  }
 
   return (
     <section className="

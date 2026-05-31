@@ -136,6 +136,17 @@ def _momentum(db: Session, lookback_days: int):
 def _calendar(db: Session):
     """Return (next_meeting, recent_meetings).
 
+    Reads from TWO sources:
+      1. Committed meeting entries (`entries` table) - manually-logged + items
+         the user has accepted from Signals into a thread.
+      2. Pending+assigned Signals (`signal_items`) - real Outlook events the
+         sync job has pulled but the user hasn't accepted yet.
+
+    Surfacing both means a freshly-connected Microsoft account shows real
+    upcoming meetings on the Insights page within ~30 minutes (or after a
+    manual sync), without forcing the user to triage them first. Once they
+    accept, the Entry takes over (deduped by external_id, see below).
+
     next_meeting:    earliest meeting with meeting_at in the future.
     recent_meetings: up to 5 meetings nearest to now (just-past + upcoming),
                      ordered chronologically, for the "latest calendar entries"
@@ -143,8 +154,21 @@ def _calendar(db: Session):
     """
     now_naive = _utcnow().replace(tzinfo=None)
 
-    def to_schema(entry, thread, area) -> schemas.CalendarEntryOut:
-        return schemas.CalendarEntryOut(
+    # ── Source 1: committed Entry rows ─────────────────────────────────────
+    entry_rows = (
+        db.query(models.Entry, models.Thread, models.Area)
+        .join(models.Thread, models.Entry.thread_id == models.Thread.id)
+        .join(models.Area, models.Thread.area_id == models.Area.id)
+        .filter(
+            models.Entry.type == "meeting",
+            models.Entry.meeting_at.isnot(None),
+        )
+        .all()
+    )
+    entry_externals = {e.external_id for e, _, _ in entry_rows if e.external_id}
+
+    entries: list[schemas.CalendarEntryOut] = [
+        schemas.CalendarEntryOut(
             id=entry.id,
             thread_id=thread.id,
             thread_title=thread.title,
@@ -153,41 +177,73 @@ def _calendar(db: Session):
             content=entry.content,
             meeting_at=entry.meeting_at,
         )
+        for entry, thread, area in entry_rows
+    ]
 
-    base = (
-        db.query(models.Entry, models.Thread, models.Area)
-        .join(models.Thread, models.Entry.thread_id == models.Thread.id)
-        .join(models.Area, models.Thread.area_id == models.Area.id)
+    # ── Source 2: pending+assigned Signal rows (not yet committed) ─────────
+    # Dedup by external_id - if the user has already accepted a signal, the
+    # Entry version is canonical and the signal row is fuzzy data we should
+    # ignore here.
+    signal_q = (
+        db.query(models.SignalItem)
         .filter(
-            models.Entry.type == "meeting",
-            models.Entry.meeting_at.isnot(None),
+            models.SignalItem.status.in_(["pending", "assigned"]),
+            models.SignalItem.kind == "meeting",
+            models.SignalItem.starts_at.isnot(None),
         )
     )
+    if entry_externals:
+        signal_q = signal_q.filter(~models.SignalItem.external_id.in_(entry_externals))
+    signal_rows = signal_q.all()
 
-    next_row = (
-        base.filter(models.Entry.meeting_at >= now_naive)
-        .order_by(models.Entry.meeting_at.asc())
-        .first()
-    )
-    next_meeting = to_schema(*next_row) if next_row else None
+    # Signals don't have a thread/area yet (the user hasn't filed them). We
+    # surface them with synthetic placeholder IDs so the frontend can still
+    # render the row + show the source — area_id=0 / thread_id=0 signal
+    # "this is a pending signal, click to triage."
+    PENDING_AREA_NAME = "Signals · pending"
+    for signal in signal_rows:
+        entries.append(schemas.CalendarEntryOut(
+            id=-signal.id,  # negative = pending signal, won't clash with real entry ids
+            thread_id=0,
+            thread_title=signal.organizer or "Microsoft 365",
+            area_id=0,
+            area_name=PENDING_AREA_NAME,
+            content=signal.title,
+            meeting_at=signal.starts_at,
+        ))
 
-    # Recent list: the 5 meetings closest to now in either direction, then
-    # sorted chronologically for display.
-    recent_rows = (
-        base.order_by(
-            func.abs(
-                func.julianday(models.Entry.meeting_at) - func.julianday(now_naive)
-            ).asc()
-        )
-        .limit(5)
-        .all()
+    if not entries:
+        return None, []
+
+    # next_meeting: earliest with meeting_at >= now.
+    upcoming = sorted(
+        (e for e in entries if e.meeting_at and _strip_tz(e.meeting_at) >= now_naive),
+        key=lambda e: _strip_tz(e.meeting_at),
     )
-    recent = sorted(
-        (to_schema(*r) for r in recent_rows),
-        key=lambda c: c.meeting_at,
-    )
+    next_meeting = upcoming[0] if upcoming else None
+
+    # Recent list: top 5 by absolute distance from now, then sorted chronologically.
+    by_distance = sorted(
+        entries,
+        key=lambda e: abs((_strip_tz(e.meeting_at) - now_naive).total_seconds()),
+    )[:5]
+    recent = sorted(by_distance, key=lambda e: _strip_tz(e.meeting_at))
 
     return next_meeting, recent
+
+
+def _strip_tz(dt):
+    """Coerce a (possibly tz-aware) datetime to a naive UTC equivalent.
+
+    Both committed entries (server_default=func.now(), naive UTC) and the
+    Signal sync (datetime.utcnow(), naive UTC) write naive timestamps, but
+    Pydantic may parse them back as tz-aware in some Python/SQLAlchemy
+    combos. This makes the comparison robust either way."""
+    if dt is None:
+        return dt
+    if dt.tzinfo is not None:
+        return dt.replace(tzinfo=None)
+    return dt
 
 
 @router.get("/insights", response_model=schemas.InsightsOut)
